@@ -1,7 +1,10 @@
 import { execFileSync } from 'node:child_process';
+import { createWriteStream } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { pathToFileURL } from 'node:url';
 
 const amenityValues = new Set(['restaurant', 'cafe', 'fast_food', 'food_court']);
@@ -147,7 +150,7 @@ export function buildDataset(collection, updatedAt = new Date().toISOString()) {
     const place = { id, name: tags.name.trim(), lat, lon, amenity: tags.amenity };
     if (typeof tags.cuisine === 'string' && tags.cuisine) place.cuisine = tags.cuisine;
     if (typeof tags.opening_hours === 'string' && tags.opening_hours) place.opening_hours = tags.opening_hours;
-    for (const key of ['website', 'contact:website', 'menu', 'menu:website', 'website:menu', 'food']) {
+    for (const key of ['website', 'contact:website', 'menu', 'menu:website', 'website:menu', 'lunch', 'lunch:website', 'website:lunch', 'lunch:feed', 'food']) {
       if (typeof tags[key] === 'string' && tags[key] && (key === 'food' || safeWebsite(tags[key]))) place[key] = tags[key].trim();
     }
     for (const [key, value] of Object.entries(tags)) {
@@ -165,6 +168,8 @@ export function buildDataset(collection, updatedAt = new Date().toISOString()) {
     region: 'Helsinki metropolitan area',
     updatedAt,
     attribution: '© OpenStreetMap contributors',
+    license: 'Open Database License (ODbL) 1.0',
+    sources: [{ name: 'OpenStreetMap', license: 'ODbL-1.0', attribution: '© OpenStreetMap contributors', url: 'https://www.openstreetmap.org/copyright' }],
     coverage: { type: 'MultiPolygon', coordinates: coverage },
     places,
   };
@@ -174,11 +179,27 @@ export function buildDataset(collection, updatedAt = new Date().toISOString()) {
 }
 
 async function generate(inputPath, outputPath) {
-  if (!inputPath || !outputPath) throw new Error('Usage: node scripts/build-osm-food-data.mjs <finland.osm.pbf> <output.json>');
+  const downloadInput = !inputPath;
+  outputPath = outputPath || path.resolve('public/data/helsinki-metro.json');
   const tempDirectory = await mkdir(path.join(os.tmpdir(), `lunumi-osm-${process.pid}`), { recursive: true }).then(() => path.join(os.tmpdir(), `lunumi-osm-${process.pid}`));
+  if (downloadInput) inputPath = path.join(tempDirectory, 'finland-latest.osm.pbf');
   const filteredPath = path.join(tempDirectory, 'food-and-boundaries.osm.pbf');
   const geojsonPath = path.join(tempDirectory, 'food-and-boundaries.geojson');
   try {
+    if (downloadInput) {
+      process.stdout.write('Downloading the latest Finland OpenStreetMap extract from Geofabrik…\n');
+      let response;
+      try {
+        response = await fetch('https://download.geofabrik.de/europe/finland-latest.osm.pbf', {
+          headers: { 'User-Agent': 'Lunumi local food data builder (OpenStreetMap ODbL dataset)' },
+          signal: AbortSignal.timeout(120000),
+        });
+      } catch {
+        throw new Error('Could not reach Geofabrik from this environment. Download the Finland PBF manually and pass its path to this command.');
+      }
+      if (!response.ok || !response.body) throw new Error(`Geofabrik download failed (HTTP ${response.status}). Download the Finland PBF manually and pass its path to this command.`);
+      await pipeline(Readable.fromWeb(response.body), createWriteStream(inputPath));
+    }
     execFileSync('osmium', [
       'tags-filter', inputPath,
       ...[...amenityValues].map(value => `nwr/amenity=${value}`),
