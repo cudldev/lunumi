@@ -1,6 +1,6 @@
 export type Place={id:string,name:string,lat:number,lon:number,tags:Record<string,string>,distance:number};
 type Coordinates={lat:number,lon:number};
-const overpassEndpoints=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
+const overpassEndpoint='https://overpass.private.coffee/api/interpreter';
 const nearbyCache=new Map<string,{places:Place[],savedAt:number}>();
 const nearbyCacheTtl=3*60*1000;
 export const haversine=(a:Coordinates,b:Coordinates)=>{const r=6371000,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p,x=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)**2;return 2*r*Math.asin(Math.sqrt(x))};
@@ -11,17 +11,16 @@ export const nearbyQuery=(lat:number,lon:number,radius:number)=>`[out:json][time
 let lastGeocode=0;export async function geocode(query:string,signal?:AbortSignal):Promise<{lat:number,lon:number,label:string}>{if(signal?.aborted)throw new DOMException('Location lookup cancelled','AbortError');const wait=Math.max(0,1100-(Date.now()-lastGeocode));if(wait)await new Promise(resolve=>setTimeout(resolve,wait));if(signal?.aborted)throw new DOMException('Location lookup cancelled','AbortError');lastGeocode=Date.now();const url=new URL('https://nominatim.openstreetmap.org/search');url.search=new URLSearchParams({q:query,format:'jsonv2',limit:'1'}).toString();const controller=new AbortController(),abort=()=>controller.abort(),timeout=setTimeout(abort,8000);signal?.addEventListener('abort',abort,{once:true});try{const res=await fetch(url,{signal:controller.signal});if(!res.ok)throw new Error('Location lookup is unavailable right now. Please try again.');const results=await res.json();if(!results.length)throw new Error('We couldn’t find that place. Try adding a city or region.');return{lat:Number(results[0].lat),lon:Number(results[0].lon),label:results[0].display_name.split(',').slice(0,2).join(',')}}catch(error){if(signal?.aborted)throw error;if(controller.signal.aborted)throw new Error('Location lookup timed out. Please try again.');throw error}finally{clearTimeout(timeout);signal?.removeEventListener('abort',abort)}}
 async function queryOverpass(endpoint:string,query:string,parentSignal?:AbortSignal):Promise<any[]>{const controller=new AbortController();const abort=()=>controller.abort();parentSignal?.addEventListener('abort',abort,{once:true});const timeout=setTimeout(abort,7000);try{const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(query),signal:controller.signal,referrerPolicy:'unsafe-url'});if(!res.ok)throw new Error(`Overpass HTTP ${res.status}`);const data=await res.json();if(!Array.isArray(data.elements))throw new Error('Unexpected Overpass response');return data.elements}catch(error){if(parentSignal?.aborted)throw error;if(controller.signal.aborted)throw new Error('Overpass request timed out');throw error}finally{clearTimeout(timeout);parentSignal?.removeEventListener('abort',abort)}}
 export function filterNearby(places:Place[],query=''):Place[]{const term=query.trim().toLowerCase();return places.filter(place=>!term||`${place.name} ${place.tags.cuisine||''} ${place.tags.amenity||''}`.toLowerCase().includes(term))}
-function firstNonEmpty<T>(requests:Promise<T[]>[]):Promise<T[]>{return new Promise((resolve,reject)=>{let completed=0,emptyResponses=0,lastError:unknown;requests.forEach(request=>request.then(results=>{completed++;if(results.length){resolve(results);return}emptyResponses++;if(completed===requests.length&&emptyResponses===requests.length)resolve([])},error=>{completed++;lastError=error;if(completed===requests.length){if(emptyResponses)resolve([]);else reject(lastError)}}))})}
 export async function nearby(lat:number,lon:number,radius:number,query='',signal?:AbortSignal):Promise<Place[]>{
  if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
  const key=`${lat},${lon},${radius}`,cached=nearbyCache.get(key);
  if(cached&&Date.now()-cached.savedAt<nearbyCacheTtl)return filterNearby(cached.places,query);
- const q=nearbyQuery(lat,lon,radius),controllers=overpassEndpoints.map(()=>new AbortController());
- const abort=()=>controllers.forEach(controller=>controller.abort());signal?.addEventListener('abort',abort,{once:true});
+ const q=nearbyQuery(lat,lon,radius),controller=new AbortController();
+ const abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
  try{
-  const elements=await firstNonEmpty(overpassEndpoints.map((endpoint,index)=>queryOverpass(endpoint,q,controllers[index].signal)));
+  const elements=await queryOverpass(overpassEndpoint,q,controller.signal);
   if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
   const places=elements.map((e:any)=>{const p=e.center||e;return{id:`osm:${e.type}/${e.id}`,name:e.tags?.name,lat:p.lat,lon:p.lon,tags:e.tags||{},distance:haversine({lat,lon},p)}}).filter((place:Place)=>place.name&&place.distance<=radius).sort((a:Place,b:Place)=>a.distance-b.distance);
   nearbyCache.set(key,{places,savedAt:Date.now()});return filterNearby(places,query);
- }catch(error){if(signal?.aborted)throw error;const detail=error instanceof Error?error.message:'temporarily unavailable';throw new Error(`Nearby search ${detail}. Change location or try again.`)}finally{signal?.removeEventListener('abort',abort);controllers.forEach(controller=>controller.abort())}
+ }catch(error){if(signal?.aborted)throw error;const detail=error instanceof Error?error.message:'temporarily unavailable';throw new Error(`Nearby search ${detail}. Change location or try again.`)}finally{signal?.removeEventListener('abort',abort);controller.abort()}
 }
