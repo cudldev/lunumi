@@ -3309,6 +3309,479 @@
         "license": "CC BY-SA 4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
       }
+    },
+    {
+      "id": "frd:helsinki:mala-master-itis",
+      "name": "Mala Master",
+      "branch": "Itis",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 1–7",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://malamaster.online/",
+      "menuUrl": "https://malamaster.online/menu/",
+      "lat": 60.2111025,
+      "lon": 25.0806012,
+      "sourceRecords": [
+        {
+          "source": "Mala Master official branch listing",
+          "url": "https://malamaster.online/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The official page lists this branch with current opening hours."
+        },
+        {
+          "source": "Mala Master official menu",
+          "url": "https://malamaster.online/menu/",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=It%C3%A4katu%201-7%2C%2000930%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/13203481655",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mala-master-iso-roba",
+      "name": "Mala Master",
+      "branch": "Iso Roba",
+      "city": "Helsinki",
+      "address": {
+        "street": "Iso Roobertinkatu 20–22",
+        "postalCode": "00120",
+        "country": "FI"
+      },
+      "website": "https://malamaster.online/",
+      "menuUrl": "https://malamaster.online/menu/",
+      "lat": 60.1629684,
+      "lon": 24.9413613,
+      "sourceRecords": [
+        {
+          "source": "Mala Master official branch listing",
+          "url": "https://malamaster.online/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The official page lists this branch with current opening hours."
+        },
+        {
+          "source": "Mala Master official menu",
+          "url": "https://malamaster.online/menu/",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Iso%20Roobertinkatu%2020-22%2C%2000120%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/22954674",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:swing-deli",
+      "name": "Swing Deli",
+      "city": "Espoo",
+      "address": {
+        "street": "Miestentie 5",
+        "postalCode": "02150",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/espoo/swing-deli",
+      "lat": 60.1788049,
+      "lon": 24.8302308,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/espoo/swing-deli",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Miestentie%205%2C%2002150%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/1066543401",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:harbore",
+      "name": "Harbore",
+      "city": "Helsinki",
+      "address": {
+        "street": "Katajanokanlaituri 4",
+        "postalCode": "00160",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/harbore",
+      "lat": 60.1661105,
+      "lon": 24.9614396,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/harbore",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Katajanokanlaituri%204%2C%2000160%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/1167548360",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:korttelikonttori-myllypuro",
+      "name": "Korttelikonttori Myllypuro",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kiviparintie 2",
+        "postalCode": "00920",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/korttelikonttori-myllypuro",
+      "lat": 60.2241485,
+      "lon": 25.0731173,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/korttelikonttori-myllypuro",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kiviparintie%202%2C%2000920%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/2116634030",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:la-famiglia",
+      "name": "La Famiglia",
+      "city": "Helsinki",
+      "address": {
+        "street": "Keskuskatu 3",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/helsinki/la-famiglia-helsinki",
+      "lat": 60.1684937,
+      "lon": 24.9431989,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/helsinki/la-famiglia-helsinki",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Keskuskatu%203%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/1589624953",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:or-restaurant-bar",
+      "name": "OR Restaurant & Bar",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kalevankatu 5",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/or-restaurant-bar",
+      "lat": 60.1676932,
+      "lon": 24.9387572,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/or-restaurant-bar",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kalevankatu%205%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/1377211663",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:paulis-pizza-grill",
+      "name": "Pauli's Pizza & Grill",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kluuvikatu 8",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/paulis-pizza-grill",
+      "lat": 60.1695471,
+      "lon": 24.9472185,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/paulis-pizza-grill",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kluuvikatu%208%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/711710912",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:salve",
+      "name": "Salve",
+      "city": "Helsinki",
+      "address": {
+        "street": "Hietalahdenranta 5 C",
+        "postalCode": "00180",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/salve",
+      "lat": 60.1612457,
+      "lon": 24.9299716,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/salve",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Hietalahdenranta%205%20C%2C%2000180%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/4479286495",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        },
+        {
+          "source": "Wikimedia Commons photo",
+          "url": "https://commons.wikimedia.org/wiki/File:Wiener_Schnitzel_at_restaurant_Salve_in_June_2026.jpg",
+          "fields": [
+            "photo"
+          ],
+          "checkedAt": "2026-10-26",
+          "attribution": "JIP",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "note": "Linked thumbnail only; image remains hosted by Wikimedia Commons."
+        }
+      ],
+      "photo": {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4c/Wiener_Schnitzel_at_restaurant_Salve_in_June_2026.jpg/960px-Wiener_Schnitzel_at_restaurant_Salve_in_June_2026.jpg?utm_campaign=index&utm_content=thumbnail&utm_source=commons.wikimedia.org",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wiener_Schnitzel_at_restaurant_Salve_in_June_2026.jpg",
+        "attribution": "JIP",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+      },
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:memphis-hakaniemi",
+      "name": "Memphis Hakaniemi",
+      "city": "Helsinki",
+      "address": {
+        "street": "Siltasaarenkatu 18–20",
+        "postalCode": "00530",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/memphis-hakaniemi",
+      "lat": 60.1803364,
+      "lon": 24.9489,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/memphis-hakaniemi",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Siltasaarenkatu%2018-20%2C%2000530%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/140493080",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
