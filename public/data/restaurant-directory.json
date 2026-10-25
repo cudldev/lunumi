@@ -6344,6 +6344,118 @@
       "lon": 24.9656777,
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-ruoholahti",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Ruoholahti",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itämerenkatu 21",
+        "postalCode": "00180",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/roberts-coffee-ruoholahti/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/roberts-coffee-ruoholahti/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/cafes/helsinki-en/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/91765309",
+          "recordId": "way/91765309",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates identify the Ruoholahti shopping-centre building (same address), not the individual cafe entrance. Restaurant identity and branch address are from the official operator page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.16373,
+      "lon": 24.9104,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-arabia",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Shopping Centre Arabia",
+      "city": "Helsinki",
+      "address": {
+        "street": "Hämeentie 109-111",
+        "postalCode": "00550",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/arabia-shopping-centre/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/arabia-shopping-centre/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/cafes/helsinki-en/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/5602379727",
+          "recordId": "node/5602379727",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates identify an OSM-mapped point at the same Hämeentie 109-111 shopping-centre address; they do not pinpoint the cafe entrance. Restaurant identity and branch address are from the official operator page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.20307,
+      "lon": 24.96921,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
