@@ -147,8 +147,8 @@ export function buildDataset(collection, updatedAt = new Date().toISOString()) {
     const place = { id, name: tags.name.trim(), lat, lon, amenity: tags.amenity };
     if (typeof tags.cuisine === 'string' && tags.cuisine) place.cuisine = tags.cuisine;
     if (typeof tags.opening_hours === 'string' && tags.opening_hours) place.opening_hours = tags.opening_hours;
-    for (const key of ['website', 'contact:website', 'menu', 'menu:website', 'website:menu', 'food']) {
-      if (typeof tags[key] === 'string' && tags[key] && (key === 'food' || safeWebsite(tags[key]))) place[key] = tags[key].trim();
+    for (const key of ['website', 'contact:website', 'menu', 'menu:website', 'website:menu', 'lunch', 'lunch:website', 'website:lunch', 'lunch:feed', 'food', 'wikimedia_commons']) {
+      if (typeof tags[key] === 'string' && tags[key] && (key === 'food' || key === 'wikimedia_commons' || safeWebsite(tags[key]))) place[key] = tags[key].trim();
     }
     for (const [key, value] of Object.entries(tags)) {
       if (/^diet:[a-z_]+$/.test(key) && typeof value === 'string' && value) place[key] = value;
@@ -165,6 +165,8 @@ export function buildDataset(collection, updatedAt = new Date().toISOString()) {
     region: 'Helsinki metropolitan area',
     updatedAt,
     attribution: '© OpenStreetMap contributors',
+    license: 'Open Database License (ODbL) 1.0',
+    sources: [{ name: 'OpenStreetMap', license: 'ODbL-1.0', attribution: '© OpenStreetMap contributors', url: 'https://www.openstreetmap.org/copyright' }],
     coverage: { type: 'MultiPolygon', coordinates: coverage },
     places,
   };
@@ -173,8 +175,94 @@ export function buildDataset(collection, updatedAt = new Date().toISOString()) {
   return dataset;
 }
 
+function plainText(value) {
+  return String(value ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/\s+/g, ' ').trim();
+}
+
+function commonsFileTitle(value) {
+  const candidate = String(value ?? '').split(';')[0].trim().replace(/^https?:\/\/commons\.wikimedia\.org\/wiki\//i, '').replace(/_/g, ' ');
+  if (!candidate || /^(category|special):/i.test(candidate)) return null;
+  const title = /^file:/i.test(candidate) ? candidate : `File:${candidate}`;
+  return title.length <= 240 ? title : null;
+}
+
+function commonsCategoryTitle(value) {
+  const candidate = String(value ?? '').split(';')[0].trim().replace(/^https?:\/\/commons\.wikimedia\.org\/wiki\//i, '').replace(/_/g, ' ');
+  if (!/^category:/i.test(candidate) || candidate.length > 240) return null;
+  return candidate;
+}
+
+function commonsPhoto(info) {
+  const meta = info?.extmetadata ?? {};
+  const license = plainText(meta.LicenseShortName?.value);
+  const licenseUrl = safeWebsite(meta.LicenseUrl?.value) ? new URL(meta.LicenseUrl.value).toString() : '';
+  const attribution = plainText(meta.Attribution?.value || meta.Artist?.value);
+  if (!info?.thumburl || !safeWebsite(info.thumburl) || !info.descriptionurl || !safeWebsite(info.descriptionurl) || !license || !licenseUrl || !attribution) return null;
+  if (!/^(?:CC0|CC BY(?:-SA)?|Public domain)\b/i.test(license)) return null;
+  return { url: info.thumburl, sourceUrl: info.descriptionurl, attribution, license, licenseUrl };
+}
+
+export async function addCommonsPhotos(dataset, fetchImpl = fetch) {
+  const files = new Map();
+  const categories = new Map();
+  for (const place of dataset.places) {
+    const title = commonsFileTitle(place.wikimedia_commons);
+    if (title) files.set(title, [...(files.get(title) ?? []), place]);
+    const category = commonsCategoryTitle(place.wikimedia_commons);
+    if (category) categories.set(category, [...(categories.get(category) ?? []), place]);
+  }
+  const titles = [...files.keys()];
+  for (let offset = 0; offset < titles.length; offset += 25) {
+    const batch = titles.slice(offset, offset + 25);
+    const params = new URLSearchParams({
+      action: 'query', prop: 'imageinfo', iiprop: 'url|extmetadata', iiurlwidth: '800',
+      titles: batch.join('|'), format: 'json', formatversion: '2',
+    });
+    try {
+      const response = await fetchImpl(`https://commons.wikimedia.org/w/api.php?${params}`, {
+        headers: { 'User-Agent': 'Lunumi local restaurant data builder (photo license metadata)' },
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!response.ok) continue;
+      const data = await response.json();
+      for (const page of data?.query?.pages ?? []) {
+        const photo = commonsPhoto(page.imageinfo?.[0]);
+        if (!photo) continue;
+        const pageTitle = String(page.title ?? '').replace(/_/g, ' ').toLocaleLowerCase('en');
+        const matchingPlaces = [...files].find(([title]) => title.replace(/_/g, ' ').toLocaleLowerCase('en') === pageTitle)?.[1] ?? [];
+        for (const place of matchingPlaces) place.photo = photo;
+      }
+    } catch {
+      // Photos are optional: a Commons outage must not prevent local dataset generation.
+    }
+  }
+  for (const [category, places] of categories) {
+    const params = new URLSearchParams({
+      action: 'query', generator: 'categorymembers', gcmtitle: category, gcmtype: 'file',
+      gcmnamespace: '6', gcmlimit: '25', gcmsort: 'timestamp', gcmdir: 'descending',
+      prop: 'imageinfo', iiprop: 'url|extmetadata', iiurlwidth: '800', format: 'json', formatversion: '2',
+    });
+    try {
+      const response = await fetchImpl(`https://commons.wikimedia.org/w/api.php?${params}`, {
+        headers: { 'User-Agent': 'Lunumi local restaurant data builder (photo license metadata)' },
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!response.ok) continue;
+      const data = await response.json();
+      const photo = (data?.query?.pages ?? []).map(page => commonsPhoto(page.imageinfo?.[0])).find(Boolean);
+      if (photo) for (const place of places) place.photo = photo;
+    } catch {
+      // Category photos are optional; continue processing the remaining places.
+    }
+  }
+  return dataset;
+}
+
 async function generate(inputPath, outputPath) {
-  if (!inputPath || !outputPath) throw new Error('Usage: node scripts/build-osm-food-data.mjs <finland.osm.pbf> <output.json>');
+  if (!inputPath) {
+    throw new Error('Pass a local OSM .pbf extract. For example: npm run data:helsinki -- ./helsinki-metro.osm.pbf public/data/helsinki-metro.json');
+  }
+  outputPath = outputPath || path.resolve('public/data/helsinki-metro.json');
   const tempDirectory = await mkdir(path.join(os.tmpdir(), `lunumi-osm-${process.pid}`), { recursive: true }).then(() => path.join(os.tmpdir(), `lunumi-osm-${process.pid}`));
   const filteredPath = path.join(tempDirectory, 'food-and-boundaries.osm.pbf');
   const geojsonPath = path.join(tempDirectory, 'food-and-boundaries.geojson');
@@ -187,10 +275,11 @@ async function generate(inputPath, outputPath) {
     ], { stdio: 'inherit' });
     execFileSync('osmium', ['export', filteredPath, '-o', geojsonPath, '--add-unique-id=type_id'], { stdio: 'inherit' });
     const collection = JSON.parse(await readFile(geojsonPath, 'utf8'));
-    const dataset = buildDataset(collection);
+    const dataset = await addCommonsPhotos(buildDataset(collection));
     await mkdir(path.dirname(path.resolve(outputPath)), { recursive: true });
     await writeFile(outputPath, JSON.stringify(dataset));
-    process.stdout.write(`Generated ${dataset.places.length} Helsinki metro food places (${Buffer.byteLength(JSON.stringify(dataset))} bytes).\n`);
+    const photoCount = dataset.places.filter(place => place.photo).length;
+    process.stdout.write(`Generated ${dataset.places.length} Helsinki metro food places, including ${photoCount} licensed Commons photo preview${photoCount === 1 ? '' : 's'} (${Buffer.byteLength(JSON.stringify(dataset))} bytes).\n`);
   } finally {
     await rm(tempDirectory, { recursive: true, force: true });
   }

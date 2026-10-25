@@ -94,6 +94,11 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 .slow-search{flex-basis:100%;margin:8px 0 0 30px;color:#8a725f;font-size:12px;line-height:1.5}
 
 .place-map-preview{display:block;width:100%;height:170px;border:0;border-radius:14px;margin:14px 0 2px;background:#f1eee7}
+.restaurant-photo{margin:0 0 12px;overflow:hidden;border-radius:15px;background:#f1eee7}
+.restaurant-photo img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.restaurant-photo figcaption{padding:5px 9px;color:#887c6e;font-size:10px;line-height:1.4}
+.restaurant-photo figcaption a{color:#6d8e63;text-decoration:none}
+.restaurant-photo figcaption a:hover{text-decoration:underline}
 .place-meta{flex-wrap:wrap}.place-meta .open{white-space:normal;line-height:1.4}.place-tags,.place-links{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 10px 57px}.food-tag,.place-links a{display:inline-flex;align-items:center;gap:5px;border-radius:30px;padding:6px 9px;font-size:11px;line-height:1.2}.food-tag{background:#f1f6e9;color:#59784f}.place-links a{background:#fff8e6;color:#806741;text-decoration:none;border:1px solid #eee5d2}.place-links a:hover{text-decoration:underline;background:#f8f1dd}
 @media(max-width:600px){.place-map-preview{height:160px}}
 @media(max-width:600px){.place-tags,.place-links{margin-left:0}}
@@ -183,6 +188,8 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 @media(max-width:600px){body .app-shell .search-dock>.controls{padding:3px 7px 2px}}
 .search-dock .location-picker-anchor>.control,.search-dock .radius{background:transparent;border-color:transparent;box-shadow:none;transition:background-color 160ms ease,border-color 160ms ease}
 .search-dock .location-picker-anchor>.control:hover,.search-dock .location-picker-anchor:focus-within>.control,.search-dock .radius:hover,.search-dock .radius:focus-within{background:#ffffff70;border-color:#ffffff55}
+.search-dock>.controls{background:transparent;background-image:none;box-shadow:none}
+.search-dock .controls .control,.search-dock .controls .distance-note{background:transparent;background-image:none;box-shadow:none;border-color:transparent}
 
 /* Gentle movement keeps view changes clear without making the app feel busy. */
 @keyframes app-view-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}

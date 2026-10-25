@@ -5,8 +5,6 @@ on:
   pull_request:
     branches: [main, staging]
   workflow_dispatch:
-  schedule:
-    - cron: '17 4 * * 0'
 permissions:
   contents: read
   pages: write
@@ -54,46 +52,14 @@ jobs:
           cache: npm
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Checkout data builder
-        uses: actions/checkout@v4
-        with:
-          path: data-pipeline
-      - name: Restore last generated Helsinki dataset
-        uses: actions/cache/restore@v4
-        with:
-          path: .cache/osm/helsinki-metro.json
-          key: lunumi-helsinki-osm-${{ github.run_id }}
-          restore-keys: lunumi-helsinki-osm-
-      - name: Check whether OSM data needs refreshing
-        id: osm-cache
-        env:
-          EVENT_NAME: ${{ github.event_name }}
+      - name: Add committed Helsinki data to both sites when available
         run: |
-          if [[ "$EVENT_NAME" == "schedule" || "$EVENT_NAME" == "workflow_dispatch" || ! -s .cache/osm/helsinki-metro.json ]]; then
-            echo "refresh=true" >> "$GITHUB_OUTPUT"
+          if [[ -s public/data/helsinki-metro.json ]]; then
+            mkdir -p staging/public/data
+            cp public/data/helsinki-metro.json staging/public/data/helsinki-metro.json
           else
-            echo "refresh=false" >> "$GITHUB_OUTPUT"
+            echo "No committed Helsinki dataset found; the app will use its online search fallback."
           fi
-      - name: Install Osmium and generate Helsinki metro data
-        if: steps.osm-cache.outputs.refresh == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y osmium-tool
-          mkdir -p .cache/osm
-          curl --fail --location --retry 3 --output .cache/osm/finland-latest.osm.pbf https://download.geofabrik.de/europe/finland-latest.osm.pbf
-          node data-pipeline/scripts/build-osm-food-data.mjs .cache/osm/finland-latest.osm.pbf .cache/osm/helsinki-metro.json
-          rm .cache/osm/finland-latest.osm.pbf
-      - name: Save refreshed Helsinki dataset cache
-        if: steps.osm-cache.outputs.refresh == 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: .cache/osm/helsinki-metro.json
-          key: lunumi-helsinki-osm-${{ github.run_id }}
-      - name: Add only filtered OSM data to both sites
-        run: |
-          mkdir -p public/data staging/public/data
-          cp .cache/osm/helsinki-metro.json public/data/helsinki-metro.json
-          cp .cache/osm/helsinki-metro.json staging/public/data/helsinki-metro.json
       - name: Install dependencies
         run: npm ci
       - name: Typecheck and test
