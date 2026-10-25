@@ -34,6 +34,15 @@ export default defineConfig({
             expiration: { maxEntries: 1, maxAgeSeconds: 14 * 24 * 60 * 60 },
             cacheableResponse: { statuses: [0, 200] },
           },
+        }, {
+          urlPattern: /\/data\/restaurant-directory\.json$/,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'lunumi-restaurant-directory',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 1, maxAgeSeconds: 14 * 24 * 60 * 60 },
+            cacheableResponse: { statuses: [0, 200] },
+          },
         }],
         ...(productionPath ? { navigateFallbackDenylist: [/^\/lunumi\/staging(?:\/|$)/] } : {}),
       },
