@@ -178,7 +178,6 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 @media(max-width:600px){.mood-illustration{flex:0 0 142px;width:142px;height:150px;margin:0 0 -2px 4px}.mood-illustration img{width:100%;height:100%;max-width:100%}}
 @media(max-width:380px){.mood-illustration{flex-basis:122px;width:122px;height:132px;margin-left:3px}.mood-illustration img{width:100%;height:100%}}
 
-/* Keep the location controls snug to search and leave room to scroll past the fixed dock. */
-body .app-shell{padding-bottom:calc(240px + env(safe-area-inset-bottom))}
+/* Keep the location controls snug to search. */
 body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
-@media(max-width:600px){body .app-shell{padding-bottom:calc(240px + env(safe-area-inset-bottom))}body .app-shell .search-dock>.controls{padding:3px 7px 2px}}
+@media(max-width:600px){body .app-shell .search-dock>.controls{padding:3px 7px 2px}}

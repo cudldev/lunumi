@@ -7,4 +7,4 @@ body{height:100dvh}
 .bottom-nav{position:fixed;z-index:5;left:50%;right:auto;bottom:0;transform:translateX(-50%);width:100vw;max-width:none;display:flex;justify-content:center;gap:8px;padding:8px 16px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(100deg,#fffdf5f2,#f8faeff2);backdrop-filter:blur(14px);border-top:1px solid #ebe2d4;box-shadow:0 -5px 20px #69573a0b}
 .bottom-nav button{width:auto;flex:1 1 0;max-width:144px}
 @media(max-width:600px){.app-shell{padding-bottom:20px}.bottom-nav{gap:5px;padding-right:12px;padding-left:12px}}
-.app-shell:has(.search-dock){padding-bottom:190px}
+.app-shell:has(.search-dock){padding-bottom:240px}
