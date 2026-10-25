@@ -1,6 +1,8 @@
 :root{--bottom-navigation-height:60px}
 html,body,#root{height:100%;overflow:hidden}
 body{height:100dvh}
+/* Faint cafe-garden line art, tiled directly on the page surfaces. */
+.app-shell,.onboard{background-image:url('./kirby-cafe-lineart.svg');background-size:560px 560px;background-position:center 20px;background-repeat:repeat;background-attachment:fixed}
 .app-shell{height:calc(100dvh - var(--bottom-navigation-height) - env(safe-area-inset-bottom));min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:20px}
 .onboard{height:100dvh;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding-bottom:96px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
 .onboard-actions{position:sticky;bottom:0;z-index:2;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#fff8f000 0%,#fff8f0ed 24%,#fff8f0 100%)}
