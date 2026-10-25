@@ -1,7 +1,9 @@
 name: Deploy Lunumi to GitHub Pages
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,11 +13,38 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  build:
+  verify-feature:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout pull request
         uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck and test
+        run: |
+          npm run typecheck
+          npm test
+      - name: Build pull request
+        run: npm run build
+  build:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout production branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          path: staging
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -31,11 +60,25 @@ jobs:
           npm test
       - name: Build
         run: npm run build
+      - name: Install staging dependencies
+        working-directory: staging
+        run: npm ci
+      - name: Typecheck and test staging
+        working-directory: staging
+        run: |
+          npm run typecheck
+          npm test
+      - name: Build staging site
+        working-directory: staging
+        env:
+          VITE_BASE_PATH: /lunumi/staging/
+        run: npm run build -- --outDir ../dist/staging
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
