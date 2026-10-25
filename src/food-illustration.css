@@ -1,0 +1,6 @@
+.food-illustration{display:block;flex:0 0 46px;width:46px;height:46px;border-radius:14px;background-color:#fff8eb;background-repeat:no-repeat;background-size:400% 200%;box-shadow:0 3px 10px #5d4a3010}
+.opening-hours{display:flex;align-items:center;gap:8px;margin:11px 0 10px 57px;padding:9px 11px;border:1px solid #f0e5d1;border-radius:12px;background:#fffaf0;color:#756447;font-size:11px;line-height:1.45}
+.opening-hours svg{flex:0 0 auto;color:#92a06b}
+.opening-hours span{flex:0 0 auto;font-weight:700;color:#887555}
+.opening-hours strong{font-weight:500;color:#665c49;overflow-wrap:anywhere}
+@media(max-width:600px){.opening-hours{margin-left:0}}

@@ -7,7 +7,7 @@ const nearbyCacheTtl=5*60*1000;
 const nearbyStaleTtl=7*24*60*60*1000;
 const nearbyCacheStorageKey='lunumi-nearby-cache-v1';
 const helsinkiMetroBounds={south:60.0,north:60.5,west:24.0,east:25.8};
-type PrebuiltPlace={id:string,name:string,lat:number,lon:number,amenity:string,cuisine?:string,opening_hours?:string};
+type PrebuiltPlace={id:string,name:string,lat:number,lon:number,amenity:string,cuisine?:string,opening_hours?:string,[key:string]:unknown};
 type PrebuiltDataset={coverage:{type:'MultiPolygon',coordinates:number[][][][]},places:PrebuiltPlace[]};
 let prebuiltDatasetPromise:Promise<PrebuiltDataset|null>|null=null;
 export const haversine=(a:Coordinates,b:Coordinates)=>{const r=6371000,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p,x=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)**2;return 2*r*Math.asin(Math.sqrt(x))};
@@ -25,7 +25,7 @@ function insideRing(lon:number,lat:number,ring:number[][]):boolean{let inside=fa
 function insideCoverage(lon:number,lat:number,coverage:PrebuiltDataset['coverage']):boolean{return coverage.coordinates.some(polygon=>insideRing(lon,lat,polygon[0])&&!polygon.slice(1).some(ring=>insideRing(lon,lat,ring)))}
 function mayBeInHelsinkiMetro(lat:number,lon:number):boolean{return lat>=helsinkiMetroBounds.south&&lat<=helsinkiMetroBounds.north&&lon>=helsinkiMetroBounds.west&&lon<=helsinkiMetroBounds.east}
 async function loadPrebuiltDataset():Promise<PrebuiltDataset|null>{if(!prebuiltDatasetPromise)prebuiltDatasetPromise=(async()=>{try{const response=await fetch(`${import.meta.env.BASE_URL}data/helsinki-metro.json`);if(!response.ok)return null;const data=await response.json();return data?.schema===1&&data?.coverage?.type==='MultiPolygon'&&Array.isArray(data?.places)?data as PrebuiltDataset:null}catch{return null}})();const result=await prebuiltDatasetPromise;if(!result)prebuiltDatasetPromise=null;return result}
-export function filterNearby(places:Place[],query=''):Place[]{const term=query.trim().toLowerCase();return places.filter(place=>!term||`${place.name} ${place.tags.cuisine||''} ${place.tags.amenity||''}`.toLowerCase().includes(term))}
+export function filterNearby(places:Place[],query=''):Place[]{const term=query.trim().toLowerCase();return places.filter(place=>!term||`${place.name} ${place.tags.cuisine||''} ${place.tags.amenity||''} ${Object.entries(place.tags).filter(([key])=>key==='food'||key.startsWith('food:')||key.startsWith('diet:')).map(([key,value])=>`${key} ${value}`).join(' ')}`.toLowerCase().includes(term))}
 export async function nearby(lat:number,lon:number,radius:number,query='',signal?:AbortSignal):Promise<Place[]>{
  if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
  const key=`${lat},${lon},${radius}`;
@@ -33,7 +33,7 @@ export async function nearby(lat:number,lon:number,radius:number,query='',signal
   const dataset=await loadPrebuiltDataset();
   if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
   if(dataset&&insideCoverage(lon,lat,dataset.coverage)){
-   const places=dataset.places.map(place=>({id:place.id,name:place.name,lat:place.lat,lon:place.lon,tags:{amenity:place.amenity,...(place.cuisine?{cuisine:place.cuisine}:{}),...(place.opening_hours?{opening_hours:place.opening_hours}:{})},distance:haversine({lat,lon},place)})).filter(place=>place.distance<=radius).sort((a,b)=>a.distance-b.distance);
+   const places=dataset.places.map(place=>({id:place.id,name:place.name,lat:place.lat,lon:place.lon,tags:Object.fromEntries(Object.entries(place).filter(([key,value])=>!['id','name','lat','lon'].includes(key)&&typeof value==='string')) as Record<string,string>,distance:haversine({lat,lon},place)})).filter(place=>place.distance<=radius).sort((a,b)=>a.distance-b.distance);
    saveNearby(key,places);return filterNearby(places,query);
   }
  }

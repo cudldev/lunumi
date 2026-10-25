@@ -10,6 +10,17 @@ const municipalityNameSet = new Set(municipalityNames.map(name => name.toLocaleL
 const searchMarginMeters = 5000;
 const maxOutputBytes = 10 * 1024 * 1024;
 
+function safeWebsite(value) {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  try {
+    const candidate = /^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`;
+    const url = new URL(candidate);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname.includes('.');
+  } catch {
+    return false;
+  }
+}
+
 function polygonCoordinates(geometry) {
   if (geometry?.type === 'Polygon') return [geometry.coordinates];
   if (geometry?.type === 'MultiPolygon') return geometry.coordinates;
@@ -136,6 +147,13 @@ export function buildDataset(collection, updatedAt = new Date().toISOString()) {
     const place = { id, name: tags.name.trim(), lat, lon, amenity: tags.amenity };
     if (typeof tags.cuisine === 'string' && tags.cuisine) place.cuisine = tags.cuisine;
     if (typeof tags.opening_hours === 'string' && tags.opening_hours) place.opening_hours = tags.opening_hours;
+    for (const key of ['website', 'contact:website', 'menu', 'menu:website', 'website:menu', 'food']) {
+      if (typeof tags[key] === 'string' && tags[key] && (key === 'food' || safeWebsite(tags[key]))) place[key] = tags[key].trim();
+    }
+    for (const [key, value] of Object.entries(tags)) {
+      if (/^diet:[a-z_]+$/.test(key) && typeof value === 'string' && value) place[key] = value;
+      if (/^food:[a-z_]+$/.test(key) && typeof value === 'string' && value) place[key] = value;
+    }
     places.push(place);
   }
 

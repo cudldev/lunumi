@@ -1,0 +1,19 @@
+.location-picker-anchor{position:relative;min-width:0;flex:0 1 auto}
+.location-picker-anchor>.control{max-width:100%}
+.location-picker-panel{position:absolute;z-index:30;left:0;bottom:calc(100% + 10px);width:min(360px,calc(100vw - 32px));max-height:min(70vh,560px);overflow-y:auto;box-sizing:border-box;padding:18px;background:var(--surface,#fff);border:1px solid var(--line,#e8e4dc);border-radius:20px;box-shadow:0 16px 48px rgba(29,34,27,.18);color:var(--ink,#252a24);animation:location-picker-in .16s ease-out}
+.location-picker-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.location-picker-heading h2{font-size:1.15rem;line-height:1.2;margin:5px 0 0}
+.location-picker-close{border:0;background:transparent;color:var(--muted,#74786f);padding:7px 2px;font:inherit;font-size:.8rem;cursor:pointer}
+.location-suggestion{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid var(--line,#e8e4dc);border-radius:12px;background:var(--surface,#fff);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.location-suggestion:hover,.location-suggestion:focus-visible{border-color:var(--accent,#7d8b56);background:var(--soft,#f5f6f0)}
+.location-suggestion:disabled{opacity:.65;cursor:wait}
+.current-location{width:100%;margin-bottom:16px;color:var(--accent-dark,#58663a)}
+.location-suggestions-label{display:block;margin-bottom:8px;color:var(--muted,#74786f);font-size:.77rem;font-weight:650}
+.location-suggestions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.location-picker-search{margin-top:17px}
+.location-picker-search>label{display:block;margin-bottom:8px;color:var(--muted,#74786f);font-size:.8rem;font-weight:600}
+.location-picker-search .inline{display:flex;gap:8px}
+.location-picker-search input{min-width:0;flex:1}
+@keyframes location-picker-in{from{opacity:0;transform:translateY(6px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){.location-picker-panel{width:min(360px,calc(100vw - 28px));padding:16px}.location-picker-anchor>.control{max-width:min(62vw,280px)}}
+@media(prefers-reduced-motion:reduce){.location-picker-panel{animation:none}}
