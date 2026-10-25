@@ -1,11 +1,7 @@
 export type Place={id:string,name:string,lat:number,lon:number,tags:Record<string,string>,distance:number,stale?:boolean};
 type Coordinates={lat:number,lon:number};
-// Public instances are best-effort. Try one alternate sequentially to avoid
-// multiplying load on community servers when the first endpoint is slow.
-const overpassEndpoints=[
- 'https://overpass.private.coffee/api/interpreter',
- 'https://overpass-api.de/api/interpreter',
-];
+// One best-effort public request per search; use cache or stale results on failure.
+const overpassEndpoint='https://overpass.private.coffee/api/interpreter';
 const nearbyCache=new Map<string,{places:Place[],savedAt:number}>();
 const nearbyCacheTtl=5*60*1000;
 const nearbyStaleTtl=7*24*60*60*1000;
@@ -46,12 +42,7 @@ export async function nearby(lat:number,lon:number,radius:number,query='',signal
  const q=nearbyQuery(lat,lon,radius),controller=new AbortController();
  const abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
  try{
-  let elements:any[]|undefined;let lastError:unknown;
-  for(const endpoint of overpassEndpoints){
-   if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
-   try{elements=await queryOverpass(endpoint,q,controller.signal);break}catch(error){if(signal?.aborted)throw error;lastError=error}
-  }
-  if(!elements)throw lastError||new Error('Overpass is temporarily unavailable');
+  const elements=await queryOverpass(overpassEndpoint,q,controller.signal);
   if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
   const places=elements.map((e:any)=>{const p=e.center||e;return{id:`osm:${e.type}/${e.id}`,name:e.tags?.name,lat:p.lat,lon:p.lon,tags:e.tags||{},distance:haversine({lat,lon},p)}}).filter((place:Place)=>place.name&&place.distance<=radius).sort((a:Place,b:Place)=>a.distance-b.distance);
   saveNearby(key,places);return filterNearby(places,query);
