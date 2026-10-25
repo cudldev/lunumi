@@ -3,7 +3,7 @@ html,body,#root{height:100%;overflow:hidden}
 body{height:100dvh}
 /* Faint cafe-garden line art, tiled across full-width page surfaces. The top wash
    follows the page's cream gradient, fading the doodles in smoothly. */
-.app-shell,.onboard{background-image:linear-gradient(180deg,#fff3ce 0,#fff8e9 155px,#fffaf100 320px),url('./kirby-cafe-lineart.svg');background-size:100% 320px,560px 560px;background-position:center top,center 20px;background-repeat:no-repeat,repeat;background-attachment:fixed,fixed}
+.app-shell,.onboard{background-image:linear-gradient(180deg,#fff3ce 0,#fff8e9 155px,#fffaf100 320px),url('./kirby-cafe-lineart.svg');background-size:100% 320px,560px 420px;background-position:center top,center 20px;background-repeat:no-repeat,repeat;background-attachment:fixed,fixed}
 .app-shell{width:100%;max-width:none;margin:0;height:calc(100dvh - var(--bottom-navigation-height) - env(safe-area-inset-bottom));min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:20px}
 .topbar{max-width:1120px;margin-inline:auto}
 .onboard{width:100%;max-width:none;margin:0;padding-left:max(19px,calc((100% - 550px)/2 + 24px));padding-right:max(19px,calc((100% - 550px)/2 + 24px));height:100dvh;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding-bottom:96px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
