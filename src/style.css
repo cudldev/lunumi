@@ -154,3 +154,8 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 .welcome.mood-afternoon{--orb-x:55%;--orb-y:7%}
 .welcome.mood-dinner{--orb-x:64%;--orb-y:16%}
 .welcome.mood-late-night{--orb-x:62%;--orb-y:12%}
+
+/* Preserve the full hair silhouette; let the lower frame crop the legs only. */
+.mood-illustration img{bottom:-64px}
+@media(max-width:600px){.mood-illustration img{bottom:-33px}}
+@media(max-width:380px){.mood-illustration img{bottom:-22px}}
