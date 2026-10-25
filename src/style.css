@@ -207,9 +207,9 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
   .app-shell,.onboard,.onboard .chip,.onboard-actions .button{animation:none;transition:none}
   .onboard .chip:hover,.onboard-actions .button:hover,.onboard-actions .button:active{transform:none}
 }
-.search-dock{background:linear-gradient(105deg,#fffaf0e8,#eff5e9ed);backdrop-filter:blur(14px);box-shadow:0 8px 28px #69573a19}
+.search-dock{background:linear-gradient(105deg,#fffaf0e8,#eff5e9ed);backdrop-filter:blur(14px);border:1px solid #e9e2d5;box-shadow:0 5px 20px #69573a12}
 .search-dock>.controls{background:transparent;background-image:none;box-shadow:none}
 .search-dock .controls .control,.search-dock .controls .distance-note{background:transparent;background-image:none;box-shadow:none;border-color:transparent}
+.place-card{background:linear-gradient(180deg,#fff 0%,#fffaf3 100%)}
 
 .brand-mark{overflow:hidden;background:transparent!important;box-shadow:none!important;padding:0}.brand-mark img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
-
