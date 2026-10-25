@@ -1,0 +1,5 @@
+.hours-status{display:flex;align-items:center;gap:5px;margin-top:5px;font-size:11px;line-height:1.35;font-weight:650;color:#718a61}
+.hours-status svg{flex:0 0 auto}
+.hours-status.closing{color:#b56d3e}
+.hours-status.closed,.hours-status.unknown{color:#887c6e}
+@media(max-width:600px){.hours-status{font-size:10px}}
