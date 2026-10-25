@@ -7041,11 +7041,29 @@
             "menuUrl"
           ],
           "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Wikimedia Commons / Finna — Helsinki City Museum",
+          "url": "https://commons.wikimedia.org/wiki/File:Kasarmitorin_Hesburgerin_sisätilat_2023_(202326;+G72087).jpg",
+          "fields": [
+            "photo"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "CC BY 4.0",
+          "attribution": "Pekka Vyhtinen / Helsinki City Museum",
+          "note": "The Commons file page identifies the photo as Kasarmikatu 19; the original Finna record confirms CC BY 4.0 and the photographer."
         }
       ],
       "checkedAt": "2026-10-26",
       "validated": true,
-      "lastValidatedAt": "2026-10-26"
+      "lastValidatedAt": "2026-10-26",
+      "photo": {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Kasarmitorin_Hesburgerin_sis%C3%A4tilat_2023_%28202326%3B%2BG72087%29.jpg/960px-Kasarmitorin_Hesburgerin_sis%C3%A4tilat_2023_%28202326%3B%2BG72087%29.jpg?utm_campaign=index&utm_content=thumbnail&utm_source=commons.wikimedia.org",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kasarmitorin_Hesburgerin_sisätilat_2023_(202326;+G72087).jpg",
+        "attribution": "Pekka Vyhtinen / Helsinki City Museum",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
     },
     {
       "id": "frd:helsinki:hesburger-konala",
