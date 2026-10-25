@@ -54,14 +54,6 @@ jobs:
           cache: npm
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Add committed Helsinki data to both sites when available
-        run: |
-          if [[ -s public/data/helsinki-metro.json ]]; then
-            mkdir -p staging/public/data
-            cp public/data/helsinki-metro.json staging/public/data/helsinki-metro.json
-          else
-            echo "No committed Helsinki dataset found; the app will use its online search fallback."
-          fi
       - name: Add the verified restaurant directory to both sites
         run: |
           node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('restaurant-data/data/restaurants.json','utf8'));if(d.schema!==2||!Array.isArray(d.places)||d.places.length===0)throw new Error('Invalid public restaurant directory');if(d.places.some(p=>!Number.isFinite(p.lat)||!Number.isFinite(p.lon)))throw new Error('A directory record is missing coordinates');console.log('Publishing '+d.places.length+' verified restaurant locations.');"
