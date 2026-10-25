@@ -93,15 +93,13 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 @media(max-width:600px){.app-shell{padding-bottom:176px}.search-dock{width:calc(100vw - 24px);bottom:calc(68px + env(safe-area-inset-bottom));padding:5px}.search-dock .search-row{height:52px}}
 .slow-search{flex-basis:100%;margin:8px 0 0 30px;color:#8a725f;font-size:12px;line-height:1.5}
 
-.place-map-preview{display:block;width:100%;height:170px;border:0;border-radius:14px;margin:14px 0 2px;background:#f1eee7}
 .restaurant-photo{margin:0 0 12px;overflow:hidden;border-radius:15px;background:#f1eee7}
 .restaurant-photo img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
 .restaurant-photo figcaption{padding:5px 9px;color:#887c6e;font-size:10px;line-height:1.4}
 .restaurant-photo figcaption a{color:#6d8e63;text-decoration:none}
 .restaurant-photo figcaption a:hover{text-decoration:underline}
-.place-meta{flex-wrap:wrap}.place-meta .open{white-space:normal;line-height:1.4}.place-tags,.place-links{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 10px 57px}.food-tag,.place-links a{display:inline-flex;align-items:center;gap:5px;border-radius:30px;padding:6px 9px;font-size:11px;line-height:1.2}.food-tag{background:#f1f6e9;color:#59784f}.place-links a{background:#fff8e6;color:#806741;text-decoration:none;border:1px solid #eee5d2}.place-links a:hover{text-decoration:underline;background:#f8f1dd}
-@media(max-width:600px){.place-map-preview{height:160px}}
-@media(max-width:600px){.place-tags,.place-links{margin-left:0}}
+.place-meta{flex-wrap:wrap}.place-meta .open{white-space:normal;line-height:1.4}.place-tags{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 10px 57px}.food-tag{display:inline-flex;align-items:center;gap:5px;border-radius:30px;padding:6px 9px;font-size:11px;line-height:1.2;background:#f1f6e9;color:#59784f}
+@media(max-width:600px){.place-tags{margin-left:0}}
 
 /* Keep each navigation destination in a fixed, equal-width slot. */
 .bottom-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));justify-content:stretch;gap:8px;padding:8px 16px calc(8px + env(safe-area-inset-bottom))}
