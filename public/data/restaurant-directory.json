@@ -5392,6 +5392,958 @@
       "checkedAt": "2026-10-26",
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:roberts-coffee-sello",
+      "name": "Robert's Coffee",
+      "branch": "Espoo Shopping Centre Sello",
+      "city": "Espoo",
+      "address": {
+        "street": "Leppävaarankatu 3-9",
+        "postalCode": "00260",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/sello-shopping-centre/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/sello-shopping-centre/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Lepp%C3%A4vaarankatu%203-9%2C%2002600%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/234282949",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.2181827,
+      "lon": 24.8083609,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:roberts-coffee-tapiola",
+      "name": "Robert's Coffee",
+      "branch": "Espoo Tapiola Stockmann",
+      "city": "Espoo",
+      "address": {
+        "street": "Länsituulentie 7",
+        "postalCode": "02100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/roberts-stockmann-tapiola/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/roberts-stockmann-tapiola/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Ainoa%20shopping%20centre%2C%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "relation/7700177",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.175459,
+      "lon": 24.8045465,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-bulevardi",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Bulevardi Bubbles Corner",
+      "city": "Helsinki",
+      "address": {
+        "street": "Bulevardi 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/bulevardi-bubbles-corner/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/bulevardi-bubbles-corner/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kalevankatu%205%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/1377211663",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1676932,
+      "lon": 24.9387572,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-central-station",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Central Railway Station",
+      "city": "Helsinki",
+      "address": {
+        "street": "Asema-aukio 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/helsinki-central-railway-station/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/helsinki-central-railway-station/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Asema-aukio%202%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/1369465692",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1705952,
+      "lon": 24.9390173,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-citykaytava",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Citykäytävä Flagship Store",
+      "city": "Helsinki",
+      "address": {
+        "street": "Aleksanterinkatu 21",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/citykaytava-en/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/citykaytava-en/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Keskuskatu%204%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/2927441043",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1692271,
+      "lon": 24.9425843,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-kahvilla",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Gift shop Kahvilla, Robert’s Coffee Corner",
+      "city": "Helsinki",
+      "address": {
+        "street": "Korkeavuorenkatu 7",
+        "postalCode": "00140",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/gift-shop-kahvilla-roberts-coffee-corner/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/gift-shop-kahvilla-roberts-coffee-corner/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Korkeavuorenkatu%206%2C%2000150%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/4685683245",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1607824,
+      "lon": 24.9463286,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-hietalahti",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Hietalahti Market Hall",
+      "city": "Helsinki",
+      "address": {
+        "street": "Lönnrotinkatu 34",
+        "postalCode": "00180",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/hietalahti-market-hall/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/hietalahti-market-hall/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Bulevardi%2015%2C%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/123586002",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.164433,
+      "lon": 24.935681,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-itis",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Itis Bulevardi",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 1-7",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/roberts-coffee-itis/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/roberts-coffee-itis/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=It%C3%A4katu%201-5%2C%2000930%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/11498047464",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.2100888,
+      "lon": 25.0789371,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-jugend",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Jugend",
+      "city": "Helsinki",
+      "address": {
+        "street": "Pohjoisesplanadi 19",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/jugend/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/jugend/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kluuvikatu%203%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/4516954096",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1685919,
+      "lon": 24.9477328,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-kamppi",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Kamppi",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kampinkuja 2",
+        "postalCode": "00120",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/roberts-coffee-kamppi/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/roberts-coffee-kamppi/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Urho%20Kekkosen%20katu%201%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122886629",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1690773,
+      "lon": 24.9330746,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-tripla",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Mall of Tripla 2nd floor",
+      "city": "Helsinki",
+      "address": {
+        "street": "Fredikanterassi 1",
+        "postalCode": "00520",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/mall-of-tripla-2-floor/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/mall-of-tripla-2-floor/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Fredikanterassi%201%2C%2000520%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/76388216",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1986779,
+      "lon": 24.9334219,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-old-market-hall",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Old Market Hall (Wanha Kauppahalli)",
+      "city": "Helsinki",
+      "address": {
+        "street": "Eteläranta 125",
+        "postalCode": "00130",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/old-market-hall/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/old-market-hall/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Etel%C3%A4esplanadi%201%2C%2000130%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/5532151133",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.167349,
+      "lon": 24.9506183,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-kaari",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Shopping Centre Kaari",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kantelettarentie 1",
+        "postalCode": "00420",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/kaari-shopping-centre/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/kaari-shopping-centre/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kantelettarentie%201%2C%2000420%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/9712397575",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.237443,
+      "lon": 24.8914315,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-stockmann-bubbles",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Stockmann Bubbles Lounge",
+      "city": "Helsinki",
+      "address": {
+        "street": "Keskuskatu 2",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/stockmann-helsinki-center-bubbles-lounge/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/stockmann-helsinki-center-bubbles-lounge/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Aleksanterinkatu%2052%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122595241",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1683005,
+      "lon": 24.9420834,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:roberts-coffee-stockmann-netcup",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki Stockmann Netcup",
+      "city": "Helsinki",
+      "address": {
+        "street": "Aleksanterinkatu 52 A",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/stockmann-netcup/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/stockmann-netcup/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Aleksanterinkatu%2052%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122595241",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1683005,
+      "lon": 24.9420834,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:roberts-coffee-airport",
+      "name": "Robert's Coffee",
+      "branch": "Helsinki-Vantaa Airport",
+      "city": "Vantaa",
+      "address": {
+        "street": "Lentoasemantie 1",
+        "postalCode": "01530",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/helsinki-vantaa-airport/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/helsinki-vantaa-airport/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Lentoasemantie%201%2C%2001530%20Vantaa%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "relation/13510333",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.3178041,
+      "lon": 24.9673005,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:roberts-coffee-jumbo",
+      "name": "Robert's Coffee",
+      "branch": "Vantaa Shopping Centre Jumbo",
+      "city": "Vantaa",
+      "address": {
+        "street": "Valuuttakatu 3",
+        "postalCode": "01510",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://robertscoffee.com/en/cafe/jumbo-shopping-centre/",
+      "sourceRecords": [
+        {
+          "source": "Robert’s Coffee official branch page",
+          "url": "https://robertscoffee.com/en/cafe/jumbo-shopping-centre/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Robert’s Coffee official cafe locator",
+          "url": "https://robertscoffee.com/en/the-nearest-roberts-coffee/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kauppakeskus%20Jumbo%2C%20Vantaa%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/5052826",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates reuse the cited OSM geocoded point for the same shopping centre or nearby address; this point may not identify the cafe entrance. Business identity and full address come from the official Robert’s Coffee branch page."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.2915942,
+      "lon": 24.9656777,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
