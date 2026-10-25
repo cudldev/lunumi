@@ -6555,6 +6555,1601 @@
       "lon": 24.9673005,
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:hesburger-lansituuli-10",
+      "name": "Hesburger",
+      "city": "Espoo",
+      "address": {
+        "street": "Länsituuli 10",
+        "postalCode": "02100",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=1442",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1757793,
+      "lon": 24.8036107,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/8655999397",
+          "recordId": "node/8655999397",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=1442",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:hesburger-suomenoja",
+      "name": "Hesburger",
+      "branch": "Suomenoja",
+      "city": "Espoo",
+      "address": {
+        "street": "Finnoonlaaksontie 9",
+        "postalCode": "02270",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=201",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.162936,
+      "lon": 24.70629,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/292816222",
+          "recordId": "node/292816222",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=201",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-hakaniemi",
+      "name": "Hesburger",
+      "branch": "Hakaniemi",
+      "city": "Helsinki",
+      "address": {
+        "street": "Hämeentie 2",
+        "postalCode": "00530",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=249",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1801406,
+      "lon": 24.9500072,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/294976831",
+          "recordId": "node/294976831",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=249",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-itakeskus",
+      "name": "Hesburger",
+      "branch": "Itäkeskus",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 7",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=140",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2106133,
+      "lon": 25.0809001,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/294978560",
+          "recordId": "node/294978560",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=140",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-itamerenkatu-14",
+      "name": "Hesburger",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itämerenkatu 14",
+        "postalCode": "00180",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=1410",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1631544,
+      "lon": 24.9150645,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/7599788429",
+          "recordId": "node/7599788429",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=1410",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-kaivokatu",
+      "name": "Hesburger",
+      "branch": "Kaivokatu",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=174",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1706059,
+      "lon": 24.940572,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/293903992",
+          "recordId": "node/293903992",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=174",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-kallio",
+      "name": "Hesburger",
+      "branch": "Kallio",
+      "city": "Helsinki",
+      "address": {
+        "street": "Helsinginkatu 28",
+        "postalCode": "00510",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=144",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1863364,
+      "lon": 24.9479755,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/294976827",
+          "recordId": "node/294976827",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=144",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-kannelmaki-kaari-kauppakeskus",
+      "name": "Hesburger",
+      "branch": "Kannelmäki Kaari, kauppakeskus",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kantelettarentie 1",
+        "postalCode": "00420",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=1294",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2372766,
+      "lon": 24.8938326,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/1608849785",
+          "recordId": "node/1608849785",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=1294",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-kasarmitori",
+      "name": "Hesburger",
+      "branch": "Kasarmitori",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kasarmikatu 19",
+        "postalCode": "00130",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=197",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1653073,
+      "lon": 24.9482923,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/293903991",
+          "recordId": "node/293903991",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=197",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-konala",
+      "name": "Hesburger",
+      "branch": "Konala",
+      "city": "Helsinki",
+      "address": {
+        "street": "Ristipellontie 11",
+        "postalCode": "00390",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=726",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2400355,
+      "lon": 24.8507639,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/394590983",
+          "recordId": "way/394590983",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates are the centre of the mapped OSM area, not a verified entrance point."
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=726",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-kontula",
+      "name": "Hesburger",
+      "branch": "Kontula",
+      "city": "Helsinki",
+      "address": {
+        "street": "Lirokuja 1",
+        "postalCode": "00940",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=205",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2339772,
+      "lon": 25.0805757,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/18502317",
+          "recordId": "way/18502317",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates are the centre of the mapped OSM area, not a verified entrance point."
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=205",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-kapyla",
+      "name": "Hesburger",
+      "branch": "Käpylä",
+      "city": "Helsinki",
+      "address": {
+        "street": "Vähänkyröntie 2",
+        "postalCode": "00610",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=248",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2070112,
+      "lon": 24.9461645,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/32544048",
+          "recordId": "way/32544048",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates are the centre of the mapped OSM area, not a verified entrance point."
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=248",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-lanterna-drive-in",
+      "name": "Hesburger",
+      "branch": "Lanterna Drive-in",
+      "city": "Helsinki",
+      "address": {
+        "street": "Varikkotie 2",
+        "postalCode": "00880",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=328",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2096352,
+      "lon": 25.061825,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/294978559",
+          "recordId": "node/294978559",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=328",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-malmi",
+      "name": "Hesburger",
+      "branch": "Malmi",
+      "city": "Helsinki",
+      "address": {
+        "street": "Malmin kauppatie 18",
+        "postalCode": "00700",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=204",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.25163,
+      "lon": 25.0102962,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/294995417",
+          "recordId": "node/294995417",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=204",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-mannerheimintie-8",
+      "name": "Hesburger",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 8",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=1351",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1673554,
+      "lon": 24.9416668,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/9680153117",
+          "recordId": "node/9680153117",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=1351",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-myllypuro",
+      "name": "Hesburger",
+      "branch": "Myllypuro",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kivensilmänkuja 1",
+        "postalCode": "00920",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=523",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2242091,
+      "lon": 25.0752509,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/1886663850",
+          "recordId": "node/1886663850",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=523",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-pasila",
+      "name": "Hesburger",
+      "branch": "Pasila",
+      "city": "Helsinki",
+      "address": {
+        "street": "Veturitie 11",
+        "postalCode": "00520",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=177",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1986063,
+      "lon": 24.9331242,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6938652927",
+          "recordId": "node/6938652927",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=177",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-pukinmaki",
+      "name": "Hesburger",
+      "branch": "Pukinmäki",
+      "city": "Helsinki",
+      "address": {
+        "street": "Rapakivenkaari 3",
+        "postalCode": "00720",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=203",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2410598,
+      "lon": 24.998253,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/72570020",
+          "recordId": "way/72570020",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates are the centre of the mapped OSM area, not a verified entrance point."
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=203",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-ruskeasuo",
+      "name": "Hesburger",
+      "branch": "Ruskeasuo",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 105",
+        "postalCode": "00280",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=368",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.204505,
+      "lon": 24.8998283,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/269957319",
+          "recordId": "node/269957319",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=368",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-sokos-asema-aukio",
+      "name": "Hesburger",
+      "branch": "Sokos Asema-aukio",
+      "city": "Helsinki",
+      "address": {
+        "street": "Asema-aukio 2",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=1463",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1707966,
+      "lon": 24.9390033,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/10656424894",
+          "recordId": "node/10656424894",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=1463",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-toolo",
+      "name": "Hesburger",
+      "branch": "Töölö",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 19",
+        "postalCode": "00250",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=180",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.1841971,
+      "lon": 24.9240183,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/294976829",
+          "recordId": "node/294976829",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=180",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-vuosaari",
+      "name": "Hesburger",
+      "branch": "Vuosaari",
+      "city": "Helsinki",
+      "address": {
+        "street": "Vuotie 45",
+        "postalCode": "00980",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=143",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.207468,
+      "lon": 25.1446367,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/294977571",
+          "recordId": "node/294977571",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=143",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:hesburger-vuosaari-rastila",
+      "name": "Hesburger",
+      "branch": "VUOSAARI RASTILA",
+      "city": "Helsinki",
+      "address": {
+        "street": "Vuotie 4",
+        "postalCode": "00980",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=1374",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2051292,
+      "lon": 25.1199687,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/1416722128",
+          "recordId": "node/1416722128",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=1374",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:hesburger-ilola",
+      "name": "Hesburger",
+      "branch": "Ilola",
+      "city": "Vantaa",
+      "address": {
+        "street": "Koivukylänväylä 66",
+        "postalCode": "01390",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=1361",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.3240748,
+      "lon": 25.024225,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6659528172",
+          "recordId": "node/6659528172",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=1361",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:hesburger-martinlaakso-drive-in",
+      "name": "Hesburger",
+      "branch": "Martinlaakso Drive-in",
+      "city": "Vantaa",
+      "address": {
+        "street": "Martinlaaksontie 1",
+        "postalCode": "01620",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=83",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2780127,
+      "lon": 24.8671688,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/12310378142",
+          "recordId": "node/12310378142",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=83",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:hesburger-myyrmaki",
+      "name": "Hesburger",
+      "branch": "Myyrmäki",
+      "city": "Vantaa",
+      "address": {
+        "street": "Raappavuorentie 10",
+        "postalCode": "01600",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=253",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2631202,
+      "lon": 24.8417492,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/178199938",
+          "recordId": "way/178199938",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates are the centre of the mapped OSM area, not a verified entrance point."
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=253",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:hesburger-tammisto",
+      "name": "Hesburger",
+      "branch": "Tammisto",
+      "city": "Vantaa",
+      "address": {
+        "street": "Tammiston kauppatie 9",
+        "postalCode": "01510",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=541",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2730245,
+      "lon": 24.9719119,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/2200353696",
+          "recordId": "node/2200353696",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=541",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:hesburger-tikkurila",
+      "name": "Hesburger",
+      "branch": "Tikkurila",
+      "city": "Vantaa",
+      "address": {
+        "street": "Asematie 4-10",
+        "postalCode": "01300",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=390",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.2924474,
+      "lon": 25.0406241,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/477340818",
+          "recordId": "node/477340818",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=390",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:hesburger-vantaanportinkatu-2",
+      "name": "Hesburger",
+      "branch": "Vantaanportinkatu 2",
+      "city": "Vantaa",
+      "address": {
+        "street": "Vantaanportinkatu 2",
+        "postalCode": "01510",
+        "country": "FI"
+      },
+      "website": "https://www.hesburger.fi/ravintolat?tid=282",
+      "menuUrl": "https://www.hesburger.fi/tuotteet",
+      "category": "restaurant",
+      "lat": 60.290245,
+      "lon": 24.9608066,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/5052896",
+          "recordId": "way/5052896",
+          "fields": [
+            "name",
+            "city",
+            "lat",
+            "lon",
+            "branch",
+            "address"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates are the centre of the mapped OSM area, not a verified entrance point."
+        },
+        {
+          "source": "Hesburger official restaurant locator",
+          "url": "https://www.hesburger.fi/ravintolat?tid=282",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current official locator lists regular opening hours for this location. Location fields in this record come from OpenStreetMap."
+        },
+        {
+          "source": "Hesburger official product menu",
+          "url": "https://www.hesburger.fi/tuotteet",
+          "fields": [
+            "menuUrl"
+          ],
+          "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
