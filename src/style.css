@@ -146,3 +146,11 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 .mood-illustration img{position:absolute;left:50%;bottom:-24px;width:242px;height:242px;max-width:none;object-fit:contain;transform:translateX(-50%)}
 @media(max-width:600px){.welcome-copy{flex:1 1 0;max-width:calc(100% - 142px);padding:10px 10px}.mood-illustration{flex:0 0 142px;width:142px;height:145px;margin:0 -4px -17px auto}.mood-illustration img{width:178px;height:178px;bottom:-22px}}
 @media(max-width:380px){.welcome-copy{max-width:calc(100% - 120px);padding-left:8px;padding-right:6px}.mood-illustration{flex-basis:120px;width:120px;height:136px}.mood-illustration img{width:158px;height:158px;bottom:-21px}}
+
+/* Keep the moving light in open sky and reveal more of the unchanged scenery. */
+.nature-scene{object-position:center 78%}
+.welcome.mood-breakfast{--orb-x:20%;--orb-y:24%}
+.welcome.mood-lunch{--orb-x:39%;--orb-y:8%}
+.welcome.mood-afternoon{--orb-x:55%;--orb-y:7%}
+.welcome.mood-dinner{--orb-x:64%;--orb-y:16%}
+.welcome.mood-late-night{--orb-x:62%;--orb-y:12%}
