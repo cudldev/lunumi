@@ -181,3 +181,27 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 /* Keep the location controls snug to search. */
 body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 @media(max-width:600px){body .app-shell .search-dock>.controls{padding:3px 7px 2px}}
+.search-dock .location-picker-anchor>.control,.search-dock .radius{background:transparent;border-color:transparent;box-shadow:none;transition:background-color 160ms ease,border-color 160ms ease}
+.search-dock .location-picker-anchor>.control:hover,.search-dock .location-picker-anchor:focus-within>.control,.search-dock .radius:hover,.search-dock .radius:focus-within{background:#ffffff70;border-color:#ffffff55}
+
+/* Gentle movement keeps view changes clear without making the app feel busy. */
+@keyframes app-view-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes onboarding-step-enter{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes location-panel-enter{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.view-transition{animation:app-view-enter 320ms cubic-bezier(.2,.7,.25,1) both}
+.onboard-step{animation:onboarding-step-enter 360ms cubic-bezier(.2,.7,.25,1) both}
+.location-picker-panel{animation:location-panel-enter 220ms cubic-bezier(.2,.7,.25,1) both;transform-origin:bottom center}
+@media(prefers-reduced-motion:reduce){
+  .view-transition,.onboard-step,.location-picker-panel{animation:none}
+  .search-dock .location-picker-anchor>.control,.search-dock .radius{transition:none}
+}
+.app-shell,.onboard{animation:app-view-enter 360ms cubic-bezier(.2,.7,.25,1) both}
+.onboard .chip{transition:transform 160ms ease,background-color 180ms ease,color 180ms ease,border-color 180ms ease}
+.onboard .chip:hover{transform:translateY(-1px)}
+.onboard-actions .button{transition:transform 160ms ease,background-color 180ms ease,box-shadow 180ms ease}
+.onboard-actions .button:hover{transform:translateY(-1px)}
+.onboard-actions .button:active{transform:translateY(0) scale(.98)}
+@media(prefers-reduced-motion:reduce){
+  .app-shell,.onboard,.onboard .chip,.onboard-actions .button{animation:none;transition:none}
+  .onboard .chip:hover,.onboard-actions .button:hover,.onboard-actions .button:active{transform:none}
+}
