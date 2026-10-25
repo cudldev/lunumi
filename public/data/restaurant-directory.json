@@ -6456,6 +6456,105 @@
       "lon": 24.96921,
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:picnic-asematunneli",
+      "name": "Picnic",
+      "branch": "Asematunneli",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://picnic.fi/",
+      "sourceRecords": [
+        {
+          "source": "Helsinki railway station official tenant page",
+          "url": "https://paarautatieasema.fi/en/p/50/picnic",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kaivokatu%201%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122595198",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates point to the railway station property at the same address, not the individual restaurant entrance. Business identity and operating status come from the linked official venue listing."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.1715453,
+      "lon": 24.9405946,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:picnic-helsinki-vantaa-airport",
+      "name": "Picnic",
+      "branch": "Helsinki-Vantaa Airport, Gate 30",
+      "city": "Vantaa",
+      "address": {
+        "street": "Lentoasemantie 1",
+        "postalCode": "01530",
+        "country": "FI"
+      },
+      "category": "cafe",
+      "website": "https://picnic.fi/",
+      "sourceRecords": [
+        {
+          "source": "Finavia official airport dining listing",
+          "url": "https://www.finavia.fi/en/airports/helsinki-airport/dining/picnic",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "venueWithinAirport",
+            "website"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "Finavia official airport contact page",
+          "url": "https://www.finavia.fi/en/airports/helsinki-airport/contacts",
+          "fields": [
+            "city",
+            "address"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Lentoasemantie%201%2C%2001530%20Vantaa%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "relation/13510333",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates point to the airport property; Finavia identifies the cafe at Gate 30. They do not pinpoint the cafe entrance. Business identity and operating status come from the linked official venue listing."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "lat": 60.3178041,
+      "lon": 24.9673005,
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
