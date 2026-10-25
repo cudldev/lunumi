@@ -10,10 +10,11 @@
 .location-suggestion>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .current-location{width:100%;margin-bottom:16px;color:var(--accent-dark,#58663a)}
 .location-suggestions-label{display:block;margin-bottom:8px;color:var(--muted,#74786f);font-size:.77rem;font-weight:650}
-.location-suggestions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.location-suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0}
+.location-suggestions>.location-suggestion{width:100%;min-width:0}
 .location-picker-search{margin-top:17px}
 .location-picker-search>label{display:block;margin-bottom:8px;color:var(--muted,#74786f);font-size:.8rem;font-weight:600}
-.location-picker-search .inline{display:flex;gap:8px}
+.location-picker-search .inline{display:flex;gap:8px;min-width:0}
 .location-picker-search input{min-width:0;flex:1}
 @keyframes location-picker-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 .location-no-suggestions{margin:9px 0 0;color:var(--muted,#74786f);font-size:.75rem;line-height:1.45}

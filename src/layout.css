@@ -1,6 +1,8 @@
 :root{--bottom-navigation-height:60px}
-html{scrollbar-gutter:stable}
+html,body,#root{height:100%;overflow:hidden}
+body{height:100dvh}
 .app-shell{height:calc(100dvh - var(--bottom-navigation-height) - env(safe-area-inset-bottom));min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:20px}
+.onboard{height:100dvh;overflow-y:auto}
 @supports not (height:100dvh){.app-shell{height:calc(100vh - var(--bottom-navigation-height) - env(safe-area-inset-bottom))}}
 .bottom-nav{position:fixed;z-index:5;left:50%;right:auto;bottom:0;transform:translateX(-50%);width:100vw;max-width:none;display:flex;justify-content:center;gap:8px;padding:8px 16px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(100deg,#fffdf5f2,#f8faeff2);backdrop-filter:blur(14px);border-top:1px solid #ebe2d4;box-shadow:0 -5px 20px #69573a0b}
 .bottom-nav button{width:auto;flex:1 1 0;max-width:144px}
