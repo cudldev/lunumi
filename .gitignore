@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .pnpm-store/
+.cache/
+*.osm.pbf
 pnpm-workspace.yaml
 *.tsbuildinfo
 vite.config.js

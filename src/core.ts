@@ -11,6 +11,10 @@ const nearbyCacheTtl=5*60*1000;
 const nearbyStaleTtl=7*24*60*60*1000;
 const nearbyCacheStorageKey='lunumi-nearby-cache-v1';
 const nearbyRequestTimeout=10000;
+const helsinkiMetroBounds={south:60.0,north:60.5,west:24.0,east:25.8};
+type PrebuiltPlace={id:string,name:string,lat:number,lon:number,amenity:string,cuisine?:string,opening_hours?:string};
+type PrebuiltDataset={coverage:{type:'MultiPolygon',coordinates:number[][][][]},places:PrebuiltPlace[]};
+let prebuiltDatasetPromise:Promise<PrebuiltDataset|null>|null=null;
 export const haversine=(a:Coordinates,b:Coordinates)=>{const r=6371000,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p,x=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)**2;return 2*r*Math.asin(Math.sqrt(x))};
 export const meal=()=>{const h=new Date().getHours()+new Date().getMinutes()/60;return h>=6&&h<10.5?'breakfast':h<14.5?'lunch':h<17?'afternoon':h<21.5?'dinner':'late night'};
 export const directionsUrl=(place:Pick<Place,'lat'|'lon'>)=>{const url=new URL('https://www.google.com/maps/dir/');url.searchParams.set('api','1');url.searchParams.set('destination',`${place.lat},${place.lon}`);return url.toString()};
@@ -21,10 +25,23 @@ async function queryOverpass(endpoint:string,query:string,parentSignal?:AbortSig
 function readStoredNearbyCache():Record<string,{places:Place[],savedAt:number}>{try{if(typeof localStorage==='undefined')return{};const parsed=JSON.parse(localStorage.getItem(nearbyCacheStorageKey)||'{}');return parsed&&typeof parsed==='object'?parsed:{}}catch{return{}}}
 function getCachedNearby(key:string):{places:Place[],savedAt:number}|undefined{return nearbyCache.get(key)||readStoredNearbyCache()[key]}
 function saveNearby(key:string,places:Place[]):void{const cached={places,savedAt:Date.now()};nearbyCache.set(key,cached);if(nearbyCache.size>30){const oldest=[...nearbyCache.entries()].sort((a,b)=>a[1].savedAt-b[1].savedAt)[0]?.[0];if(oldest)nearbyCache.delete(oldest)}try{if(typeof localStorage==='undefined')return;const store=readStoredNearbyCache();store[key]=cached;const entries=Object.entries(store).sort((a,b)=>b[1].savedAt-a[1].savedAt).slice(0,30);localStorage.setItem(nearbyCacheStorageKey,JSON.stringify(Object.fromEntries(entries)))}catch{/* Search still works when browser storage is full or unavailable. */}}
+function insideRing(lon:number,lat:number,ring:number[][]):boolean{let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const[xi,yi]=ring[i],[xj,yj]=ring[j];if((yi>lat)!==(yj>lat)&&lon<((xj-xi)*(lat-yi))/(yj-yi)+xi)inside=!inside}return inside}
+function insideCoverage(lon:number,lat:number,coverage:PrebuiltDataset['coverage']):boolean{return coverage.coordinates.some(polygon=>insideRing(lon,lat,polygon[0])&&!polygon.slice(1).some(ring=>insideRing(lon,lat,ring)))}
+function mayBeInHelsinkiMetro(lat:number,lon:number):boolean{return lat>=helsinkiMetroBounds.south&&lat<=helsinkiMetroBounds.north&&lon>=helsinkiMetroBounds.west&&lon<=helsinkiMetroBounds.east}
+async function loadPrebuiltDataset():Promise<PrebuiltDataset|null>{if(!prebuiltDatasetPromise)prebuiltDatasetPromise=(async()=>{try{const response=await fetch(`${import.meta.env.BASE_URL}data/helsinki-metro.json`);if(!response.ok)return null;const data=await response.json();return data?.schema===1&&data?.coverage?.type==='MultiPolygon'&&Array.isArray(data?.places)?data as PrebuiltDataset:null}catch{return null}})();const result=await prebuiltDatasetPromise;if(!result)prebuiltDatasetPromise=null;return result}
 export function filterNearby(places:Place[],query=''):Place[]{const term=query.trim().toLowerCase();return places.filter(place=>!term||`${place.name} ${place.tags.cuisine||''} ${place.tags.amenity||''}`.toLowerCase().includes(term))}
 export async function nearby(lat:number,lon:number,radius:number,query='',signal?:AbortSignal):Promise<Place[]>{
  if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
- const key=`${lat},${lon},${radius}`,cached=getCachedNearby(key);
+ const key=`${lat},${lon},${radius}`;
+ if(mayBeInHelsinkiMetro(lat,lon)){
+  const dataset=await loadPrebuiltDataset();
+  if(signal?.aborted)throw new DOMException('Search cancelled','AbortError');
+  if(dataset&&insideCoverage(lon,lat,dataset.coverage)){
+   const places=dataset.places.map(place=>({id:place.id,name:place.name,lat:place.lat,lon:place.lon,tags:{amenity:place.amenity,...(place.cuisine?{cuisine:place.cuisine}:{}),...(place.opening_hours?{opening_hours:place.opening_hours}:{})},distance:haversine({lat,lon},place)})).filter(place=>place.distance<=radius).sort((a,b)=>a.distance-b.distance);
+   saveNearby(key,places);return filterNearby(places,query);
+  }
+ }
+ const cached=getCachedNearby(key);
  if(cached&&Date.now()-cached.savedAt<nearbyCacheTtl)return filterNearby(cached.places,query);
  const q=nearbyQuery(lat,lon,radius),controller=new AbortController();
  const abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
