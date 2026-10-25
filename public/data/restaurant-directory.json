@@ -3782,6 +3782,1616 @@
       "checkedAt": "2026-10-26",
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:gateau-iso-omena",
+      "name": "Gateau",
+      "branch": "Iso Omena",
+      "category": "cafe",
+      "city": "Espoo",
+      "address": {
+        "street": "Piispansilta 11",
+        "postalCode": "02230",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-iso-omena/",
+      "lat": 60.1621312,
+      "lon": 24.7362907,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Piispansilta%2011%2C%2002230%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/1011337660",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:gateau-lippulaiva",
+      "name": "Gateau",
+      "branch": "Lippulaiva",
+      "category": "cafe",
+      "city": "Espoo",
+      "address": {
+        "street": "Espoonlahdenkatu 8",
+        "postalCode": "02320",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-lippulaiva/",
+      "lat": 60.1496984,
+      "lon": 24.6544459,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Espoonlahdenkatu%208%2C%2002320%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/972283013",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-citycenter",
+      "name": "Gateau",
+      "branch": "Citycenter",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu 8",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-citycenter/",
+      "lat": 60.1698032,
+      "lon": 24.9417984,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kaivokatu%208%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "relation/9630",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-espa",
+      "name": "Gateau",
+      "branch": "Espa",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Pohjoisesplanadi 35",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-espa/",
+      "lat": 60.1679394,
+      "lon": 24.944929,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Pohjoisesplanadi%2035%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/6232669243",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-itis",
+      "name": "Gateau",
+      "branch": "Itis",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 1–5",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-itis/",
+      "lat": 60.2100888,
+      "lon": 25.0789371,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=It%C3%A4katu%201-5%2C%2000930%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/11498047464",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-kamppi",
+      "name": "Gateau",
+      "branch": "Kamppi",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Urho Kekkosen katu 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-kamppi/",
+      "lat": 60.1690773,
+      "lon": 24.9330746,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Urho%20Kekkosen%20katu%201%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122886629",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-karhupuisto",
+      "name": "Gateau",
+      "branch": "Karhupuisto",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Viides linja 10",
+        "postalCode": "00530",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-karhupuisto/",
+      "lat": 60.1833385,
+      "lon": 24.9527929,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Viides%20linja%2010%2C%2000530%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/8860248359",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-lauttasaari",
+      "name": "Gateau",
+      "branch": "Lauttasaari",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Lauttasaarentie 28",
+        "postalCode": "00200",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-lauttasaari/",
+      "lat": 60.1599624,
+      "lon": 24.8809133,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Lauttasaarentie%2028%2C%2000200%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/416046610",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-rautatieasema",
+      "name": "Gateau",
+      "branch": "Rautatieasema",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-rautatieasema/",
+      "lat": 60.1715453,
+      "lon": 24.9405946,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kaivokatu%201%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122595198",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-redi",
+      "name": "Gateau",
+      "branch": "Redi",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Hermannin rantatie 5",
+        "postalCode": "00580",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-redi/",
+      "lat": 60.1865501,
+      "lon": 24.979145,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Hermannin%20rantatie%205%2C%2000580%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/6060938289",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-tripla",
+      "name": "Gateau",
+      "branch": "Tripla",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Pasilan asema-aukio 1",
+        "postalCode": "00520",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-tripla/",
+      "lat": 60.1986766,
+      "lon": 24.9335889,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Pasilan%20asema-aukio%201%2C%2000520%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/12182734894",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-tooloo",
+      "name": "Gateau",
+      "branch": "Töölö",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Sandelsinkatu 6",
+        "postalCode": "00260",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-toolo/",
+      "lat": 60.178732,
+      "lon": 24.923071,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Sandelsinkatu%206%2C%2000260%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/4958025477",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:gateau-ullanlinna",
+      "name": "Gateau",
+      "branch": "Ullanlinna",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Korkeavuorenkatu 6",
+        "postalCode": "00150",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-ullanlinna/",
+      "lat": 60.1607824,
+      "lon": 24.9463286,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Korkeavuorenkatu%206%2C%2000150%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/4685683245",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:kauniainen:gateau-grani",
+      "name": "Gateau",
+      "branch": "Grani",
+      "category": "cafe",
+      "city": "Kauniainen",
+      "address": {
+        "street": "Kauniaistentie 7",
+        "postalCode": "02700",
+        "country": "FI"
+      },
+      "website": "https://www.gateau.fi/myymalat/gateau-grani/",
+      "lat": 60.2105646,
+      "lon": 24.7284008,
+      "sourceRecords": [
+        {
+          "source": "Gateau official store locator",
+          "url": "https://www.gateau.fi/myymalat/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The locator lists this branch with current opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kauniaistentie%207%2C%2002700%20Kauniainen%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/27424858",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:fazer-cafe-ainoa",
+      "name": "Fazer Café",
+      "branch": "AINOA",
+      "category": "cafe",
+      "city": "Espoo",
+      "address": {
+        "street": "Länsituulentie 7",
+        "postalCode": "02100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.175459,
+      "lon": 24.8045465,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours. Coordinates point to the AINOA mall; the official locator supplies the café address."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Ainoa%20shopping%20centre%2C%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "relation/7700177",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:fazer-cafe-iso-omena",
+      "name": "Fazer Café",
+      "branch": "Iso Omena",
+      "category": "cafe",
+      "city": "Espoo",
+      "address": {
+        "street": "Piispansilta 9",
+        "postalCode": "02230",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.1607036,
+      "lon": 24.7375871,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Piispansilta%209%2C%2002230%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/1011337669",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:fazer-cafe-keilaniemi",
+      "name": "Fazer Café",
+      "branch": "Keilaniemi",
+      "category": "cafe",
+      "city": "Espoo",
+      "address": {
+        "street": "Keilaniementori 4",
+        "postalCode": "02150",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.175015,
+      "lon": 24.830078,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Keilaniementori%204%2C%2002150%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/882539658",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:fazer-cafe-sello",
+      "name": "Fazer Café",
+      "branch": "Sello",
+      "category": "cafe",
+      "city": "Espoo",
+      "address": {
+        "street": "Leppävaarankatu 3–9",
+        "postalCode": "02600",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.2181827,
+      "lon": 24.8083609,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Lepp%C3%A4vaarankatu%203-9%2C%2002600%20Espoo%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/234282949",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-8th-floor",
+      "name": "Fazer Café",
+      "branch": "8th Floor, Stockmann",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Aleksanterinkatu 52",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/leipomot-ja-ravintolat/fazerin-ravintolat/fazer-8th-floor/",
+      "lat": 60.1683005,
+      "lon": 24.9420834,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Aleksanterinkatu%2052%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122595241",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-annankatu",
+      "name": "Fazer Café",
+      "branch": "Annankatu",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Annankatu 28",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-annankatu/",
+      "lat": 60.1670812,
+      "lon": 24.9362829,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Annankatu%2028%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/12782299759",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-bulevardi",
+      "name": "Fazer Café",
+      "branch": "Bulevardi",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Bulevardi 7",
+        "postalCode": "00120",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-bulevardi/",
+      "lat": 60.1649003,
+      "lon": 24.9383023,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Bulevardi%207%2C%2000120%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/7628890672",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-citycenter",
+      "name": "Fazer Café",
+      "branch": "Citycenter",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu 8",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-citycenter/",
+      "lat": 60.1698032,
+      "lon": 24.9417984,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kaivokatu%208%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "relation/9630",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-forum",
+      "name": "Fazer Café",
+      "branch": "Forum",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 20",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-forum/",
+      "lat": 60.1694785,
+      "lon": 24.9378326,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Mannerheimintie%2020%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/303146160",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-itis",
+      "name": "Fazer Café",
+      "branch": "Itis",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 1",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-itis/",
+      "lat": 60.2100888,
+      "lon": 25.0789371,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours. Coordinates use the Itäkatu 1–5 mall address; the official locator gives the café as Itäkatu 1."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=It%C3%A4katu%201-5%2C%2000930%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/11498047464",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-kaisaniemi",
+      "name": "Fazer Café",
+      "branch": "Kaisaniemi",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaisaniemenkatu 6",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-kaisaniemi/",
+      "lat": 60.1723554,
+      "lon": 24.9478894,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kaisaniemenkatu%206%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/8852865451",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-kamppi",
+      "name": "Fazer Café",
+      "branch": "Kamppi",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Urho Kekkosen katu 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.1690773,
+      "lon": 24.9330746,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Urho%20Kekkosen%20katu%201%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/122886629",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-kluuvikatu-3",
+      "name": "Fazer Café",
+      "branch": "Kluuvikatu 3",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kluuvikatu 3",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/karl-fazer-cafe/",
+      "lat": 60.1685919,
+      "lon": 24.9477328,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kluuvikatu%203%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/4516954096",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-lauttasaari",
+      "name": "Fazer Café",
+      "branch": "Lauttasaari",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Lauttasaarentie 29",
+        "postalCode": "00200",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-lauttasaari/",
+      "lat": 60.1605974,
+      "lon": 24.8812405,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Lauttasaarentie%2029%2C%2000200%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/30126036",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-munkkiniemi",
+      "name": "Fazer Café",
+      "branch": "Munkkiniemi",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Solnantie 26",
+        "postalCode": "00330",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.197017,
+      "lon": 24.8783662,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Solnantie%2026%2C%2000330%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/11556370075",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-runeberginkatu",
+      "name": "Fazer Café",
+      "branch": "Runeberginkatu",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Runeberginkatu 32",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-runeberginkatu/",
+      "lat": 60.176238,
+      "lon": 24.9218369,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Runeberginkatu%2032%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/269497238",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-sanomatalo",
+      "name": "Fazer Café",
+      "branch": "Sanomatalo",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Töölönlahdenkatu 2",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-sanomatalo/",
+      "lat": 60.1724136,
+      "lon": 24.9384812,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=T%C3%B6%C3%B6l%C3%B6nlahdenkatu%202%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/302561517",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-tripla-1st-floor",
+      "name": "Fazer Café",
+      "branch": "Tripla, 1st floor",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Firdonkatu 2 B",
+        "postalCode": "00520",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.1979595,
+      "lon": 24.9311919,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Firdonkatu%202%20B%2C%2000520%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/11537931136",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-tripla-3rd-floor",
+      "name": "Fazer Café",
+      "branch": "Tripla, 3rd floor",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Fredikanterassi 1",
+        "postalCode": "00520",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-tripla/",
+      "lat": 60.1986779,
+      "lon": 24.9334219,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Fredikanterassi%201%2C%2000520%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/76388216",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-tooloo",
+      "name": "Fazer Café",
+      "branch": "Töölö",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Topeliuksenkatu 17",
+        "postalCode": "00250",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+      "lat": 60.1833148,
+      "lon": 24.9188169,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Topeliuksenkatu%2017%2C%2000250%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/8005902946",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:fazer-cafe-vallila",
+      "name": "Fazer Café",
+      "branch": "Vallila",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Aleksis Kiven katu 5",
+        "postalCode": "00500",
+        "country": "FI"
+      },
+      "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-vallila/",
+      "lat": 60.189587,
+      "lon": 24.9557323,
+      "sourceRecords": [
+        {
+          "source": "Fazer Café official location finder",
+          "url": "https://www.fazer.fi/fazer-cafe/loyda-lahin-fazer-cafe/",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current locator lists this location with opening hours."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Aleksis%20Kiven%20katu%205%2C%2000500%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/12694117713",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
