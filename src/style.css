@@ -92,3 +92,21 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 .search-dock .search-row{margin:0;background:linear-gradient(125deg,#fffefa,#fffdf7);box-shadow:0 3px 14px #69573a0b}
 @media(max-width:600px){.app-shell{padding-bottom:176px}.search-dock{width:calc(100vw - 24px);bottom:calc(68px + env(safe-area-inset-bottom));padding:5px}.search-dock .search-row{height:52px}}
 .slow-search{flex-basis:100%;margin:8px 0 0 30px;color:#8a725f;font-size:12px;line-height:1.5}
+
+.place-map-preview{display:block;width:100%;height:170px;border:0;border-radius:14px;margin:14px 0 2px;background:#f1eee7}
+@media(max-width:600px){.place-map-preview{height:160px}}
+
+
+.suggestions-loading{padding:16px 20px;min-height:54px;align-items:center}
+.suggestions-loading .loading-actions{margin-left:auto}
+@media(max-width:600px){.suggestions-loading{padding:14px}.suggestions-loading .loading-actions{width:100%;justify-content:center;margin-left:0}}
+
+.search-dock .controls{padding:3px 8px 7px;gap:8px;flex-wrap:nowrap}
+.search-dock .control{min-width:0;max-width:68%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-dock .radius{max-width:none;flex:0 0 auto}
+.search-dock .radius select{max-width:78px}
+.search-dock .distance-note{font-size:10px;white-space:nowrap;margin-left:auto}
+@media(max-width:600px){.search-dock .controls{gap:6px;padding:3px 7px 6px}.search-dock .distance-note{font-size:9px}.search-dock .control{max-width:62%}}
+
+.search-dock .controls>.control:first-child{flex:1 1 auto}
+@media(max-width:600px){.search-dock .distance-note{display:none}.search-dock .controls>.control:first-child{max-width:none}.search-dock .radius{flex:0 0 auto}}
