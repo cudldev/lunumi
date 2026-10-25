@@ -195,7 +195,9 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
   .view-transition,.onboard-step,.location-picker-panel{animation:none}
   .search-dock .location-picker-anchor>.control,.search-dock .radius{transition:none}
 }
-.app-shell,.onboard{animation:app-view-enter 360ms cubic-bezier(.2,.7,.25,1) both}
+.app-shell{animation:app-shell-fade-in 300ms ease both}
+.onboard{animation:app-view-enter 360ms cubic-bezier(.2,.7,.25,1) both}
+@keyframes app-shell-fade-in{from{opacity:0}to{opacity:1}}
 .onboard .chip{transition:transform 160ms ease,background-color 180ms ease,color 180ms ease,border-color 180ms ease}
 .onboard .chip:hover{transform:translateY(-1px)}
 .onboard-actions .button{transition:transform 160ms ease,background-color 180ms ease,box-shadow 180ms ease}
@@ -205,3 +207,6 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
   .app-shell,.onboard,.onboard .chip,.onboard-actions .button{animation:none;transition:none}
   .onboard .chip:hover,.onboard-actions .button:hover,.onboard-actions .button:active{transform:none}
 }
+.search-dock{background:transparent;backdrop-filter:none;box-shadow:none}
+.search-dock>.controls{background:transparent;background-image:none;box-shadow:none}
+.search-dock .controls .control,.search-dock .controls .distance-note{background:transparent;background-image:none;box-shadow:none;border-color:transparent}
