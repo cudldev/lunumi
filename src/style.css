@@ -218,3 +218,5 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .place-card{background:linear-gradient(180deg,#fff 0%,#fffaf3 100%)}
 
 .brand-mark{overflow:hidden;background:transparent!important;box-shadow:none!important;padding:0}.brand-mark img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+
+.status.verified{background:#edf5e8;color:#52744d;text-decoration:none}.status.verified:hover{text-decoration:underline}

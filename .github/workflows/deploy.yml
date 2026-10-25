@@ -45,6 +45,8 @@ jobs:
         with:
           ref: staging
           path: staging
+      - name: Checkout public restaurant directory
+        run: git clone --depth 1 https://github.com/cudldev/finland-restaurant-data.git restaurant-data
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -60,6 +62,12 @@ jobs:
           else
             echo "No committed Helsinki dataset found; the app will use its online search fallback."
           fi
+      - name: Add the verified restaurant directory to both sites
+        run: |
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('restaurant-data/data/restaurants.json','utf8'));if(d.schema!==2||!Array.isArray(d.places)||d.places.length===0)throw new Error('Invalid public restaurant directory');if(d.places.some(p=>!Number.isFinite(p.lat)||!Number.isFinite(p.lon)))throw new Error('A directory record is missing coordinates');console.log('Publishing '+d.places.length+' verified restaurant locations.');"
+          mkdir -p public/data staging/public/data
+          cp restaurant-data/data/restaurants.json public/data/restaurant-directory.json
+          cp restaurant-data/data/restaurants.json staging/public/data/restaurant-directory.json
       - name: Install dependencies
         run: npm ci
       - name: Typecheck and test
