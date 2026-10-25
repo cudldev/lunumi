@@ -2833,6 +2833,482 @@
       "checkedAt": "2026-10-26",
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:cafe-lasipalatsi",
+      "name": "Café Lasipalatsi",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 22–24",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/cafe-lasipalatsi",
+      "lat": 60.1706865,
+      "lon": 24.9364447,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/cafe-lasipalatsi",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official page lists current opening hours and address; café only, no meal menu/feed exposed in dataset."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Mannerheimintie%2022-24%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/5887336141",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:chicos-viikki",
+      "name": "Chico's Viikki",
+      "city": "Helsinki",
+      "address": {
+        "street": "Viikintori 3",
+        "postalCode": "00790",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/chicos-viikki",
+      "lat": 60.2273859,
+      "lon": 25.0095719,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/chicos-viikki",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Viikintori%203%2C%2000790%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/289307411",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:coffee-house-kannelmaki",
+      "name": "Coffee House Kannelmäki",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kantelettarentie 1",
+        "postalCode": "00420",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/coffee-house-kannelmaki-helsinki",
+      "lat": 60.237443,
+      "lon": 24.8914315,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/coffee-house-kannelmaki-helsinki",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official page lists current opening hours and address; café only, no meal menu/feed exposed in dataset."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Kantelettarentie%201%2C%2000420%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/9712397575",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:coffee-house-asema-aukio",
+      "name": "Coffee House Asema-aukio",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Asema-aukio 2",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/coffee-house-asema-aukio-helsinki",
+      "lat": 60.1705952,
+      "lon": 24.9390173,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/coffee-house-asema-aukio-helsinki",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official page lists current opening hours and address; café only, no meal menu/feed exposed in dataset."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Asema-aukio%202%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/1369465692",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:cafe-helli",
+      "name": "Café Helli",
+      "category": "cafe",
+      "city": "Helsinki",
+      "address": {
+        "street": "Katajanokanlaituri 4",
+        "postalCode": "00160",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/cafe-helli",
+      "lat": 60.1661105,
+      "lon": 24.9614396,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/cafe-helli",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official page lists current opening hours and address; café only, no meal menu/feed exposed in dataset."
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Katajanokanlaituri%204%2C%2000160%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/1167548360",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:bistro-vilho",
+      "name": "Bistro Vilho",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mikonkatu 23",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/bistro-vilho",
+      "lat": 60.172137,
+      "lon": 24.9457455,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/bistro-vilho",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Mikonkatu%2023%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/93455942",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:red-bar-kitchen",
+      "name": "RED Bar & Kitchen",
+      "city": "Helsinki",
+      "address": {
+        "street": "Vuorikatu 24",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/red-bar-kitchen",
+      "lat": 60.1732518,
+      "lon": 24.9468918,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/red-bar-kitchen",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Vuorikatu%2024%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/22327856",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:belge",
+      "name": "Belge",
+      "city": "Helsinki",
+      "address": {
+        "street": "Keskuskatu 4",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/belge",
+      "lat": 60.1692271,
+      "lon": 24.9425843,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/belge",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Keskuskatu%204%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/2927441043",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        },
+        {
+          "source": "Wikimedia Commons photo",
+          "url": "https://commons.wikimedia.org/wiki/File:Moules-frites_at_restaurant_Belge.jpg",
+          "fields": [
+            "photo"
+          ],
+          "checkedAt": "2026-10-26",
+          "attribution": "JIP",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "note": "Linked thumbnail only; image remains hosted by Wikimedia Commons."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26",
+      "photo": {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Moules-frites_at_restaurant_Belge.jpg/960px-Moules-frites_at_restaurant_Belge.jpg?utm_campaign=index&utm_content=thumbnail&utm_source=commons.wikimedia.org",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Moules-frites_at_restaurant_Belge.jpg",
+        "attribution": "JIP",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+      }
+    },
+    {
+      "id": "frd:helsinki:kappeli",
+      "name": "Kappeli",
+      "city": "Helsinki",
+      "address": {
+        "street": "Eteläesplanadi 1",
+        "postalCode": "00130",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/kappeli",
+      "lat": 60.167349,
+      "lon": 24.9506183,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/kappeli",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Etel%C3%A4esplanadi%201%2C%2000130%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "node/5532151133",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:zetor",
+      "name": "Zetor",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 3–5",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/fi/ravintola/helsinki/zetor",
+      "lat": 60.1694387,
+      "lon": 24.9409654,
+      "sourceRecords": [
+        {
+          "source": "Raflaamo official location page",
+          "url": "https://www.raflaamo.fi/fi/ravintola/helsinki/zetor",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "website",
+            "operatingStatus"
+          ],
+          "checkedAt": "2026-10-26"
+        },
+        {
+          "source": "OpenStreetMap Nominatim address geocoding",
+          "url": "https://nominatim.openstreetmap.org/search?q=Mannerheimintie%203-5%2C%2000100%20Helsinki%2C%20Finland&format=jsonv2&limit=1&countrycodes=fi",
+          "recordId": "way/675858720",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors",
+          "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        },
+        {
+          "source": "Wikimedia Commons photo",
+          "url": "https://commons.wikimedia.org/wiki/File:Sahti_at_Zetor_in_April_2025.jpg",
+          "fields": [
+            "photo"
+          ],
+          "checkedAt": "2026-10-26",
+          "attribution": "JIP",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "note": "Linked thumbnail only; image remains hosted by Wikimedia Commons."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26",
+      "photo": {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Sahti_at_Zetor_in_April_2025.jpg/960px-Sahti_at_Zetor_in_April_2025.jpg?utm_campaign=index&utm_content=thumbnail&utm_source=commons.wikimedia.org",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sahti_at_Zetor_in_April_2025.jpg",
+        "attribution": "JIP",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+      }
     }
   ]
 }
