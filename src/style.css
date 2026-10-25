@@ -112,12 +112,12 @@ body{background-image:radial-gradient(circle,rgba(135,169,111,.055) 1px,transpar
 .suggestions-loading .loading-actions{margin-left:auto}
 @media(max-width:600px){.suggestions-loading{padding:14px}.suggestions-loading .loading-actions{width:100%;justify-content:center;margin-left:0}}
 
-.search-dock .controls{padding:3px 8px 7px;gap:8px;flex-wrap:nowrap}
+.search-dock .controls{margin:0;padding:3px 8px 2px;gap:8px;flex-wrap:nowrap}
 .search-dock .control{min-width:0;max-width:68%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .search-dock .radius{max-width:none;flex:0 0 auto}
 .search-dock .radius select{max-width:78px}
 .search-dock .distance-note{font-size:10px;white-space:nowrap;margin-left:auto}
-@media(max-width:600px){.search-dock .controls{gap:6px;padding:3px 7px 6px}.search-dock .distance-note{font-size:9px}.search-dock .control{max-width:62%}}
+@media(max-width:600px){.search-dock .controls{gap:6px;padding:3px 7px 2px}.search-dock .distance-note{font-size:9px}.search-dock .control{max-width:62%}}
 
 .search-dock .controls>.control:first-child{flex:1 1 auto}
 @media(max-width:600px){.search-dock .distance-note{display:none}.search-dock .controls>.control:first-child{max-width:none}.search-dock .radius{flex:0 0 auto}}
