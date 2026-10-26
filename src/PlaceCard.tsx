@@ -94,14 +94,14 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         document.body.appendChild(overlay);
         animation = overlay.animate([
           { opacity: 0, transform: 'translate3d(0,0,0) scale(.76) rotate(-6deg)', offset: 0 },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.2, easing: 'cubic-bezier(.18,.85,.25,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.37, easing: 'cubic-bezier(.2,.8,.35,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY + 6}px,0) scale(.96) rotate(4deg)`, offset: 0.51, easing: 'cubic-bezier(.2,.7,.3,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.55, easing: 'cubic-bezier(.2,.7,.3,1)' },
-          { opacity: 1, transform: `translate3d(${midX * 0.72}px,${centerY + (midY - centerY) * 0.72 - 8}px,0) scale(${1 + (destinationScale * 1.18 - 1) * 0.72}) rotate(-7deg)`, offset: 0.72, easing: 'cubic-bezier(.2,.7,.25,1)' },
-          { opacity: 1, transform: `translate3d(${midX}px,${midY + 3}px,0) scale(${destinationScale * 1.42}) rotate(7deg)`, offset: 0.86, easing: 'cubic-bezier(.2,.7,.25,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.302, easing: 'cubic-bezier(.18,.85,.25,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.559, easing: 'cubic-bezier(.2,.8,.35,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY + 6}px,0) scale(.96) rotate(4deg)`, offset: 0.77, easing: 'cubic-bezier(.2,.7,.3,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.83, easing: 'cubic-bezier(.2,.7,.3,1)' },
+          { opacity: 1, transform: `translate3d(${midX * 0.72}px,${centerY + (midY - centerY) * 0.72 - 8}px,0) scale(${1 + (destinationScale * 1.18 - 1) * 0.72}) rotate(-7deg)`, offset: 0.8925, easing: 'cubic-bezier(.2,.7,.25,1)' },
+          { opacity: 1, transform: `translate3d(${midX}px,${midY + 3}px,0) scale(${destinationScale * 1.42}) rotate(7deg)`, offset: 0.945, easing: 'cubic-bezier(.2,.7,.25,1)' },
           { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)`, offset: 1 },
-        ], { duration: 1350, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+        ], { duration: 1780, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
         animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitIntro(false); };
       });
     });
