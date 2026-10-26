@@ -29,7 +29,7 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
   const handledArrival = useRef<string | null>(null);
   const activePointers = useRef(new Map<number, { x: number; y: number }>());
   const pinchStart = useRef<{ distance: number } | null>(null);
-  const [arrivalStage, setArrivalStage] = useState<'zooming' | 'pin' | 'name' | null>(null);
+  const [arrivalStage, setArrivalStage] = useState<'zooming' | 'pin' | 'others' | 'name' | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [zoomOffset, setZoomOffset] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -166,8 +166,9 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
     setArrivalStage('zooming');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const pinTimer = window.setTimeout(() => setArrivalStage('pin'), reducedMotion ? 0 : 1050);
-    const nameTimer = window.setTimeout(() => setArrivalStage('name'), reducedMotion ? 150 : 2950);
-    return () => { window.clearTimeout(pinTimer); window.clearTimeout(nameTimer); };
+    const othersTimer = window.setTimeout(() => setArrivalStage('others'), reducedMotion ? 100 : 3200);
+    const nameTimer = window.setTimeout(() => setArrivalStage('name'), reducedMotion ? 250 : 4050);
+    return () => { window.clearTimeout(pinTimer); window.clearTimeout(othersTimer); window.clearTimeout(nameTimer); };
   }, [visitArrival?.placeId]);
   useEffect(() => {
     if (arrivalStage !== 'name') return;
@@ -177,7 +178,7 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
   useEffect(() => {
     if (!visitArrival || !onArrivalDone) return;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const timer = window.setTimeout(() => onArrivalDone(visitArrival.placeId), reducedMotion ? 700 : 4450);
+    const timer = window.setTimeout(() => onArrivalDone(visitArrival.placeId), reducedMotion ? 800 : 5500);
     return () => window.clearTimeout(timer);
   }, [visitArrival?.placeId, visitArrival?.from]);
   useEffect(() => {
@@ -250,9 +251,15 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
     <div className={`history-map${visitArrival ? ' has-visit-arrival' : ''}`} ref={mapRef} tabIndex={0} onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan} onPointerCancel={stopPan} onKeyDown={panByKey} aria-label={`${historyEntries.length} history places and ${nearbyEntries.length} nearby places on OpenStreetMap. Drag to move, use arrow keys to pan.`}>
       {viewport && <>
         <div className="history-map-tiles" aria-hidden="true">{viewport.tiles.map(tile => <img key={`${tile.z}/${tile.x}/${tile.y}`} src={`https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} style={{ left: tile.left, top: tile.top }} />)}</div>
-        <div className="history-map-markers">{markers.map((marker, index) => marker.kind === 'cluster'
-          ? <button key={`cluster-${index}`} className="history-map-cluster" style={{ left: marker.x, top: marker.y }} onClick={() => zoomTo(marker.lat, marker.lon)} aria-label={`Zoom in on ${marker.entries.length} nearby restaurants`} title={`${marker.entries.length} nearby restaurants`}>{marker.entries.length}</button>
-          : <button key={marker.entry.id} className={`history-map-pin ${marker.entry.isUnvisited ? 'is-nearby' : marker.entry.status === 'target' ? 'is-target' : marker.entry.status === 'visited' ? 'is-visited' : 'is-explored'}${visitArrival?.placeId === marker.entry.id && visitArrival.from !== 'visited' && arrivalStage === 'pin' ? ` is-visit-arrival from-${visitArrival.from}` : ''}`} style={{ left: marker.x, top: marker.y }} onClick={() => onSelect(marker.entry)} aria-label={`Open ${marker.entry.place.name}`} title={marker.entry.place.name}><MapPin size={22}/>{marker.number && <span>{marker.number}</span>}</button>)}</div>
+        <div className="history-map-markers">{markers.map((marker, index) => {
+          const isArrivalTarget = marker.kind === 'place' && visitArrival?.placeId === marker.entry.id;
+          const arrivalPhaseClass = visitArrival && visitArrival.from !== 'visited' && !isArrivalTarget
+            ? arrivalStage === 'others' ? ' is-arrival-reveal' : arrivalStage === 'name' ? '' : ' is-arrival-pending'
+            : '';
+          const style = { left: marker.x, top: marker.y, ...(arrivalPhaseClass === ' is-arrival-reveal' ? { animationDelay: `${Math.min(index * 10, 220)}ms` } : {}) };
+          if (marker.kind === 'cluster') return <button key={`cluster-${index}`} className={`history-map-cluster${arrivalPhaseClass}`} style={style} onClick={() => zoomTo(marker.lat, marker.lon)} aria-label={`Zoom in on ${marker.entries.length} nearby restaurants`} title={`${marker.entries.length} nearby restaurants`}>{marker.entries.length}</button>;
+          return <button key={marker.entry.id} className={`history-map-pin ${marker.entry.isUnvisited ? 'is-nearby' : marker.entry.status === 'target' ? 'is-target' : marker.entry.status === 'visited' ? 'is-visited' : 'is-explored'}${visitArrival?.placeId === marker.entry.id && visitArrival.from !== 'visited' && arrivalStage && arrivalStage !== 'zooming' ? ` is-visit-arrival from-${visitArrival.from}` : ''}${arrivalPhaseClass}`} style={style} onClick={() => onSelect(marker.entry)} aria-label={`Open ${marker.entry.place.name}`} title={marker.entry.place.name}><MapPin size={22}/>{marker.number && <span>{marker.number}</span>}</button>;
+        })}</div>
       </>}
       {viewport && <>
         <nav className="history-map-controls" aria-label="Map navigation">
