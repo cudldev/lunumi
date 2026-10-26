@@ -49,11 +49,11 @@
         {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.2,easing:'cubic-bezier(.18,.85,.25,1)'},
         {opacity:1,transform:`translate3d(0,${centerY-38}px,0) scale(1.08) rotate(-6deg)`,offset:.37,easing:'cubic-bezier(.2,.8,.35,1)'},
         {opacity:1,transform:`translate3d(0,${centerY+6}px,0) scale(.96) rotate(4deg)`,offset:.51,easing:'cubic-bezier(.2,.7,.3,1)'},
-        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.58},
-        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.68,easing:'cubic-bezier(.2,.7,.2,1)'},
-        {opacity:1,transform:`translate3d(${midX}px,${midY}px,0) scale(${scale*1.42}) rotate(5deg)`,offset:.86},
+        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.55,easing:'cubic-bezier(.2,.7,.3,1)'},
+        {opacity:1,transform:`translate3d(${midX*.72}px,${centerY+(midY-centerY)*.72-8}px,0) scale(${1+(scale*1.18-1)*.72}) rotate(-7deg)`,offset:.72,easing:'cubic-bezier(.2,.7,.25,1)'},
+        {opacity:1,transform:`translate3d(${midX}px,${midY+3}px,0) scale(${scale*1.42}) rotate(7deg)`,offset:.86,easing:'cubic-bezier(.2,.7,.25,1)'},
         {opacity:1,transform:`translate3d(${destX}px,${destY}px,0) scale(${scale}) rotate(0deg)`,offset:1}
-      ],{duration:1700,easing:'cubic-bezier(.22,.72,.28,1)',fill:'forwards'});
+      ],{duration:1350,easing:'cubic-bezier(.22,.72,.28,1)',fill:'forwards'});
       await motion.finished; sprite.remove(); card.classList.remove('active'); card.classList.add('arrived');
     }
     document.querySelector('#replay').addEventListener('click',replay); replay();
