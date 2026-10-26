@@ -10,7 +10,7 @@ type Tile = { x: number; y: number; z: number; left: number; top: number };
 type Marker = { kind: 'place'; entry: MapEntry; x: number; y: number; number?: number } | { kind: 'cluster'; entries: MapEntry[]; x: number; y: number; lat: number; lon: number };
 const TILE_SIZE = 256;
 const MIN_ZOOM = 2;
-const MAX_ZOOM = 18;
+const MAX_ZOOM = 19;
 const CLUSTER_SIZE = 120;
 const MAX_NEARBY_ROWS = 12;
 const clampLat = (lat: number) => Math.max(-85.05112878, Math.min(85.05112878, lat));
@@ -54,7 +54,7 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
     const points = located.map(entry => worldPoint(entry.place.lat, entry.place.lon, 0));
     const minX = Math.min(...points.map(point => point.x)), maxX = Math.max(...points.map(point => point.x));
     const minY = Math.min(...points.map(point => point.y)), maxY = Math.max(...points.map(point => point.y));
-    let zoom = MAX_ZOOM;
+    let zoom = MAX_ZOOM - 2;
     while (zoom > MIN_ZOOM) {
       const scale = 2 ** zoom;
       if ((maxX - minX) * scale <= size.width * .72 && (maxY - minY) * scale <= size.height * .72) break;
@@ -154,7 +154,7 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
     const place = located.find(entry => entry.id === visitArrival.placeId);
     if (!place) return;
     handledArrival.current = visitArrival.placeId;
-    const zoom = Math.min(MAX_ZOOM, Math.max(fitted.zoom + 5, 16));
+    const zoom = Math.min(MAX_ZOOM, Math.max(fitted.zoom + 6, 18));
     const scale = 2 ** (zoom - fitted.zoom);
     const point = worldPoint(place.place.lat, place.place.lon, zoom);
     const worldSize = TILE_SIZE * 2 ** zoom;

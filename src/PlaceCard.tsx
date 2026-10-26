@@ -9,6 +9,9 @@ import MenuAssistant from './MenuAssistant';
 const visitJumpSrc = new URL('mascot/lunumi-jump.webp', document.baseURI).href;
 const visitJumpPreload = new Image();
 visitJumpPreload.src = visitJumpSrc;
+const visitCarrySrc = new URL('mascot/lunumi-hold-map-pin.png', document.baseURI).href;
+const visitCarryPreload = new Image();
+visitCarryPreload.src = visitCarrySrc;
 const visitWalkFrameASrc = new URL('mascot/lunumi-walk-right-a.webp', document.baseURI).href;
 const visitWalkFrameAPreload = new Image();
 visitWalkFrameAPreload.src = visitWalkFrameASrc;
@@ -179,23 +182,10 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       flight.className = 'visit-flight-character visit-return-flight-character';
       Object.assign(flight.style, { left: `${sourceRect.left}px`, top: `${sourceRect.top}px`, width: `${sourceRect.width}px`, height: `${sourceRect.height}px` });
       const flightMascot = document.createElement('img');
-      flightMascot.src = visitJumpSrc;
+      flightMascot.src = visitCarrySrc;
       flightMascot.alt = '';
       flightMascot.draggable = false;
-      const carriedMarker = document.createElement('span');
-      carriedMarker.className = 'visit-carried-map-marker';
-      const pin = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      pin.setAttribute('viewBox', '0 0 24 24');
-      pin.setAttribute('aria-hidden', 'true');
-      const pinPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      pinPath.setAttribute('d', 'M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z');
-      const pinCenter = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      pinCenter.setAttribute('cx', '12');
-      pinCenter.setAttribute('cy', '10');
-      pinCenter.setAttribute('r', '2.7');
-      pin.append(pinPath, pinCenter);
-      carriedMarker.appendChild(pin);
-      flight.append(flightMascot, carriedMarker);
+      flight.append(flightMascot);
       document.body.appendChild(flight);
       mascot.style.visibility = 'hidden';
 
@@ -205,14 +195,14 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       const targetY = targetRect.top + targetRect.height / 2;
       const control1 = { x: startX + (targetX - startX) * 0.18, y: startY - Math.max(150, Math.abs(targetX - startX) * 0.2) };
       const control2 = { x: startX + (targetX - startX) * 0.84, y: targetY - Math.max(100, Math.abs(targetX - startX) * 0.12) };
-      flightFrames = [0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.84, 0.94, 1].map(offset => {
+      flightFrames = Array.from({ length: 121 }, (_, index) => index / 120).map(offset => {
         const inverse = 1 - offset;
         const x = inverse ** 3 * startX + 3 * inverse ** 2 * offset * control1.x + 3 * inverse * offset ** 2 * control2.x + offset ** 3 * targetX;
         const y = inverse ** 3 * startY + 3 * inverse ** 2 * offset * control1.y + 3 * inverse * offset ** 2 * control2.y + offset ** 3 * targetY;
         const scale = 1.45 - offset * 0.55;
         const rotation = -8 + offset * 34;
         const opacity = offset < 0.84 ? 1 : Math.max(0, 1 - (offset - 0.84) / 0.16);
-        return { transform: `translate3d(${x - startX}px,${y - startY}px,0) scale(${scale}) rotate(${rotation}deg)`, opacity, offset, ...(offset < 1 ? { easing: 'cubic-bezier(.22,.72,.28,1)' } : {}) };
+        return { transform: `translate3d(${x - startX}px,${y - startY}px,0) scale(${scale}) rotate(${rotation}deg)`, opacity, offset, easing: 'linear' };
       });
     }
 
