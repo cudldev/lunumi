@@ -808,6 +808,51 @@
       "lastValidatedAt": "2026-10-26"
     },
     {
+      "id": "frd:espoo:kotipizza-valakuja-10",
+      "name": "Kotipizza",
+      "city": "Espoo",
+      "address": {
+        "street": "Valakuja 10",
+        "postalCode": "02770",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-keskus-valakuja-kauppakeskus-entresse",
+      "category": "restaurant",
+      "lat": 60.2035999,
+      "lon": 24.6577571,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/332539471",
+          "recordId": "node/332539471",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-keskus-valakuja-kauppakeskus-entresse",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
       "id": "frd:espoo:kotipizza-espoonlahdenkatu-8",
       "name": "Kotipizza",
       "branch": "Espoonlahti",
@@ -5443,6 +5488,411 @@
         {
           "source": "Kotipizza official restaurant page",
           "url": "https://www.kotipizza.fi/ravintolat/helsinki-toukola-kaanaankatu",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-ala-malmin-tori-4",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Ala-Malmin tori 4",
+        "postalCode": "00700",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-ala-malmi-ala-malmin-tori",
+      "category": "restaurant",
+      "lat": 60.2506415,
+      "lon": 25.0125615,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/614665431",
+          "recordId": "node/614665431",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-ala-malmi-ala-malmin-tori",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-itamerenkatu-2",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itämerenkatu 2",
+        "postalCode": "00180",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-ruoholahti-itamerenkatu",
+      "category": "restaurant",
+      "lat": 60.1633794,
+      "lon": 24.9206903,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/75772337",
+          "recordId": "node/75772337",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-ruoholahti-itamerenkatu",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-munkkiniemen-puistotie-16",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Munkkiniemen puistotie 16",
+        "postalCode": "00330",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-munkkiniemi-munkkiniemen-puistotie",
+      "category": "restaurant",
+      "lat": 60.1974156,
+      "lon": 24.8786565,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/9822889496",
+          "recordId": "node/9822889496",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-munkkiniemi-munkkiniemen-puistotie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-lonnrotinkatu-13",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Lönnrotinkatu 13",
+        "postalCode": "00120",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-kamppi-lonnrotinkatu",
+      "category": "restaurant",
+      "lat": 60.1656877,
+      "lon": 24.9361725,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/2623487082",
+          "recordId": "node/2623487082",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-kamppi-lonnrotinkatu",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-kantelettarentie-1",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kantelettarentie 1",
+        "postalCode": "00420",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-kannelmaki-kantelettarentie-kauppakeskus-kaari",
+      "category": "restaurant",
+      "lat": 60.2372158,
+      "lon": 24.8911263,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/9712397582",
+          "recordId": "node/9712397582",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-kannelmaki-kantelettarentie-kauppakeskus-kaari",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-mannikkotie-6",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Männikkötie 6",
+        "postalCode": "00630",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-maunula-mannikkotie",
+      "category": "restaurant",
+      "lat": 60.22615,
+      "lon": 24.928727,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/2933856571",
+          "recordId": "node/2933856571",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-maunula-mannikkotie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-roihuvuorentie-26",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Roihuvuorentie 26",
+        "postalCode": "00820",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-roihuvuori-roihuvuorentie",
+      "category": "restaurant",
+      "lat": 60.2024965,
+      "lon": 25.0587171,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/2109340377",
+          "recordId": "node/2109340377",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-roihuvuori-roihuvuorentie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-siltavoudintie-9",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Siltavoudintie 9",
+        "postalCode": "00640",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-oulunkyla-siltavoudintie",
+      "category": "restaurant",
+      "lat": 60.2311929,
+      "lon": 24.9682641,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/282571152",
+          "recordId": "node/282571152",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-oulunkyla-siltavoudintie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-topeliuksenkatu-21",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Topeliuksenkatu 21",
+        "postalCode": "00250",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-toolo-topeliuksenkatu",
+      "category": "restaurant",
+      "lat": 60.1844753,
+      "lon": 24.9176662,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/464729835",
+          "recordId": "node/464729835",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-toolo-topeliuksenkatu",
           "fields": [
             "operatingStatus",
             "website",
