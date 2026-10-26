@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lunumi visit animation preview</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f5f0e5;color:#493a31;font-family:Nunito,Arial,sans-serif}
+    .preview{width:min(760px,100%);overflow:hidden;border:1px solid #e9e0d4;border-radius:24px;background:#fffdf8;box-shadow:0 22px 70px #5145331c}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;border-bottom:1px solid #eee6db}
+    .toolbar strong{font-size:14px}.toolbar button{border:0;border-radius:12px;background:#6f9c68;color:#fff;padding:10px 16px;font:700 13px inherit;cursor:pointer}
+    .journey{position:relative;display:flex;align-items:center;min-height:188px;padding:20px 28px;overflow:hidden;background:linear-gradient(120deg,#f7e6b5,#f4efd9 48%,#dcebd5)}
+    .journey:before,.journey:after{position:absolute;content:"";width:240px;height:240px;border:1px solid #ffffff70;border-radius:50%;pointer-events:none}.journey:before{right:-112px;top:-145px}.journey:after{left:-173px;bottom:-188px;width:280px;height:280px}
+    .route{position:relative;z-index:1;flex:0 0 180px;height:116px}.route-line{position:absolute;left:35px;right:25px;top:57px;border-top:3px dashed #8ba17d;transform:rotate(-15deg);transform-origin:left center;animation:route-draw .7s ease-out both}.pin{position:absolute;right:18px;top:22px;color:#d17c5c}
+    .target{position:absolute;left:17px;top:30px;width:72px;height:78px;animation:walk .68s steps(2,end) infinite}.target img,.flight{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 4px #69573a1c)}
+    .journey-copy{position:relative;z-index:1;display:grid;gap:8px;max-width:360px;transition:opacity .65s cubic-bezier(.22,.72,.28,1)}.eyebrow{color:#6d8066;font-size:11px;font-weight:800;letter-spacing:1.5px}.journey-copy strong{font-family:Georgia,serif;font-size:24px;line-height:1.15}.journey-copy span:last-child{font-size:13px;color:#796e60}
+    .panel{padding:22px 28px 26px;transition:opacity .72s cubic-bezier(.22,.72,.28,1)}.panel h2{margin:0 0 8px;font-family:Georgia,serif;font-size:21px}.panel p{margin:0 0 14px;color:#887c6e;font-size:13px;line-height:1.6}.map{height:178px;margin:12px 0 16px;border:1px solid #e9e0d4;border-radius:17px;background-color:#edf1e8;background-image:linear-gradient(28deg,transparent 47%,#fff 48% 51%,transparent 52%),linear-gradient(110deg,transparent 45%,#fff 46% 49%,transparent 50%),radial-gradient(circle at 73% 35%,#d17c5c 0 5px,transparent 6px);background-size:150px 100px,180px 140px,100% 100%;position:relative}.map:after{content:"Restaurant";position:absolute;top:28%;right:18%;font-size:11px;color:#746a5d}.actions{display:flex;gap:8px}.actions button{flex:1;min-height:43px;border:1px solid #e9e0d4;border-radius:13px;background:#fff;color:#6d8066;font:700 12px inherit}.actions button:first-child{background:#6f9c68;color:#fff;border-color:#6f9c68}
+    .flight{position:fixed;z-index:10;pointer-events:none;transform-origin:center center;will-change:transform,opacity;filter:drop-shadow(0 8px 10px #574b2833)}
+    .active .panel,.active .journey-copy{opacity:0}.active .target{visibility:hidden}.arrived .panel,.arrived .journey-copy{opacity:1}
+    @keyframes walk{0%,100%{transform:translate(0,0) rotate(-2deg)}25%{transform:translate(5px,-6px) rotate(2deg)}50%{transform:translate(11px,0) rotate(-2deg)}75%{transform:translate(6px,-6px) rotate(2deg)}}
+    @keyframes route-draw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
+    @media(max-width:560px){body{padding:12px}.preview{border-radius:22px}.journey{min-height:164px;padding:16px 18px}.route{flex-basis:132px;height:105px}.route-line{left:21px;right:16px;top:54px}.pin{right:9px;top:23px}.target{left:5px;top:28px;width:64px;height:69px}.journey-copy strong{font-size:19px}.journey-copy span:last-child{font-size:11px}.panel{padding:18px 20px 22px}.map{height:155px}}
+    @media(prefers-reduced-motion:reduce){.target{animation:none}.route-line{animation:none}}
+  </style>
+</head>
+<body>
+  <main class="preview" id="preview">
+    <header class="toolbar"><strong>Visit transition · animation preview</strong><button id="replay" type="button">Replay</button></header>
+    <section class="journey">
+      <div class="route" aria-hidden="true"><span class="route-line"></span><span class="pin">📍</span><span class="target" id="target"><img src="./mascot/lunumi-visit.png" alt=""></span></div>
+      <div class="journey-copy"><span class="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to Momotoko</strong><span>Good food is just around the corner.</span></div>
+    </section>
+    <section class="panel"><h2>Your next stop</h2><p>Momotoko · Japanese · 1.2 km away</p><div class="map" aria-hidden="true"></div><div class="actions"><button>Directions to Momotoko ↗</button><button>Mark as visited</button></div></section>
+  </main>
+  <script>
+    const card=document.querySelector('#preview'), target=document.querySelector('#target');
+    async function replay(){
+      card.classList.remove('active','arrived');
+      await new Promise(requestAnimationFrame); await new Promise(requestAnimationFrame);
+      const rect=target.getBoundingClientRect(), width=rect.width*2, height=rect.height*2;
+      const left=(innerWidth-width)/2, bottom=innerHeight+12, centerY=(innerHeight-height)/2-bottom;
+      const destX=rect.left+rect.width/2-innerWidth/2, destY=rect.top+rect.height/2-(bottom+height/2), scale=rect.width/width;
+      const midX=destX*.58-22, midY=centerY+(destY-centerY)*.58-24;
+      const sprite=document.createElement('img'); sprite.className='flight'; sprite.src='./mascot/lunumi-visit.png';
+      Object.assign(sprite.style,{left:`${left}px`,top:`${bottom}px`,width:`${width}px`,height:`${height}px`});document.body.appendChild(sprite);
+      card.classList.add('active');
+      const motion=sprite.animate([
+        {opacity:0,transform:'translate3d(0,0,0) scale(.76) rotate(-6deg)',offset:0},
+        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.2,easing:'cubic-bezier(.18,.85,.25,1)'},
+        {opacity:1,transform:`translate3d(0,${centerY-38}px,0) scale(1.08) rotate(-6deg)`,offset:.37,easing:'cubic-bezier(.2,.8,.35,1)'},
+        {opacity:1,transform:`translate3d(0,${centerY+6}px,0) scale(.96) rotate(4deg)`,offset:.51,easing:'cubic-bezier(.2,.7,.3,1)'},
+        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.55,easing:'cubic-bezier(.2,.7,.3,1)'},
+        {opacity:1,transform:`translate3d(${midX*.72}px,${centerY+(midY-centerY)*.72-8}px,0) scale(${1+(scale*1.18-1)*.72}) rotate(-7deg)`,offset:.72,easing:'cubic-bezier(.2,.7,.25,1)'},
+        {opacity:1,transform:`translate3d(${midX}px,${midY+3}px,0) scale(${scale*1.42}) rotate(7deg)`,offset:.86,easing:'cubic-bezier(.2,.7,.25,1)'},
+        {opacity:1,transform:`translate3d(${destX}px,${destY}px,0) scale(${scale}) rotate(0deg)`,offset:1}
+      ],{duration:1350,easing:'cubic-bezier(.22,.72,.28,1)',fill:'forwards'});
+      await motion.finished; sprite.remove(); card.classList.remove('active'); card.classList.add('arrived');
+    }
+    document.querySelector('#replay').addEventListener('click',replay); replay();
+  </script>
+</body>
+</html>

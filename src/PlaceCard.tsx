@@ -5,6 +5,10 @@ import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
 import RestaurantPhoto from './RestaurantPhoto';
 
+const visitCharacterSrc = new URL('mascot/lunumi-visit.png', document.baseURI).href;
+const visitCharacterPreload = new Image();
+visitCharacterPreload.src = visitCharacterSrc;
+
 const safeUrl = (value?: string) => {
   if (!value) return null;
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
@@ -57,8 +61,16 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
     let animation: Animation | null = null;
     let firstFrame = 0;
     let secondFrame = 0;
+    let cancelled = false;
     firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(async () => {
+        try {
+          await visitCharacterPreload.decode();
+        } catch {
+          if (!cancelled) setVisitIntro(false);
+          return;
+        }
+        if (cancelled) return;
         const target = visitCharacterRef.current;
         if (!target) { setVisitIntro(false); return; }
         const targetRect = target.getBoundingClientRect();
@@ -74,7 +86,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         const destinationScale = targetRect.width / startWidth;
 
         overlay = document.createElement('img');
-        overlay.src = new URL('mascot/lunumi-visit.png', document.baseURI).href;
+        overlay.src = visitCharacterSrc;
         overlay.alt = '';
         overlay.setAttribute('aria-hidden', 'true');
         overlay.className = 'visit-flight-character';
@@ -82,17 +94,19 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         document.body.appendChild(overlay);
         animation = overlay.animate([
           { opacity: 0, transform: 'translate3d(0,0,0) scale(.76) rotate(-6deg)', offset: 0 },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.2 },
-          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.31 },
-          { opacity: 1, transform: `translate3d(0,${centerY + 5}px,0) scale(.96) rotate(4deg)`, offset: 0.42 },
-          { opacity: 1, transform: `translate3d(0,${centerY - 16}px,0) scale(1.02) rotate(-2deg)`, offset: 0.5 },
-          { opacity: 1, transform: `translate3d(${midX}px,${midY}px,0) scale(${destinationScale * 1.42}) rotate(5deg)`, offset: 0.72 },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.2, easing: 'cubic-bezier(.18,.85,.25,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.37, easing: 'cubic-bezier(.2,.8,.35,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY + 6}px,0) scale(.96) rotate(4deg)`, offset: 0.51, easing: 'cubic-bezier(.2,.7,.3,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.55, easing: 'cubic-bezier(.2,.7,.3,1)' },
+          { opacity: 1, transform: `translate3d(${midX * 0.72}px,${centerY + (midY - centerY) * 0.72 - 8}px,0) scale(${1 + (destinationScale * 1.18 - 1) * 0.72}) rotate(-7deg)`, offset: 0.72, easing: 'cubic-bezier(.2,.7,.25,1)' },
+          { opacity: 1, transform: `translate3d(${midX}px,${midY + 3}px,0) scale(${destinationScale * 1.42}) rotate(7deg)`, offset: 0.86, easing: 'cubic-bezier(.2,.7,.25,1)' },
           { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)`, offset: 1 },
-        ], { duration: 2700, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+        ], { duration: 1350, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
         animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitIntro(false); };
       });
     });
     return () => {
+      cancelled = true;
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
       animation?.cancel();
