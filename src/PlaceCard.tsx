@@ -5,14 +5,14 @@ import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
 import RestaurantPhoto from './RestaurantPhoto';
 
-const visitCharacterSrc = new URL('mascot/lunumi-visit.png', document.baseURI).href;
-const visitJumpSrc = new URL('mascot/lunumi-jump.png', document.baseURI).href;
+const visitCharacterSrc = new URL('mascot/lunumi-visit.webp', document.baseURI).href;
+const visitJumpSrc = new URL('mascot/lunumi-jump.webp', document.baseURI).href;
 const visitCharacterPreload = new Image();
 visitCharacterPreload.src = visitCharacterSrc;
 const visitJumpPreload = new Image();
 visitJumpPreload.src = visitJumpSrc;
-const visitWalkFrameASrc = new URL('mascot/lunumi-walk-right-a.png', document.baseURI).href;
-const visitWalkFrameBSrc = new URL('mascot/lunumi-walk-right-b.png', document.baseURI).href;
+const visitWalkFrameASrc = new URL('mascot/lunumi-walk-right-a.webp', document.baseURI).href;
+const visitWalkFrameBSrc = new URL('mascot/lunumi-walk-right-b.webp', document.baseURI).href;
 const visitWalkFrameAPreload = new Image();
 const visitWalkFrameBPreload = new Image();
 visitWalkFrameAPreload.src = visitWalkFrameASrc;
@@ -116,7 +116,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         overlay.src = visitWalkFrameASrc;
         walkTimer = window.setInterval(() => {
           if (overlay) overlay.src = overlay.src === visitWalkFrameASrc ? visitWalkFrameBSrc : visitWalkFrameASrc;
-        }, 150);
+        }, 300);
         animation = overlay.animate([
           { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)` },
           { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)` },

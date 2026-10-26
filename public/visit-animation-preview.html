@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="preload" as="image" href="./mascot/lunumi-walk-right-a.png">
-  <link rel="preload" as="image" href="./mascot/lunumi-walk-right-b.png">
-  <link rel="preload" as="image" href="./mascot/lunumi-jump.png">
-  <link rel="preload" as="image" href="./mascot/lunumi-visit.png">
+  <link rel="preload" as="image" href="./mascot/lunumi-walk-right-a.webp">
+  <link rel="preload" as="image" href="./mascot/lunumi-walk-right-b.webp">
+  <link rel="preload" as="image" href="./mascot/lunumi-jump.webp">
+  <link rel="preload" as="image" href="./mascot/lunumi-visit.webp">
   <title>Lunumi visit animation preview</title>
   <style>
     *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f5f0e5;color:#493a31;font-family:Nunito,Arial,sans-serif}
@@ -16,12 +16,12 @@
     .journey{position:relative;display:flex;align-items:center;min-height:188px;padding:20px 28px;overflow:hidden;background:linear-gradient(120deg,#f7e6b5,#f4efd9 48%,#dcebd5)}
     .journey:before,.journey:after{position:absolute;content:"";width:240px;height:240px;border:1px solid #ffffff70;border-radius:50%;pointer-events:none}.journey:before{right:-112px;top:-145px}.journey:after{left:-173px;bottom:-188px;width:280px;height:280px}
     .route{position:relative;z-index:1;flex:0 0 180px;height:116px}.route-line{position:absolute;left:35px;right:25px;top:57px;border-top:3px dashed #8ba17d;transform:rotate(-15deg);transform-origin:left center;animation:route-draw .7s ease-out both}.pin{position:absolute;right:18px;top:22px;color:#d17c5c}
-    .target{position:absolute;left:17px;top:30px;width:78px;height:78px;display:block;filter:drop-shadow(0 4px 4px #69573a1c)}.walk-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none}.walk-frame-a{animation:walk-a .43s steps(1,end) infinite}.walk-frame-b{opacity:0;animation:walk-b .43s steps(1,end) infinite}.flight{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 4px #69573a1c)}
+    .target{position:absolute;left:17px;top:30px;width:78px;height:78px;display:block;filter:drop-shadow(0 4px 4px #69573a1c)}.walk-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:50% 86%;user-select:none;pointer-events:none}.walk-frame-a{animation:walk-a 860ms ease-in-out infinite}.walk-frame-b{opacity:0;animation:walk-b 860ms ease-in-out infinite}.flight{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 4px #69573a1c)}
     .journey-copy{position:relative;z-index:1;display:grid;gap:8px;max-width:360px;transition:opacity .65s cubic-bezier(.22,.72,.28,1)}.eyebrow{color:#6d8066;font-size:11px;font-weight:800;letter-spacing:1.5px}.journey-copy strong{font-family:Georgia,serif;font-size:24px;line-height:1.15}.journey-copy span:last-child{font-size:13px;color:#796e60}
     .panel{padding:22px 28px 26px;transition:opacity .72s cubic-bezier(.22,.72,.28,1)}.panel h2{margin:0 0 8px;font-family:Georgia,serif;font-size:21px}.panel p{margin:0 0 14px;color:#887c6e;font-size:13px;line-height:1.6}.map{height:178px;margin:12px 0 16px;border:1px solid #e9e0d4;border-radius:17px;background-color:#edf1e8;background-image:linear-gradient(28deg,transparent 47%,#fff 48% 51%,transparent 52%),linear-gradient(110deg,transparent 45%,#fff 46% 49%,transparent 50%),radial-gradient(circle at 73% 35%,#d17c5c 0 5px,transparent 6px);background-size:150px 100px,180px 140px,100% 100%;position:relative}.map:after{content:"Restaurant";position:absolute;top:28%;right:18%;font-size:11px;color:#746a5d}.actions{display:flex;gap:8px}.actions button{flex:1;min-height:43px;border:1px solid #e9e0d4;border-radius:13px;background:#fff;color:#6d8066;font:700 12px inherit}.actions button:first-child{background:#6f9c68;color:#fff;border-color:#6f9c68}
     .flight{position:fixed;z-index:10;pointer-events:none;transform-origin:center center;will-change:transform,opacity;filter:drop-shadow(0 8px 10px #574b2833)}
     .active .panel,.active .journey-copy{opacity:0}.flight-ready .target{visibility:hidden}.arrived .panel,.arrived .journey-copy{opacity:1}
-    @keyframes walk-a{0%,49.99%{opacity:1}50%,100%{opacity:0}}@keyframes walk-b{0%,49.99%{opacity:0}50%,100%{opacity:1}}
+    @keyframes walk-a{0%{opacity:1;transform:rotate(-25deg)}48%,50%{opacity:1;transform:rotate(25deg)}50.01%,100%{opacity:0;transform:rotate(-25deg)}}@keyframes walk-b{0%,48%{opacity:0;transform:rotate(25deg)}50%{opacity:1;transform:rotate(25deg)}98%{opacity:1;transform:rotate(-25deg)}100%{opacity:0;transform:rotate(-25deg)}}
     @keyframes route-draw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
     @media(max-width:560px){body{padding:12px}.preview{border-radius:22px}.journey{min-height:164px;padding:16px 18px}.route{flex-basis:132px;height:105px}.route-line{left:21px;right:16px;top:54px}.pin{right:9px;top:23px}.target{left:5px;top:28px;width:69px;height:69px}.journey-copy strong{font-size:19px}.journey-copy span:last-child{font-size:11px}.panel{padding:18px 20px 22px}.map{height:155px}}
     @media(prefers-reduced-motion:reduce){.walk-frame{animation:none}.walk-frame-b{opacity:0}.route-line{animation:none}}
@@ -31,23 +31,23 @@
   <main class="preview" id="preview">
     <header class="toolbar"><strong>Visit transition · animation preview</strong><button id="replay" type="button">Replay</button></header>
     <section class="journey">
-      <div class="route" aria-hidden="true"><span class="route-line"></span><span class="pin">📍</span><span class="target" id="target"><img class="walk-frame walk-frame-a" src="./mascot/lunumi-walk-right-a.png" alt="" draggable="false"><img class="walk-frame walk-frame-b" src="./mascot/lunumi-walk-right-b.png" alt="" draggable="false"></span></div>
+      <div class="route" aria-hidden="true"><span class="route-line"></span><span class="pin">📍</span><span class="target" id="target"><img class="walk-frame walk-frame-a" src="./mascot/lunumi-walk-right-a.webp" alt="" draggable="false"><img class="walk-frame walk-frame-b" src="./mascot/lunumi-walk-right-b.webp" alt="" draggable="false"></span></div>
       <div class="journey-copy"><span class="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to Momotoko</strong><span>Good food is just around the corner.</span></div>
     </section>
     <section class="panel"><h2>Your next stop</h2><p>Momotoko · Japanese · 1.2 km away</p><div class="map" aria-hidden="true"></div><div class="actions"><button>Directions to Momotoko ↗</button><button>Mark as visited</button></div></section>
   </main>
   <script>
     const card=document.querySelector('#preview'), target=document.querySelector('#target');
-    const walkSprites=['./mascot/lunumi-walk-right-a.png','./mascot/lunumi-walk-right-b.png'].map(src=>{const image=new Image();image.src=src;return image});
+    const walkSprites=['./mascot/lunumi-walk-right-a.webp','./mascot/lunumi-walk-right-b.webp'].map(src=>{const image=new Image();image.src=src;return image});
     async function replay(){
       card.classList.remove('active','arrived');
       await new Promise(requestAnimationFrame); await new Promise(requestAnimationFrame);
       const rect=target.getBoundingClientRect(), width=rect.width*2, height=rect.height*2;
       const left=(innerWidth-width)/2, bottom=innerHeight+12, centerY=(innerHeight-height)/2-bottom;
       const destX=rect.left+rect.width/2-innerWidth/2, destY=rect.top+rect.height/2-(bottom+height/2), scale=rect.width/width;
-      const sprite=document.createElement('img'); sprite.className='flight'; sprite.src='./mascot/lunumi-jump.png';
+      const sprite=document.createElement('img'); sprite.className='flight'; sprite.src='./mascot/lunumi-jump.webp';
       Object.assign(sprite.style,{left:`${left}px`,top:`${bottom}px`,width:`${width}px`,height:`${height}px`});
-      const jump=new Image(); jump.src='./mascot/lunumi-jump.png'; const settle=new Image(); settle.src='./mascot/lunumi-visit.png';
+      const jump=new Image(); jump.src='./mascot/lunumi-jump.webp'; const settle=new Image(); settle.src='./mascot/lunumi-visit.webp';
       await Promise.all([...walkSprites.map(image=>image.decode()), jump.decode(), settle.decode()]);
       document.body.appendChild(sprite);
       card.classList.add('active','flight-ready');
@@ -57,8 +57,8 @@
         {opacity:1,transform:`translate3d(0,${centerY+7}px,0) scale(.97) rotate(3deg)`,offset:.84,easing:'cubic-bezier(.2,.7,.3,1)'},
         {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:1}
       ],{duration:1050,easing:'cubic-bezier(.22,.72,.28,1)',fill:'forwards'});
-      await jumpMotion.finished; sprite.src='./mascot/lunumi-visit.png'; await new Promise(r=>setTimeout(r,110));
-      sprite.src='./mascot/lunumi-walk-right-a.png'; let walk=0; const walkTimer=setInterval(()=>{sprite.src=walkSprites[walk++%2].src;},150);
+      await jumpMotion.finished; sprite.src='./mascot/lunumi-visit.webp'; await new Promise(r=>setTimeout(r,110));
+      sprite.src='./mascot/lunumi-walk-right-a.webp'; let walk=0; const walkTimer=setInterval(()=>{sprite.src=walkSprites[walk++%2].src;},300);
       const move=sprite.animate([
         {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`},
         {opacity:1,transform:`translate3d(${destX}px,${destY}px,0) scale(${scale}) rotate(0deg)`}
