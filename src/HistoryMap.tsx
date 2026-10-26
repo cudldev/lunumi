@@ -68,11 +68,11 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
         <div className="history-map-markers">{located.map((entry, index) => {
           const point = worldPoint(entry.place.lat, entry.place.lon, viewport.zoom);
           const x = ((point.x % (TILE_SIZE * 2 ** viewport.zoom)) + TILE_SIZE * 2 ** viewport.zoom) % (TILE_SIZE * 2 ** viewport.zoom);
-          return <button key={entry.id} className={`history-map-pin ${entry.status === 'visited' ? 'is-visited' : ''}`} style={{ left: x - viewport.centerX + size.width / 2, top: point.y - viewport.centerY + size.height / 2 }} onClick={() => onSelect(entry)} aria-label={`Open ${entry.place.name}`} title={entry.place.name}><MapPin size={22}/><span>{index + 1}</span></button>;
+          return <button key={entry.id} className={`history-map-pin ${entry.status === 'target' ? 'is-target' : entry.status === 'visited' ? 'is-visited' : 'is-explored'}`} style={{ left: x - viewport.centerX + size.width / 2, top: point.y - viewport.centerY + size.height / 2 }} onClick={() => onSelect(entry)} aria-label={`Open ${entry.place.name}`} title={entry.place.name}><MapPin size={22}/><span>{index + 1}</span></button>;
         })}</div>
       </>}
       <a className="history-map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>
-      <span className="history-map-local">Saved on this device</span>
+      <div className="history-map-legend" aria-label="Pin colors"><span><i className="is-explored"/>Explored</span><span><i className="is-target"/>To try</span><span><i className="is-visited"/>Visited</span></div><span className="history-map-local">Saved on this device</span>
     </div>
     <p className="history-map-note">Map tiles come from OpenStreetMap; rendering the map sends the viewed area to its tile server. Your restaurant history stays on this device.</p>
     <div className="history-map-list">{located.map((entry, index) => <button key={entry.id} className="history-map-row" onClick={() => onSelect(entry)}><span className="history-map-number">{index + 1}</span><span>{entry.place.name}<small>{entry.status === 'visited' ? 'Visited' : entry.sentiment === 'favorite' ? 'Favorite' : entry.status === 'target' ? 'To try' : 'Explored'}</small></span><MapPin size={16}/></button>)}</div>
