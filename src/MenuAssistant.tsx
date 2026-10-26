@@ -69,6 +69,26 @@ function feedText(value: string, contentType: string): string {
   return cleanMenuText(value);
 }
 
+async function readMenuResponse(response: Response): Promise<string> {
+  const limit = 500_000;
+  if (!response.body) return (await response.text()).slice(0, limit);
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0;
+  let text = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel();
+      throw new Error('This menu page is too large to read automatically.');
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
+}
+
 function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassifier | null): MenuItem[] {
   const lines = cleanMenuText(value).split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const found: MenuItem[] = [];
@@ -141,7 +161,6 @@ function writeCachedMenu(sourceUrl: string, resolvedSourceUrl: string, items: Me
 }
 
 type Props = { restaurantName: string; sourceUrl?: string | null };
-const menuReaderUrl = import.meta.env.VITE_MENU_READER_URL?.trim();
 
 export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -182,25 +201,24 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
 
     async function loadMenu() {
       try {
-        if (!menuReaderUrl) throw new Error('Menu reading is not connected for this deployment yet.');
+        const parsedUrl = new URL(menuUrl);
+        if (parsedUrl.protocol !== 'https:' || parsedUrl.username || parsedUrl.password) {
+          throw new Error('Only public HTTPS menu pages can be read automatically.');
+        }
         timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15_000);
-        const response = await fetch(menuReaderUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: menuUrl }),
+        const response = await fetch(parsedUrl.href, {
           signal: controller.signal,
           credentials: 'omit',
         });
-        const result = await response.json() as { text?: string; contentType?: string; sourceUrl?: string; error?: string };
-        if (!response.ok) throw new Error(result.error || `The menu could not be fetched (${response.status}).`);
-        const contentType = result.contentType || '';
+        if (!response.ok) throw new Error(`The menu page could not be fetched (${response.status}).`);
+        const contentType = response.headers.get('content-type') || '';
         if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(menuUrl)) {
           throw new Error('This menu is a PDF and cannot be read automatically yet.');
         }
         if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
           throw new Error('This menu format cannot be read automatically yet.');
         }
-        const body = (result.text || '').slice(0, 500_000);
+        const body = await readMenuResponse(response);
         const readable = feedText(body, contentType);
         const detectedLanguage = detectLanguage(readable);
         let classifier: MenuClassifier | null = null;
@@ -213,15 +231,17 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
           setItems(extracted);
           setLanguage(detectedLanguage);
           setModelUsed(Boolean(classifier));
-          setVerifiedSourceUrl(result.sourceUrl ?? menuUrl);
-          setCachedAt(writeCachedMenu(menuUrl, result.sourceUrl ?? menuUrl, extracted, detectedLanguage));
+          setVerifiedSourceUrl(response.url || menuUrl);
+          setCachedAt(writeCachedMenu(menuUrl, response.url || menuUrl, extracted, detectedLanguage));
         }
       } catch (cause) {
         if (timedOut) {
           setError('The menu service took too long to respond.');
         } else if (!controller.signal.aborted) {
           const message = cause instanceof Error ? cause.message : 'The menu could not be read.';
-          setError(/failed to fetch|networkerror|load failed/i.test(message) ? 'Lunumi could not reach its menu service.' : message);
+          setError(/failed to fetch|networkerror|load failed/i.test(message)
+            ? 'This restaurant page could not be read by the browser. It may block cross-site access (CORS); open the source to view the menu.'
+            : message);
         }
       } finally {
         if (timeout !== undefined) window.clearTimeout(timeout);
