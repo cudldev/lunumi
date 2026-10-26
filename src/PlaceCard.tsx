@@ -198,7 +198,6 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       flight.append(flightMascot, carriedMarker);
       document.body.appendChild(flight);
       mascot.style.visibility = 'hidden';
-      mapTab.classList.add('visit-return-target');
 
       const startX = sourceRect.left + sourceRect.width / 2;
       const startY = sourceRect.top + sourceRect.height / 2;
@@ -210,7 +209,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         const inverse = 1 - offset;
         const x = inverse ** 3 * startX + 3 * inverse ** 2 * offset * control1.x + 3 * inverse * offset ** 2 * control2.x + offset ** 3 * targetX;
         const y = inverse ** 3 * startY + 3 * inverse ** 2 * offset * control1.y + 3 * inverse * offset ** 2 * control2.y + offset ** 3 * targetY;
-        const scale = 1 - offset * 0.84;
+        const scale = 1.45 - offset * 0.55;
         const rotation = -8 + offset * 34;
         const opacity = offset < 0.84 ? 1 : Math.max(0, 1 - (offset - 0.84) / 0.16);
         return { transform: `translate3d(${x - startX}px,${y - startY}px,0) scale(${scale}) rotate(${rotation}deg)`, opacity, offset, ...(offset < 1 ? { easing: 'cubic-bezier(.22,.72,.28,1)' } : {}) };
@@ -231,10 +230,11 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
     }
 
     if (flight && mapTab) {
+      mapTab.classList.add('visit-return-target');
       if (mascot?.isConnected) closeDetails();
       try {
         await new Promise(resolve => window.setTimeout(resolve, 650));
-        await flight.animate(flightFrames, { duration: 3000, fill: 'forwards' }).finished.catch(() => undefined);
+        await flight.animate(flightFrames, { duration: 750, fill: 'forwards' }).finished.catch(() => undefined);
       } finally {
         flight.remove();
         onReturn(place.id, arrivalFrom);
