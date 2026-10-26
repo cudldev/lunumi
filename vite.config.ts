@@ -44,7 +44,10 @@ export default defineConfig({
             cacheableResponse: { statuses: [0, 200] },
           },
         }],
-        ...(productionPath ? { navigateFallbackDenylist: [/^\/lunumi\/staging(?:\/|$)/] } : {}),
+        navigateFallbackDenylist: [
+          ...(productionPath ? [/^\/lunumi\/staging(?:\/|$)/] : []),
+          /\/visit-animation-preview\.html$/,
+        ],
       },
     }),
   ],

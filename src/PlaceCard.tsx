@@ -5,6 +5,16 @@ import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
 import RestaurantPhoto from './RestaurantPhoto';
 
+const visitCharacterSrc = new URL('mascot/lunumi-visit.webp', document.baseURI).href;
+const visitJumpSrc = new URL('mascot/lunumi-jump.webp', document.baseURI).href;
+const visitCharacterPreload = new Image();
+visitCharacterPreload.src = visitCharacterSrc;
+const visitJumpPreload = new Image();
+visitJumpPreload.src = visitJumpSrc;
+const visitWalkFrameASrc = new URL('mascot/lunumi-walk-right-a.webp', document.baseURI).href;
+const visitWalkFrameAPreload = new Image();
+visitWalkFrameAPreload.src = visitWalkFrameASrc;
+
 const safeUrl = (value?: string) => {
   if (!value) return null;
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
@@ -16,6 +26,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
   const [details, setDetails] = useState(false);
   const [visitMode, setVisitMode] = useState(false);
   const [visitIntro, setVisitIntro] = useState(false);
+  const [visitFlightActive, setVisitFlightActive] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const visitCharacterRef = useRef<HTMLSpanElement>(null);
@@ -57,8 +68,9 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
     let animation: Animation | null = null;
     let firstFrame = 0;
     let secondFrame = 0;
+    let cancelled = false;
     firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(async () => {
         const target = visitCharacterRef.current;
         if (!target) { setVisitIntro(false); return; }
         const targetRect = target.getBoundingClientRect();
@@ -69,34 +81,53 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         const centerY = (window.innerHeight - startHeight) / 2 - bottomTop;
         const destinationX = targetRect.left + targetRect.width / 2 - window.innerWidth / 2;
         const destinationY = targetRect.top + targetRect.height / 2 - (bottomTop + startHeight / 2);
-        const midX = destinationX * 0.58 - 22;
-        const midY = centerY + (destinationY - centerY) * 0.58 - 24;
         const destinationScale = targetRect.width / startWidth;
 
         overlay = document.createElement('img');
-        overlay.src = new URL('mascot/lunumi-visit.png', document.baseURI).href;
+        overlay.src = visitJumpSrc;
         overlay.alt = '';
         overlay.setAttribute('aria-hidden', 'true');
         overlay.className = 'visit-flight-character';
         Object.assign(overlay.style, { left: `${centerLeft}px`, top: `${bottomTop}px`, width: `${startWidth}px`, height: `${startHeight}px` });
+        try {
+          await Promise.all([visitJumpPreload.decode(), visitCharacterPreload.decode(), visitWalkFrameAPreload.decode(), overlay.decode()]);
+        } catch {
+          if (!cancelled) setVisitIntro(false);
+          return;
+        }
+        if (cancelled) return;
         document.body.appendChild(overlay);
+        setVisitFlightActive(true);
         animation = overlay.animate([
           { opacity: 0, transform: 'translate3d(0,0,0) scale(.76) rotate(-6deg)', offset: 0 },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.2 },
-          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.31 },
-          { opacity: 1, transform: `translate3d(0,${centerY + 5}px,0) scale(.96) rotate(4deg)`, offset: 0.42 },
-          { opacity: 1, transform: `translate3d(0,${centerY - 16}px,0) scale(1.02) rotate(-2deg)`, offset: 0.5 },
-          { opacity: 1, transform: `translate3d(${midX}px,${midY}px,0) scale(${destinationScale * 1.42}) rotate(5deg)`, offset: 0.72 },
+          { opacity: 1, transform: `translate3d(0,${centerY - 42}px,0) scale(1.04) rotate(-4deg)`, offset: 0.62, easing: 'cubic-bezier(.18,.85,.25,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY + 7}px,0) scale(.97) rotate(3deg)`, offset: 0.84, easing: 'cubic-bezier(.2,.7,.3,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 1 },
+        ], { duration: 1050, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+        await animation.finished.catch(() => undefined);
+        if (cancelled || !overlay) return;
+        overlay.src = visitCharacterSrc;
+        await new Promise(resolve => window.setTimeout(resolve, 110));
+        if (cancelled || !overlay) return;
+        overlay.src = visitWalkFrameASrc;
+        animation = overlay.animate([
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0 },
+          { opacity: 1, transform: `translate3d(${destinationX / 3}px,${destinationY / 3}px,0) scale(${(2 + destinationScale) / 3}) rotate(12deg)`, offset: 0.33 },
+          { opacity: 1, transform: `translate3d(${destinationX * 2 / 3}px,${destinationY * 2 / 3}px,0) scale(${(1 + 2 * destinationScale) / 3}) rotate(-12deg)`, offset: 0.66 },
           { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)`, offset: 1 },
-        ], { duration: 2700, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
-        animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitIntro(false); };
+        ], { duration: 500, easing: 'cubic-bezier(.2,.72,.25,1)', fill: 'forwards' });
+        await animation.finished.catch(() => undefined);
+        if (cancelled || !overlay) return;
+        overlay.remove(); overlay = null; setVisitFlightActive(false); setVisitIntro(false);
       });
     });
     return () => {
+      cancelled = true;
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
       animation?.cancel();
       overlay?.remove();
+      setVisitFlightActive(false);
     };
   }, [visitIntro, visitMode]);
   const cuisine = (place.tags.cuisine || place.tags.amenity?.replace('_', ' ') || 'Food nearby').split(';').map(x => x.trim()).filter(Boolean);
@@ -112,7 +143,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
   mapUrl.searchParams.set('bbox', `${place.lon - 0.006},${place.lat - 0.0035},${place.lon + 0.006},${place.lat + 0.0035}`);
   mapUrl.searchParams.set('layer', 'mapnik');
   mapUrl.searchParams.set('marker', `${place.lat},${place.lon}`);
-  const closeDetails = () => { setDetails(false); setVisitMode(false); setDetailsExpanded(false); };
+  const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setDetailsExpanded(false); };
   const startVisit = () => { setVisitIntro(true); setVisitMode(true); onStatus('target'); };
 
   return <>
@@ -122,11 +153,11 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       <button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={event => { event.stopPropagation(); onFavorite(); }}>♥</button></div>
       <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><span className="card-open">View place <ArrowLeft size={14}/></span></div>
     </article>
-    {details && createPortal(<div className="place-detail-backdrop" onClick={closeDetails} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`} onClick={event => event.stopPropagation()}>
+    {details && createPortal(<div className="place-detail-backdrop" onClick={closeDetails} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}${visitFlightActive ? ' visit-flight-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`} onClick={event => event.stopPropagation()}>
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className="visit-journey" aria-label={`Starting a visit to ${place.name}`}>
-        <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img src={new URL('mascot/lunumi-visit.png', document.baseURI).href} alt=""/></span></div>
+        <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
         <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>Good food is just around the corner.</span></div>
       </div> : <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} large />}
       <div className="place-detail-content">
