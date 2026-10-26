@@ -1,6 +1,6 @@
 # Lunumi
 
-Lunumi is a mobile-first, local-first food discovery PWA. It uses React, TypeScript, Vite, Dexie/IndexedDB and public restaurant data. Helsinki metro searches combine a prebuilt OpenStreetMap snapshot with a separately maintained directory of restaurants checked against their official pages; other areas use the public Overpass API. The Map tab plots restaurants from local food history on-device; selecting a place opens a map search. There is no account, paid service or tracking analytics.
+Lunumi is a mobile-first, local-first food discovery PWA. It uses React, TypeScript, Vite, Dexie/IndexedDB and public restaurant data. Helsinki metro searches combine a prebuilt OpenStreetMap snapshot with a separately maintained directory of restaurants checked against their official pages; other areas use the public Overpass API. The Map tab shows local food history as pins on OpenStreetMap tiles; selecting a pin opens Lunumi's restaurant info card. Viewing the map sends the displayed map area to OpenStreetMap, while history stays on-device. There is no account, paid service or tracking analytics.
 
 ## Run locally
 
@@ -60,7 +60,7 @@ Searches outside the Helsinki metro boundary still use the public Overpass API. 
 
 Dietary compatibility is always unknown in V1 because the provider does not offer reliable ingredient/allergen evidence. Unknown must not be treated as safe; confirm directly with restaurants, especially for allergies. Group matching is a local preference collection and does not transmit profiles. A user-submitted city/address lookup uses the public Nominatim endpoint once per submit; there is no autocomplete. That service is donation-funded and has a strict app-wide limit of one request per second; this client spaces submissions by 1.1 seconds per browser instance, but a static prototype cannot enforce the aggregate limit across all users. Treat it as low-volume prototype access, not an SLA. If it is unavailable, use current location. The lookup sends the entered location to OSM.
 
-All personalization and storage run on the device. Restaurant requests send the chosen search coordinates and radius to the public Overpass service. There is no background location tracking, analytics, tracking cookies or user account.
+All personalization and history storage run on the device. Viewing the history map requests only the visible OpenStreetMap tiles, which reveals the displayed area to its tile server. Restaurant requests send the chosen search coordinates and radius to the public Overpass service. There is no background location tracking, analytics, tracking cookies or user account.
 
 ## Manual smoke checks
 
