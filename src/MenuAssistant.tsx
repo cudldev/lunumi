@@ -42,6 +42,7 @@ function parseMenu(value: string): MenuItem[] {
 }
 
 type Props = { restaurantName: string; sourceUrl?: string | null };
+const menuReaderUrl = import.meta.env.VITE_MENU_READER_URL?.trim();
 
 export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
   const [text, setText] = useState('');
@@ -57,22 +58,30 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 15_000);
     try {
-      const response = await fetch(sourceUrl, { signal: controller.signal, mode: 'cors', credentials: 'omit' });
-      if (!response.ok) throw new Error(`The restaurant page returned an error (${response.status}).`);
-      const contentType = response.headers.get('content-type') || '';
+      if (!menuReaderUrl) throw new Error('Menu reading is not connected for this deployment yet. Please open the restaurant source link.');
+      const response = await fetch(menuReaderUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: sourceUrl }),
+        signal: controller.signal,
+        credentials: 'omit',
+      });
+      const result = await response.json() as { text?: string; contentType?: string; error?: string };
+      if (!response.ok) throw new Error(result.error || `The menu could not be fetched (${response.status}).`);
+      const contentType = result.contentType || '';
       if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(sourceUrl)) {
         throw new Error('This menu is a PDF. Open the source link to view it; automatic PDF reading is not available yet.');
       }
       if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
         throw new Error('This menu format cannot be read automatically yet.');
       }
-      const body = (await response.text()).slice(0, 500_000);
+      const body = (result.text || '').slice(0, 500_000);
       const extracted = parseMenu(body);
       if (!extracted.length) throw new Error('The page loaded, but Lunumi could not identify menu entries on it.');
       setText(body);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'The menu could not be read.';
-      setError(controller.signal.aborted ? 'The page took too long to load. Try opening the restaurant source link.' : /failed to fetch|networkerror|load failed/i.test(message) ? 'This restaurant site does not allow Lunumi to read its page directly. Open the source link to view the menu.' : message);
+      setError(controller.signal.aborted ? 'The menu service took too long to respond. Open the restaurant source link instead.' : /failed to fetch|networkerror|load failed/i.test(message) ? 'Lunumi could not reach its menu service. Open the source link to view the menu.' : message);
     } finally {
       window.clearTimeout(timeout);
       setBusy(false);
