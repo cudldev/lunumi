@@ -59,12 +59,14 @@ flowchart TD
   L -- Save --> M[Favorite or add to try list]
   L -- Go --> N[Start journey]
   N --> O[Directions to restaurant]
-  O --> P[Arrive and mark visited]
+  O --> P[Arrive]
   P --> Q[Rate: loved it / okay / not for me]
   Q --> U[Would you recommend it?]
   U --> V[Choose yes / maybe / no]
-  V --> W[Character-led visit outro]
-  W --> F
+  V --> W[Complete visit and save feedback]
+  W --> Y[Mascot flies to Map tab]
+  Y --> Z[Open visited places map]
+  Z --> F
   M --> F
   F --> X[Profile: preferences and saved places]
   X --> F
@@ -79,7 +81,7 @@ flowchart TD
 5. **Explain empty and failure states with a next action.** Distinguish no location, no matches, no nearby data, offline/stale results, and provider failure. Keep location/radius adjustments and retry available in context.
 6. **Keep each place decision in one detail view.** Present distance, hours, available menu/site links, and data freshness before the visit action. Label unknown dietary compatibility consistently. Make save-for-later and directions easy to find.
 7. **Make the journey a clear, low-friction sequence.** Start the route from the place details, give directions one prominent touch target, then let the user mark arrival. Keep the dialog steady during the journey so outside taps do not dismiss it, and keep primary actions in an easy-to-reach area.
-8. **End with a friendly visit outro.** After arrival, celebrate the visit, ask whether the user liked it, then whether they would recommend it. Save each answer as it is chosen and return to Discover with one clear Done action. Let the user close or skip feedback without losing the visit record.
+8. **End with a friendly visit outro.** After arrival, ask one required question at a time: whether the user liked the place, then whether they would recommend it. Keep the place in progress until both answers are saved and the user taps Complete visit. Then mark it visited, fly the mascot to the Map tab, and show the visited places map. Let the user close feedback and resume it later without marking the visit complete.
 9. **Remove Together from the primary flow.** Without reliable dietary compatibility evidence, group matching adds a destination that cannot answer the key group question. Keep the core flow focused on local discovery.
 10. **Keep Profile as a utility area.** Food preferences, location defaults, saved places/history, privacy, and data transfer. Make destructive history clearing and profile replacement clearly distinct from import/merge.
 

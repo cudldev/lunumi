@@ -18,7 +18,7 @@ const safeUrl = (value?: string) => {
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
 };
 
-type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
+type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
 
 export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn, initiallyOpen = false, onDismiss }: Props) {
   const [details, setDetails] = useState(initiallyOpen);
@@ -26,9 +26,14 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
   const [visitStage, setVisitStage] = useState<'journey' | 'outro'>('journey');
   const [visitIntro, setVisitIntro] = useState(false);
   const [visitFlightActive, setVisitFlightActive] = useState(false);
+  const [visitFinishing, setVisitFinishing] = useState(false);
+  const [visitFeedbackStep, setVisitFeedbackStep] = useState<'sentiment' | 'recommendation'>('sentiment');
+  const [visitSaveError, setVisitSaveError] = useState('');
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const visitCharacterRef = useRef<HTMLSpanElement>(null);
+  const visitOutroMascotRef = useRef<HTMLImageElement>(null);
+  const visitFinishingRef = useRef(false);
   const suppressHandleClick = useRef(false);
   useEffect(() => {
     if (!details) return;
@@ -148,10 +153,69 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
   mapUrl.searchParams.set('bbox', `${place.lon - 0.006},${place.lat - 0.0035},${place.lon + 0.006},${place.lat + 0.0035}`);
   mapUrl.searchParams.set('layer', 'mapnik');
   mapUrl.searchParams.set('marker', `${place.lat},${place.lon}`);
-  const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setDetailsExpanded(false); onDismiss?.(); };
-  const startVisit = () => { setVisitStage(status === 'visited' ? 'outro' : 'journey'); setVisitIntro(true); setVisitMode(true); if (status !== 'visited') onStatus('target'); };
-  const finishVisit = () => { closeDetails(); onReturn(); };
+  const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setVisitFinishing(false); visitFinishingRef.current = false; setDetailsExpanded(false); onDismiss?.(); };
+  const startVisit = () => { const hasSentiment = Boolean(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment)); setVisitStage(status === 'visited' || visitStage === 'outro' ? 'outro' : 'journey'); setVisitFeedbackStep(hasSentiment ? 'recommendation' : 'sentiment'); setVisitSaveError(''); setVisitIntro(true); setVisitMode(true); if (status !== 'visited') onStatus('target'); };
   const feedbackComplete = Boolean(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment) && recommendationVote);
+  const finishVisit = async () => {
+    if (!feedbackComplete || visitFinishingRef.current) return;
+    visitFinishingRef.current = true;
+    setVisitFinishing(true);
+    setVisitSaveError('');
+    try {
+      await onStatus('visited');
+    } catch {
+      visitFinishingRef.current = false;
+      setVisitFinishing(false);
+      setVisitSaveError('Your visit could not be saved. Please try again.');
+      return;
+    }
+
+    const mascot = visitOutroMascotRef.current;
+    const mapTab = document.querySelector<HTMLElement>('[data-nav-tab="map"]');
+    const mapIcon = mapTab?.querySelector<SVGElement>('svg');
+    const sourceRect = mascot?.getBoundingClientRect();
+    const targetRect = mapIcon?.getBoundingClientRect();
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (mascot && mapTab && sourceRect && targetRect && !reducedMotion && typeof mascot.animate === 'function') {
+      const flight = document.createElement('img');
+      flight.src = visitJumpSrc;
+      flight.alt = '';
+      flight.setAttribute('aria-hidden', 'true');
+      flight.className = 'visit-flight-character visit-return-flight-character';
+      Object.assign(flight.style, { left: `${sourceRect.left}px`, top: `${sourceRect.top}px`, width: `${sourceRect.width}px`, height: `${sourceRect.height}px` });
+      document.body.appendChild(flight);
+      mascot.style.visibility = 'hidden';
+      mapTab.classList.add('visit-return-target');
+
+      const startX = sourceRect.left + sourceRect.width / 2;
+      const startY = sourceRect.top + sourceRect.height / 2;
+      const targetX = targetRect.left + targetRect.width / 2;
+      const targetY = targetRect.top + targetRect.height / 2;
+      const endWidth = 28;
+      const endHeight = 34;
+      const endLeft = targetX - endWidth / 2;
+      const endTop = targetY - endHeight / 2;
+      const middleX = startX + (targetX - startX) * 0.48;
+      const middleY = startY + (targetY - startY) * 0.48 - 92;
+      closeDetails();
+      try {
+        await flight.animate([
+          { left: `${sourceRect.left}px`, top: `${sourceRect.top}px`, width: `${sourceRect.width}px`, height: `${sourceRect.height}px`, opacity: 1, transform: 'rotate(-8deg) scale(1)', offset: 0 },
+          { left: `${middleX - sourceRect.width * 0.38}px`, top: `${middleY - sourceRect.height * 0.38}px`, width: `${sourceRect.width * 0.76}px`, height: `${sourceRect.height * 0.76}px`, opacity: 1, transform: 'rotate(16deg) scale(.86)', offset: 0.58, easing: 'cubic-bezier(.2,.8,.25,1)' },
+          { left: `${endLeft}px`, top: `${endTop}px`, width: `${endWidth}px`, height: `${endHeight}px`, opacity: 0.2, transform: 'rotate(380deg) scale(.55)', offset: 1 },
+        ], { duration: 760, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' }).finished.catch(() => undefined);
+      } finally {
+        flight.remove();
+        onReturn();
+        window.setTimeout(() => mapTab.classList.remove('visit-return-target'), 900);
+      }
+      return;
+    }
+
+    closeDetails();
+    onReturn();
+  };
 
   return <>
     <article className="place-card place-card-visual" onClick={event => { if (!(event.target as HTMLElement).closest('button,a')) setDetails(true); }}>
@@ -163,13 +227,13 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
     {details && createPortal(<div className="place-detail-backdrop" role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}${visitFlightActive ? ' visit-flight-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`}>
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
-      {visitMode ? <div className={`visit-journey${visitStage === 'outro' ? ' visit-outro' : ''}`} aria-label={visitStage === 'outro' ? `Visit complete at ${place.name}` : `Starting a visit to ${place.name}`}>
+      {visitMode ? <div className={`visit-journey${visitStage === 'outro' ? ' visit-outro' : ''}`} aria-label={visitStage === 'outro' ? `Visit feedback for ${place.name}` : `Starting a visit to ${place.name}`}>
         {visitStage === 'journey' ? <>
           <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
           <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>Good food is just around the corner.</span></div>
         </> : <>
-          <img className="visit-outro-mascot" src={visitJumpSrc} alt="" aria-hidden="true"/>
-          <div className="visit-journey-copy"><span className="eyebrow">YOU MADE IT</span><strong>A little adventure complete!</strong><span>How was {place.name}?</span></div>
+          <img className="visit-outro-mascot" ref={visitOutroMascotRef} src={visitJumpSrc} alt="" aria-hidden="true"/>
+          <div className="visit-journey-copy"><span className="eyebrow">YOU MADE IT</span><strong>How was {place.name}?</strong><span>Your visit is complete after your quick rating.</span></div>
         </>}
       </div> : <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} large />}
       <div className="place-detail-content">
@@ -180,17 +244,18 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
             <div className="visit-map"><iframe title={`Map showing ${place.name}`} src={mapUrl.toString()} loading="lazy" referrerPolicy="no-referrer"/><a href={`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}#map=16/${place.lat}/${place.lon}`} target="_blank" rel="noopener noreferrer">Open map</a></div>
             <button className="button directions visit-directions" onClick={onDirections}><Navigation size={17}/>Directions to {place.name}<span>↗</span></button>
           </> : <>
-            <div className="visit-feedback"><h3>Did you like it?</h3><div className="visit-feedback-actions">
-              <button className={`button outline${sentiment === 'loved' ? ' selected' : ''}`} aria-pressed={sentiment === 'loved'} onClick={() => onSentiment('loved')}><Heart size={17}/>Loved it</button>
-              <button className={`button outline${sentiment === 'okay' ? ' selected' : ''}`} aria-pressed={sentiment === 'okay'} onClick={() => onSentiment('okay')}>It was okay</button>
-              <button className={`button outline${sentiment === 'disliked' ? ' selected' : ''}`} aria-pressed={sentiment === 'disliked'} onClick={() => onSentiment('disliked')}>Not for me</button>
-            </div></div>
-            <div className="visit-feedback"><h3>Would you recommend this place?</h3><div className="visit-feedback-actions">
-              <button className={`button outline${recommendationVote === 'yes' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'yes'} onClick={() => onRecommendation('yes')}>Yes</button>
-              <button className={`button outline${recommendationVote === 'maybe' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'maybe'} onClick={() => onRecommendation('maybe')}>Maybe</button>
-              <button className={`button outline${recommendationVote === 'no' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'no'} onClick={() => onRecommendation('no')}>No</button>
-            </div></div>
-            <p className="visit-feedback-hint">Your visit is saved. Answer both questions to finish, or close to come back later.</p>
+            {visitFeedbackStep === 'sentiment' ? <div className="visit-feedback" aria-live="polite">
+              <span className="eyebrow">QUESTION 1 OF 2</span><h3>Did you like it?</h3><div className="visit-feedback-actions">
+                <button className={`button outline${sentiment === 'loved' ? ' selected' : ''}`} aria-pressed={sentiment === 'loved'} onClick={() => { onSentiment('loved'); setVisitFeedbackStep('recommendation'); }}><Heart size={17}/>Loved it</button>
+                <button className={`button outline${sentiment === 'okay' ? ' selected' : ''}`} aria-pressed={sentiment === 'okay'} onClick={() => { onSentiment('okay'); setVisitFeedbackStep('recommendation'); }}>It was okay</button>
+                <button className={`button outline${sentiment === 'disliked' ? ' selected' : ''}`} aria-pressed={sentiment === 'disliked'} onClick={() => { onSentiment('disliked'); setVisitFeedbackStep('recommendation'); }}>Not for me</button>
+              </div></div> : <div className="visit-feedback" aria-live="polite">
+              <span className="eyebrow">QUESTION 2 OF 2</span><h3>Would you recommend this place?</h3><div className="visit-feedback-actions">
+                <button className={`button outline${recommendationVote === 'yes' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'yes'} onClick={() => onRecommendation('yes')}>Yes</button>
+                <button className={`button outline${recommendationVote === 'maybe' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'maybe'} onClick={() => onRecommendation('maybe')}>Maybe</button>
+                <button className={`button outline${recommendationVote === 'no' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'no'} onClick={() => onRecommendation('no')}>No</button>
+              </div><button className="text-button visit-change-rating" onClick={() => setVisitFeedbackStep('sentiment')}>Change your rating</button></div>}
+            <p className="visit-feedback-hint" aria-live="polite">{visitSaveError || (feedbackComplete ? 'Your answers are ready. Complete your visit to save it and open the Map.' : 'Choose an answer to each question to complete your visit.')}</p>
           </>}
         </> : <>
         <div className="place-detail-heading"><div><span className="eyebrow">{cuisine.join(' · ')}</span><h2>{place.name}</h2></div><button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={onFavorite}>♥</button></div>
@@ -205,7 +270,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'visited' ? 'Finish your visit' : status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
         </>}
       </div>
-      <div className="place-detail-bottom-bar">{visitMode ? visitStage === 'journey' ? <button className="button visit-arrived" onClick={() => { onStatus('visited'); setVisitStage('outro'); }}><Check size={18}/>I’m here — mark as visited</button> : <button className="button visit-done" disabled={!feedbackComplete} onClick={finishVisit}><Check size={18}/>{feedbackComplete ? 'Done · back to places' : 'Choose both answers to finish'}</button> : <button className="place-detail-bottom-back" onClick={closeDetails}><ArrowLeft size={17}/>Back to places</button>}</div>
+      <div className="place-detail-bottom-bar">{visitMode ? visitStage === 'journey' ? <button className="button visit-arrived" onClick={() => { setVisitFeedbackStep(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment) ? 'recommendation' : 'sentiment'); setVisitSaveError(''); setVisitStage('outro'); }}><Check size={18}/>I’m here — mark as visited</button> : <button className="button visit-done" disabled={!feedbackComplete || visitFinishing} onClick={() => void finishVisit()}><Check size={18}/>{visitFinishing ? 'Heading to the Map…' : feedbackComplete ? 'Complete visit · open Map' : 'Answer both questions to finish'}</button> : <button className="place-detail-bottom-back" onClick={closeDetails}><ArrowLeft size={17}/>Back to places</button>}</div>
     </section></div>, document.body)}
   </>;
 }
