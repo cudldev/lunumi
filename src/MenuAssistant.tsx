@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { classifyMenuLine, loadMenuClassifier, type MenuClassifier } from './menu-classifier';
 
@@ -9,6 +10,17 @@ type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: str
 const MENU_CACHE_KEY = 'lunumi:menu-cache:v3';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
+const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
+const menuReaderUrl = import.meta.env.VITE_MENU_READER_URL?.trim();
+type CachedMenuSource = { sourceUrl: string; resolvedSourceUrl: string; contentType: string; text: string; fetchedAt: number };
+class MenuSourceCacheDatabase extends Dexie {
+  sources!: Table<CachedMenuSource, string>;
+  constructor() {
+    super('lunumi-menu-source-cache');
+    this.version(1).stores({ sources: 'sourceUrl,fetchedAt' });
+  }
+}
+const menuSourceCache = new MenuSourceCacheDatabase();
 
 type LanguageModule = { name: string; clues: RegExp[]; dietSignals: Array<[RegExp, string]>; headings: RegExp };
 const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> = {
@@ -197,6 +209,80 @@ function writeCachedMenu(sourceUrl: string, resolvedSourceUrl: string, menu: Par
   }
 }
 
+async function readCachedMenuSource(sourceUrl: string): Promise<CachedMenuSource | null> {
+  try {
+    const cached = await menuSourceCache.sources.get(sourceUrl);
+    if (!cached || cached.text.length > 500_000 || !Number.isFinite(cached.fetchedAt)) return null;
+    const age = Date.now() - cached.fetchedAt;
+    return age >= 0 && age < MENU_SOURCE_CACHE_STALE_MS ? cached : null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveCachedMenuSource(entry: CachedMenuSource): Promise<void> {
+  try {
+    await menuSourceCache.sources.put(entry);
+    await menuSourceCache.sources.where('fetchedAt').below(Date.now() - MENU_SOURCE_CACHE_STALE_MS).delete();
+  } catch { /* menu remains available for this session when browser storage is full or blocked */ }
+}
+
+async function requestMenuSource(sourceUrl: string, signal: AbortSignal): Promise<CachedMenuSource> {
+  const parsedUrl = new URL(sourceUrl);
+  if (parsedUrl.protocol !== 'https:' || parsedUrl.username || parsedUrl.password) {
+    throw new Error('Only public HTTPS menu pages can be read automatically.');
+  }
+
+  let text: string;
+  let contentType: string;
+  let resolvedSourceUrl = parsedUrl.href;
+  if (menuReaderUrl) {
+    const response = await fetch(menuReaderUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: parsedUrl.href }),
+      signal,
+      credentials: 'omit',
+    });
+    const result = await response.json() as { text?: string; contentType?: string; sourceUrl?: string; error?: string };
+    if (!response.ok) throw new Error(result.error || `The menu reader could not fetch this page (${response.status}).`);
+    text = (result.text || '').slice(0, 500_000);
+    contentType = result.contentType || '';
+    resolvedSourceUrl = result.sourceUrl || parsedUrl.href;
+  } else {
+    const response = await fetch(parsedUrl.href, { signal, credentials: 'omit' });
+    if (!response.ok) throw new Error(`The menu page could not be fetched (${response.status}).`);
+    contentType = response.headers.get('content-type') || '';
+    resolvedSourceUrl = response.url || parsedUrl.href;
+    text = await readMenuResponse(response);
+  }
+
+  if (/application\/pdf|image\//i.test(contentType) || /\.pdf(?:$|[?#])/i.test(resolvedSourceUrl)) {
+    throw new Error('This menu is a PDF or image and cannot be read automatically yet. Open the source link instead.');
+  }
+  if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
+    throw new Error('This menu format cannot be read automatically yet.');
+  }
+  if (!text.trim()) throw new Error('The restaurant page did not contain readable text.');
+  const entry = { sourceUrl: parsedUrl.href, resolvedSourceUrl, contentType, text, fetchedAt: Date.now() };
+  await saveCachedMenuSource(entry);
+  return entry;
+}
+
+async function loadMenuSource(sourceUrl: string, signal: AbortSignal): Promise<CachedMenuSource & { refreshError?: string }> {
+  const cached = await readCachedMenuSource(sourceUrl);
+  if (cached && Date.now() - cached.fetchedAt < MENU_CACHE_TTL_MS) return cached;
+  try {
+    return await requestMenuSource(sourceUrl, signal);
+  } catch (cause) {
+    if (signal.aborted) throw cause;
+    if (cached) {
+      return { ...cached, refreshError: cause instanceof Error ? cause.message : 'The menu refresh failed.' };
+    }
+    throw cause;
+  }
+}
+
 type Props = { restaurantName: string; sourceUrl?: string | null };
 
 export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
@@ -241,25 +327,9 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
 
     async function loadMenu() {
       try {
-        const parsedUrl = new URL(menuUrl);
-        if (parsedUrl.protocol !== 'https:' || parsedUrl.username || parsedUrl.password) {
-          throw new Error('Only public HTTPS menu pages can be read automatically.');
-        }
         timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15_000);
-        const response = await fetch(parsedUrl.href, {
-          signal: controller.signal,
-          credentials: 'omit',
-        });
-        if (!response.ok) throw new Error(`The menu page could not be fetched (${response.status}).`);
-        const contentType = response.headers.get('content-type') || '';
-        if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(menuUrl)) {
-          throw new Error('This menu is a PDF and cannot be read automatically yet.');
-        }
-        if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
-          throw new Error('This menu format cannot be read automatically yet.');
-        }
-        const body = await readMenuResponse(response);
-        const readable = feedText(body, contentType);
+        const source = await loadMenuSource(menuUrl, controller.signal);
+        const readable = feedText(source.text, source.contentType);
         const detectedLanguage = detectLanguage(readable);
         let classifier: MenuClassifier | null = null;
         if (detectedLanguage === 'en') {
@@ -272,8 +342,11 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
           setNotes(extracted.notes);
           setLanguage(detectedLanguage);
           setModelUsed(Boolean(classifier));
-          setVerifiedSourceUrl(response.url || menuUrl);
-          setCachedAt(writeCachedMenu(menuUrl, response.url || menuUrl, extracted, detectedLanguage));
+          setVerifiedSourceUrl(source.resolvedSourceUrl);
+          setCachedAt(source.refreshError
+            ? new Date(source.fetchedAt).toISOString()
+            : writeCachedMenu(menuUrl, source.resolvedSourceUrl, extracted, detectedLanguage));
+          if (source.refreshError) setError(`Showing the menu saved on this device from ${new Date(source.fetchedAt).toLocaleString()}; refresh failed: ${source.refreshError}`);
         }
       } catch (cause) {
         if (timedOut) {
@@ -281,7 +354,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
         } else if (!controller.signal.aborted) {
           const message = cause instanceof Error ? cause.message : 'The menu could not be read.';
           setError(/failed to fetch|networkerror|load failed/i.test(message)
-            ? 'This restaurant page could not be read by the browser. It may block cross-site access (CORS); open the source to view the menu.'
+            ? 'Lunumi could not reach the menu source or reader service; the restaurant may block automated requests or its site may be outside the approved list. Open the source to view the menu.'
             : message);
         }
       } finally {
@@ -308,6 +381,8 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
         </div>
         <div className="menu-assistant-diets">{item.diets.length ? item.diets.map(diet => <span key={diet}>{diet}</span>) : <span>Dietary details not stated</span>}</div>
       </li>)}</ul>
+      {cachedAt && <p className="menu-assistant-note">Saved on this device · Updated {new Date(cachedAt).toLocaleString()}</p>}
+      {error && <p className="menu-assistant-note" role="status">{error}</p>}
       <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
       {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
       {modelUsed && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>.</p>}
