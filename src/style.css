@@ -259,6 +259,26 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .detail-section-title{font-family:Georgia,serif;font-size:17px;margin:21px 0 6px;color:#493a31}
 .detail-description{font-size:12px;color:#887c6e;line-height:1.6;margin:0}
 .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.menu-assistant{margin-top:16px;padding:14px;border:1px solid #eadfd2;border-radius:16px;background:#fffaf3}
+.menu-assistant-heading{display:flex;align-items:center;gap:9px;color:#d66b3f}
+.menu-assistant-heading div{display:grid;gap:2px}
+.menu-assistant-heading strong{font-size:14px;color:#493a31}
+.menu-assistant-heading span,.menu-assistant-note{font-size:11px;color:#887c6e;line-height:1.5}
+.menu-assistant-source{display:inline-flex;align-items:center;gap:5px;margin-top:10px;color:#6e8b65;font-size:12px;font-weight:700;text-decoration:none}
+.menu-assistant-source:hover{text-decoration:underline}
+.menu-assistant-read{display:flex;width:100%;justify-content:center;gap:7px;margin-top:11px}
+.menu-assistant-read:disabled{opacity:.55}
+.menu-assistant-spinner{animation:spin .8s linear infinite}
+.menu-assistant-error{margin:9px 0 0;color:#aa4e3c;font-size:11px;line-height:1.5}
+.menu-assistant-error a{color:#8b503d;font-weight:700}
+.menu-assistant-results{margin-top:12px;padding-top:10px;border-top:1px solid #eee2d8}
+.menu-assistant-result-heading{display:flex;align-items:center;justify-content:space-between;color:#493a31;font-size:12px}
+.menu-assistant-results ul{display:grid;gap:8px;max-height:320px;overflow:auto;margin:10px 0;padding:0;list-style:none}
+.menu-assistant-results li{display:grid;gap:5px;padding:9px;border-radius:10px;background:#fff;font-size:12px}
+.menu-assistant-results li>div:first-child{display:grid;gap:3px}
+.menu-assistant-results li>div:first-child span{color:#887c6e;font-size:11px}
+.menu-assistant-diets{display:flex;flex-wrap:wrap;gap:5px}
+.menu-assistant-diets span{padding:3px 7px;border-radius:20px;background:#edf3e9;color:#607d5b;font-size:10px}
 .visit-start,.visit-directions{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:48px;margin-top:19px;border-radius:15px}
 .visit-start span,.visit-directions span{margin-left:auto;font-size:19px}
 .visit-journey{position:relative;display:flex;align-items:center;min-height:166px;padding:24px 28px;overflow:hidden;background:linear-gradient(120deg,#f7e6b5 0%,#f4efd9 48%,#dcebd5 100%)}
