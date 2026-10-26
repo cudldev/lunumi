@@ -76,19 +76,31 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         const targetRect = target.getBoundingClientRect();
         const startWidth = targetRect.width * 2;
         const startHeight = targetRect.height * 2;
-        const centerLeft = (window.innerWidth - startWidth) / 2;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
         const bottomTop = window.innerHeight + 12;
-        const centerY = (window.innerHeight - startHeight) / 2 - bottomTop;
-        const destinationX = targetRect.left + targetRect.width / 2 - window.innerWidth / 2;
-        const destinationY = targetRect.top + targetRect.height / 2 - (bottomTop + startHeight / 2);
-        const destinationScale = targetRect.width / startWidth;
+        const startCenterY = bottomTop + startHeight / 2;
+        const targetCenterX = targetRect.left + targetRect.width / 2;
+        const targetCenterY = targetRect.top + targetRect.height / 2;
+        const jumpFrame = (center: number, scale: number, rotation: number, offset: number, opacity = 1, easing?: string): Keyframe => {
+          const width = startWidth * scale;
+          const height = startHeight * scale;
+          return { opacity, left: `${centerX - width / 2}px`, top: `${center - height / 2}px`, width: `${width}px`, height: `${height}px`, transform: `rotate(${rotation}deg)`, offset, ...(easing ? { easing } : {}) };
+        };
+        const travelFrame = (progress: number, rotation: number, offset: number): Keyframe => {
+          const width = startWidth + (targetRect.width - startWidth) * progress;
+          const height = startHeight + (targetRect.height - startHeight) * progress;
+          const x = centerX + (targetCenterX - centerX) * progress;
+          const y = centerY + (targetCenterY - centerY) * progress;
+          return { opacity: 1, left: `${x - width / 2}px`, top: `${y - height / 2}px`, width: `${width}px`, height: `${height}px`, transform: `rotate(${rotation}deg)`, offset, easing: 'cubic-bezier(.2,.72,.25,1)' };
+        };
 
         overlay = document.createElement('img');
         overlay.src = visitJumpSrc;
         overlay.alt = '';
         overlay.setAttribute('aria-hidden', 'true');
         overlay.className = 'visit-flight-character';
-        Object.assign(overlay.style, { left: `${centerLeft}px`, top: `${bottomTop}px`, width: `${startWidth}px`, height: `${startHeight}px` });
+        Object.assign(overlay.style, { left: `${centerX - startWidth / 2}px`, top: `${bottomTop}px`, width: `${startWidth}px`, height: `${startHeight}px`, transformOrigin: 'center center' });
         try {
           await Promise.all([visitJumpPreload.decode(), visitWalkFrameAPreload.decode(), overlay.decode()]);
         } catch {
@@ -99,13 +111,13 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         document.body.appendChild(overlay);
         setVisitFlightActive(true);
         animation = overlay.animate([
-          { opacity: 0, transform: 'translate3d(0,0,0) scale(.76) rotate(-6deg)', offset: 0, easing: 'cubic-bezier(.22,.72,.28,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY - 42}px,0) scale(1.04) rotate(-4deg)`, offset: 0.344, easing: 'cubic-bezier(.18,.85,.25,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(.97) rotate(3deg)`, offset: 0.467, easing: 'cubic-bezier(.2,.7,.3,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.58, easing: 'cubic-bezier(.2,.72,.25,1)' },
-          { opacity: 1, transform: `translate3d(${destinationX / 4}px,${destinationY / 4}px,0) scale(${(3 + destinationScale) / 4}) rotate(12deg)`, offset: 0.685, easing: 'cubic-bezier(.2,.72,.25,1)' },
-          { opacity: 1, transform: `translate3d(${destinationX * 3 / 4}px,${destinationY * 3 / 4}px,0) scale(${(1 + 3 * destinationScale) / 4}) rotate(-12deg)`, offset: 0.895, easing: 'cubic-bezier(.2,.72,.25,1)' },
-          { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(12deg)`, offset: 1 },
+          jumpFrame(startCenterY, 0.76, -6, 0, 0, 'cubic-bezier(.22,.72,.28,1)'),
+          jumpFrame(centerY - 42, 1.04, -4, 0.344, 1, 'cubic-bezier(.18,.85,.25,1)'),
+          jumpFrame(centerY, 0.97, 3, 0.467, 1, 'cubic-bezier(.2,.7,.3,1)'),
+          jumpFrame(centerY, 1, 0, 0.58, 1, 'cubic-bezier(.2,.72,.25,1)'),
+          travelFrame(0.25, 12, 0.685),
+          travelFrame(0.75, -12, 0.895),
+          travelFrame(1, 12, 1),
         ], { duration: 1810, fill: 'forwards' });
         walkTimer = window.setTimeout(() => { if (!cancelled && overlay) overlay.src = visitWalkFrameASrc; }, 1050);
         await animation.finished.catch(() => undefined);
