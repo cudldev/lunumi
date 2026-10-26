@@ -628,6 +628,98 @@
       "lastValidatedAt": "2026-10-26"
     },
     {
+      "id": "frd:espoo:kotipizza-lahderannantie-22",
+      "name": "Kotipizza",
+      "city": "Espoo",
+      "address": {
+        "street": "Lähderannantie 22",
+        "postalCode": "02720",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-lahderanta-lahderannantie",
+      "category": "restaurant",
+      "lat": 60.2395171,
+      "lon": 24.7403192,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/10307349697",
+          "recordId": "node/10307349697",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-lahderanta-lahderannantie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-pihatorma-1",
+      "name": "Kotipizza",
+      "branch": "Olari",
+      "city": "Espoo",
+      "address": {
+        "street": "Pihatörmä 1",
+        "postalCode": "02240",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-olari-pihatorma-kauppakeskus-lansikeskus",
+      "category": "restaurant",
+      "lat": 60.1654791,
+      "lon": 24.7295512,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11813827597",
+          "recordId": "node/11813827597",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-olari-pihatorma-kauppakeskus-lansikeskus",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
       "id": "frd:espoo:makaronitehdas-ainoa",
       "name": "Makaronitehdas",
       "branch": "Ainoa",
@@ -4950,6 +5042,192 @@
       "lastValidatedAt": "2026-10-26"
     },
     {
+      "id": "frd:helsinki:kotipizza-kaanaankatu-1",
+      "name": "Kotipizza",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaanaankatu 1",
+        "postalCode": "00560",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-toukola-kaanaankatu",
+      "category": "restaurant",
+      "lat": 60.2114554,
+      "lon": 24.9799223,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11784643814",
+          "recordId": "node/11784643814",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-toukola-kaanaankatu",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-kauppakartanonkatu-16a",
+      "name": "Kotipizza",
+      "branch": "Helsinki Itäkeskus, Kauppakartanonkatu",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kauppakartanonkatu 16a",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-itakeskus-kauppakartanonkatu",
+      "category": "restaurant",
+      "lat": 60.2076136,
+      "lon": 25.0822305,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11787658922",
+          "recordId": "node/11787658922",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-itakeskus-kauppakartanonkatu",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-yliskylan-puistokatu-4",
+      "name": "Kotipizza",
+      "branch": "Helsinki Laajasalo",
+      "city": "Helsinki",
+      "address": {
+        "street": "Yliskylän puistokatu 4",
+        "postalCode": "00840",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-laajasalo-yliskylan-puistokatu-kauppakeskus-saari",
+      "category": "restaurant",
+      "lat": 60.1793833,
+      "lon": 25.0520395,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/1079281944",
+          "recordId": "way/1079281944",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-laajasalo-yliskylan-puistokatu-kauppakeskus-saari",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-asesepankuja-2",
+      "name": "Kotipizza",
+      "branch": "Helsinki Metsälä Neste Huili",
+      "city": "Helsinki",
+      "address": {
+        "street": "Asesepänkuja 2",
+        "postalCode": "00620",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-metsala-asesepankuja-neste-huili",
+      "category": "restaurant",
+      "lat": 60.2205537,
+      "lon": 24.9405535,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/8912174112",
+          "recordId": "node/8912174112",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-metsala-asesepankuja-neste-huili",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
       "id": "frd:helsinki:la-famiglia",
       "name": "La Famiglia",
       "city": "Helsinki",
@@ -7066,60 +7344,6 @@
       "lastValidatedAt": "2026-10-26"
     },
     {
-      "id": "frd:helsinki:subway-hermannin-rantatie-5",
-      "name": "Subway",
-      "city": "Helsinki",
-      "address": {
-        "street": "Hermannin rantatie 5",
-        "postalCode": "00580",
-        "country": "FI"
-      },
-      "website": "https://restaurants.subway.com/fi/suomi/helsinki/hermannin-rantatie-5",
-      "category": "restaurant",
-      "lat": 60.1868052,
-      "lon": 24.9794686,
-      "sourceRecords": [
-        {
-          "source": "OpenStreetMap",
-          "url": "https://www.openstreetmap.org/node/6060938325",
-          "recordId": "node/6060938325",
-          "fields": [
-            "name",
-            "city",
-            "address",
-            "lat",
-            "lon"
-          ],
-          "checkedAt": "2026-10-26",
-          "license": "ODbL-1.0",
-          "attribution": "© OpenStreetMap contributors"
-        },
-        {
-          "source": "Subway official restaurant page",
-          "url": "https://restaurants.subway.com/fi/suomi/helsinki/hermannin-rantatie-5",
-          "fields": [
-            "operatingStatus",
-            "website",
-            "branch",
-            "category"
-          ],
-          "checkedAt": "2026-10-26",
-          "note": "Current official branch page identifies Helsinki Redi and lists regular opening hours. Address and coordinates are sourced from OpenStreetMap."
-        }
-      ],
-      "checkedAt": "2026-10-26",
-      "validated": true,
-      "lastValidatedAt": "2026-10-26",
-      "branch": "Redi",
-      "photo": {
-        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/Subway_sandwich_at_Subway_Redi_on_an_evening_in_December_2025.jpg/960px-Subway_sandwich_at_Subway_Redi_on_an_evening_in_December_2025.jpg?utm_campaign=index&utm_content=thumbnail&utm_source=commons.wikimedia.org",
-        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Subway_sandwich_at_Subway_Redi_on_an_evening_in_December_2025.jpg",
-        "attribution": "JIP",
-        "license": "CC BY-SA 4.0",
-        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
-      }
-    },
-    {
       "id": "frd:helsinki:subway-iso-roobertinkatu-23",
       "name": "Subway",
       "city": "Helsinki",
@@ -7758,6 +7982,60 @@
       "checkedAt": "2026-10-26",
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:subway-hermannin-rantatie-5",
+      "name": "Subway",
+      "city": "Helsinki",
+      "address": {
+        "street": "Hermannin rantatie 5",
+        "postalCode": "00580",
+        "country": "FI"
+      },
+      "website": "https://restaurants.subway.com/fi/suomi/helsinki/hermannin-rantatie-5",
+      "category": "restaurant",
+      "lat": 60.1868052,
+      "lon": 24.9794686,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6060938325",
+          "recordId": "node/6060938325",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Subway official restaurant page",
+          "url": "https://restaurants.subway.com/fi/suomi/helsinki/hermannin-rantatie-5",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "branch",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current official branch page identifies Helsinki Redi and lists regular opening hours. Address and coordinates are sourced from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26",
+      "branch": "Redi",
+      "photo": {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/Subway_sandwich_at_Subway_Redi_on_an_evening_in_December_2025.jpg/960px-Subway_sandwich_at_Subway_Redi_on_an_evening_in_December_2025.jpg?utm_campaign=index&utm_content=thumbnail&utm_source=commons.wikimedia.org",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Subway_sandwich_at_Subway_Redi_on_an_evening_in_December_2025.jpg",
+        "attribution": "JIP",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+      }
     },
     {
       "id": "frd:helsinki:vltava",
