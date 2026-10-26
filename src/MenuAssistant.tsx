@@ -3,7 +3,7 @@ import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { classifyMenuLine, loadMenuClassifier, type MenuClassifier } from './menu-classifier';
 
-type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; allergenInfo: string[]; sourceText: string };
+type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; allergenInfo: string[]; sourceText: string; imageUrl?: string };
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
@@ -26,8 +26,8 @@ type LanguageModule = { name: string; clues: RegExp[]; dietSignals: Array<[RegEx
 const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> = {
   fi: {
     name: 'Finnish',
-    clues: [/\blounas\b/i, /\bmaanantai|tiistai|keskiviikko|torstai|perjantai\b/i, /\bkeitto|salaatti|kasvisruoka|gluteeniton\b/i],
-    dietSignals: [[/\bvegaan\w*\b/i, 'Marked vegan'], [/\bkasvisruoka\b/i, 'Marked vegetarian'], [/\bgluteeniton\b/i, 'Marked gluten-free'], [/\bmaidoton\b/i, 'Marked dairy-free'], [/\blaktoositon\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:geeninen)?\b/i, 'Marked keto']],
+    clues: [/\blounas\b/i, /\bmaanantai|tiistai|keskiviikko|torstai|perjantai\b/i, /\bkeitto|salaatti|kasvis\w*|gluteenittom\w*\b/i],
+    dietSignals: [[/\bvegaan\w*\b/i, 'Marked vegan'], [/\bkasvis\w*\b/i, 'Marked vegetarian'], [/\bgluteeniton\b/i, 'Marked gluten-free'], [/\bmaidoton\b/i, 'Marked dairy-free'], [/\blaktoositon\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:geeninen)?\b/i, 'Marked keto']],
     headings: /^(?:lounas|ruokalista|ruokalistat|jälkiruoat?|juomat|allergeenit|maanantai|tiistai|keskiviikko|torstai|perjantai)$/i,
   },
   sv: {
@@ -45,13 +45,13 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
 };
 
 const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
-  fi: /^(?:alkuruoat|pääruoat|jälkiruoat?|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|maanantai|tiistai|keskiviikko|torstai|perjantai)$/i,
+  fi: /^(?:alkuruoat|pääruoat|jälkiruoat?|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai)$/i,
   sv: /^(?:förrätter|huvudrätter|efterrätter|drycker|burgare|sallader|soppor|tillbehör|dagens|måndag|tisdag|onsdag|torsdag|fredag)$/i,
   en: /^(?:starters?|appetizers?|mains?|main courses|burgers?|sandwiches|salads?|soups?|sides|desserts?|drinks|lunch|dinner|specials?|monday|tuesday|wednesday|thursday|friday)$/i,
 };
 
 const allergenNotices: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
-  fi: /^(?:allerg(?:ia|iat|eenit|eeneja)\b|sisältää\b|saattaa sisältää\b)/i,
+  fi: /^(?:\*?\s*(?:allerg(?:ia|iat|eenit|eeneja)\b|sisältää\b|saattaa sisältää\b)|.*(?:samassa öljyssä|emme takaa.*gluteenittomuutta))/i,
   sv: /^(?:allerg(?:i|ener)\b|innehåller\b|kan innehålla\b)/i,
   en: /^(?:allerg(?:en|ens)\b|contains\b|may contain\b)/i,
 };
@@ -64,14 +64,64 @@ function detectLanguage(value: string): MenuLanguage {
   return scores[0]?.score && scores[0].score > (scores[1]?.score || 0) ? scores[0].language : 'unknown';
 }
 
-function cleanMenuText(value: string): string {
+function splitMenuNotice(value: string): string[] {
+  const sentences = value.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(part => part.trim()).filter(Boolean) ?? [value];
+  const chunks: string[] = [];
+  for (const sentence of sentences) {
+    let chunk = '';
+    for (const word of sentence.split(/\s+/)) {
+      const next = chunk ? `${chunk} ${word}` : word;
+      if (next.length > 220 && chunk) { chunks.push(chunk); chunk = word; }
+      else chunk = next;
+    }
+    if (chunk) chunks.push(chunk);
+  }
+  return chunks;
+}
+
+function safeMenuImage(value: string, sourceUrl?: string): string | undefined {
+  try {
+    const image = new URL(value, sourceUrl);
+    const source = sourceUrl ? new URL(sourceUrl) : null;
+    const sameSite = source && (image.hostname === source.hostname || image.hostname.endsWith(`.${source.hostname}`));
+    const hesburgerCdn = source?.hostname.endsWith('hesburger.fi') && image.hostname === 'fi-www.hesburger.net';
+    return image.protocol === 'https:' && !image.username && !image.password && !image.port && (sameSite || hesburgerCdn)
+      ? image.href
+      : undefined;
+  } catch { return undefined; }
+}
+
+function cleanMenuText(value: string, sourceUrl?: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
   document.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(node => node.remove());
-  return document.body.innerText || document.body.textContent || '';
+  const productSections = [...document.querySelectorAll('.category')].map(category => {
+    const heading = category.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '';
+    const products = [...category.querySelectorAll('a.product-item')].map(product => {
+      const name = product.querySelector('.text,[itemprop="name"]')?.textContent?.trim()
+        || product.getAttribute('aria-label')?.trim()
+        || product.textContent?.replace(/\s+/g, ' ').trim()
+        || '';
+      const image = product.querySelector('img')?.getAttribute('src')
+        || product.querySelector('img')?.getAttribute('data-src')
+        || '';
+      const imageUrl = safeMenuImage(image, sourceUrl);
+      return [imageUrl ? `menu-image: ${imageUrl}` : '', name].filter(Boolean).join('\n');
+    }).filter(Boolean);
+    const notices = [...category.querySelectorAll('p')].map(note => note.textContent?.replace(/\s+/g, ' ').trim() || '').filter(Boolean);
+    return [heading, ...products, ...notices].filter(Boolean).join('\n');
+  }).filter(Boolean);
+  if (productSections.length) return productSections.join('\n');
+
+  // DOMParser creates a detached document where innerText can collapse the whole page.
+  // Keep semantic content blocks on separate lines for the local item parser.
+  const blocks = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')]
+    .map(node => node.textContent?.replace(/\s+/g, ' ').trim() || '')
+    .filter(text => text.length > 1);
+  return blocks.length ? blocks.join('\n') : document.body.textContent?.replace(/\s+/g, ' ').trim() || '';
 }
 
-function feedText(value: string, contentType: string): string {
+function feedText(value: string, contentType: string, sourceUrl?: string): string {
   if (/json/i.test(contentType) || /^\s*[\[{]/.test(value)) {
     try {
       const data = JSON.parse(value) as { items?: unknown[]; [key: string]: unknown };
@@ -91,7 +141,7 @@ function feedText(value: string, contentType: string): string {
     if (entries.length) return entries.map(entry => ['title', 'description', 'summary', 'content', 'encoded', 'price']
       .map(tag => entry.getElementsByTagName(tag).item(0)?.textContent?.trim()).filter(Boolean).join(' · ')).join('\n');
   }
-  return cleanMenuText(value);
+  return cleanMenuText(value, sourceUrl);
 }
 
 async function readMenuResponse(response: Response): Promise<string> {
@@ -126,11 +176,21 @@ function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassi
   const isSection = (line: string) => sectionHeadings[activeLanguage].test(line) || modules.some(module => module.headings.test(line));
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
   let section = '';
+  let pendingImageUrl: string | undefined;
   for (const line of lines) {
-    if (line.length < 3 || line.length > 220 || /^https?:\/\//i.test(line)) continue;
+    const image = line.match(/^menu-image:\s*(https:\/\/\S+)$/i);
+    if (image) { pendingImageUrl = image[1]; continue; }
+    if (line.length < 3) continue;
     if (isSection(line)) { section = line; continue; }
     const hasAllergenInfo = isAllergenNotice(line);
-    if (hasAllergenInfo && !pricePattern.test(line)) { if (notes.length < 30 && !notes.includes(line)) notes.push(line); continue; }
+    if (hasAllergenInfo && !pricePattern.test(line)) {
+      for (const note of splitMenuNotice(line)) {
+        if (notes.length >= 30) break;
+        if (!notes.includes(note)) notes.push(note);
+      }
+      continue;
+    }
+    if (line.length > 220 || /^https?:\/\//i.test(line)) continue;
     const price = line.match(pricePattern);
     const parts = line.split(/\s+[·|—–]\s+|\s{2,}/);
     const name = (parts[0] || line).replace(/\s+(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?.*$/, '').trim();
@@ -149,12 +209,13 @@ function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassi
       }
     }
     const key = name.toLocaleLowerCase();
-    if (seen.has(key)) continue;
+    if (seen.has(key)) { pendingImageUrl = undefined; continue; }
     seen.add(key);
     const diets = [...new Set(modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)))];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
-    found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: line });
+    found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: line, imageUrl: pendingImageUrl });
+    pendingImageUrl = undefined;
     if (found.length >= 100) break;
   }
   return { items: found, notes };
@@ -174,6 +235,7 @@ function validCachedMenu(value: unknown): value is CachedMenu {
       && typeof item.description === 'string' && item.description.length <= 240
       && typeof item.price === 'string' && item.price.length <= 30
       && typeof item.sourceText === 'string' && item.sourceText.length <= 500
+      && (item.imageUrl === undefined || (typeof item.imageUrl === 'string' && item.imageUrl.length <= 2048 && /^https:\/\//i.test(item.imageUrl)))
       && Array.isArray(item.allergenInfo) && item.allergenInfo.length <= 10 && item.allergenInfo.every(note => typeof note === 'string' && note.length <= 220)
       && Array.isArray(item.diets) && item.diets.every(diet => typeof diet === 'string' && diet.length <= 40));
 }
@@ -329,7 +391,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       try {
         timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15_000);
         const source = await loadMenuSource(menuUrl, controller.signal);
-        const readable = feedText(source.text, source.contentType);
+        const readable = feedText(source.text, source.contentType, source.resolvedSourceUrl);
         const detectedLanguage = detectLanguage(readable);
         let classifier: MenuClassifier | null = null;
         if (detectedLanguage === 'en') {
@@ -375,6 +437,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     {items.length > 0 ? <>
       {notes.length > 0 && <aside className="menu-assistant-menu-notes"><strong>Menu information</strong>{notes.map((note, index) => <p key={`${note}-${index}`}>{note}</p>)}</aside>}
       <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}>
+        {item.imageUrl && <img className="menu-assistant-item-image" src={item.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />}
         <div>{item.section && <span className="menu-assistant-section">{item.section}</span>}<strong>{item.name}</strong>{item.description && <span>{item.description}</span>}{item.price && <span>{item.price}</span>}
           {item.allergenInfo.map((note, noteIndex) => <span className="menu-assistant-allergen" key={`${note}-${noteIndex}`}>{note}</span>)}
           <details className="menu-assistant-evidence"><summary>Source text</summary><span>{item.sourceText}</span></details>
