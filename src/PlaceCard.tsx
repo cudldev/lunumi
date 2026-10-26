@@ -19,9 +19,9 @@ const safeUrl = (value?: string) => {
 };
 
 type VisitOrigin = 'target' | 'explored' | 'nearby' | 'visited';
-type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; initiallyOpen?: boolean; onDismiss?: () => void };
+type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; onTransitionStart?: () => void; onTransitionCancel?: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
 
-export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn, initiallyOpen = false, onDismiss }: Props) {
+export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn, onTransitionStart, onTransitionCancel, initiallyOpen = false, onDismiss }: Props) {
   const [details, setDetails] = useState(initiallyOpen);
   const [visitMode, setVisitMode] = useState(false);
   const [visitStage, setVisitStage] = useState<'journey' | 'outro'>('journey');
@@ -160,6 +160,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
   const finishVisit = async () => {
     if (!feedbackComplete || visitFinishingRef.current) return;
     visitFinishingRef.current = true;
+    onTransitionStart?.();
     setVisitFinishing(true);
     setVisitSaveError('');
     const mascot = visitOutroMascotRef.current;
@@ -224,6 +225,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       mapTab?.classList.remove('visit-return-target');
       visitFinishingRef.current = false;
       setVisitFinishing(false);
+      onTransitionCancel?.();
       setVisitSaveError('Your visit could not be saved. Please try again.');
       return;
     }
@@ -231,7 +233,8 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
     if (flight && mapTab) {
       if (mascot?.isConnected) closeDetails();
       try {
-        await flight.animate(flightFrames, { duration: 2100, fill: 'forwards' }).finished.catch(() => undefined);
+        await new Promise(resolve => window.setTimeout(resolve, 650));
+        await flight.animate(flightFrames, { duration: 3000, fill: 'forwards' }).finished.catch(() => undefined);
       } finally {
         flight.remove();
         onReturn(place.id, arrivalFrom);
@@ -251,7 +254,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       <button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={event => { event.stopPropagation(); onFavorite(); }}>♥</button></div>
       <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><button className="card-open" type="button" aria-label={`View ${place.name}`} onClick={() => setDetails(true)}>View place <ArrowLeft size={14}/></button></div>
     </article>
-    {details && createPortal(<div className="place-detail-backdrop" role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}${visitFlightActive ? ' visit-flight-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`}>
+    {details && createPortal(<div ref={node=>node?.toggleAttribute("inert", visitFinishing)} className="place-detail-backdrop" role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}${visitFlightActive ? ' visit-flight-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`}>
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className={`visit-journey${visitStage === 'outro' ? ' visit-outro' : ''}`} aria-label={visitStage === 'outro' ? `Visit feedback for ${place.name}` : `Starting a visit to ${place.name}`}>

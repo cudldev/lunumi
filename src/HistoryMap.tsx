@@ -27,6 +27,9 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
   const pendingPan = useRef<{ x: number; y: number } | null>(null);
   const panFrame = useRef<number | null>(null);
   const handledArrival = useRef<string | null>(null);
+  const activePointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinchStart = useRef<{ distance: number } | null>(null);
+  const [arrivalStage, setArrivalStage] = useState<'zooming' | 'pin' | 'name' | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [zoomOffset, setZoomOffset] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -119,6 +122,24 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
     if (!fitted || !viewport) return;
     setZoomOffset(current => Math.max(MIN_ZOOM - fitted.zoom, Math.min(MAX_ZOOM - fitted.zoom, current + delta)));
   };
+  const zoomAt = (delta: number, clientX: number, clientY: number) => {
+    if (!fitted || !viewport) return;
+    const map = mapRef.current;
+    if (!map) return;
+    const rect = map.getBoundingClientRect();
+    const zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, viewport.zoom + delta));
+    if (zoom === viewport.zoom) return;
+    const ratio = 2 ** (zoom - viewport.zoom);
+    const offsetX = clientX - rect.left - size.width / 2;
+    const offsetY = clientY - rect.top - size.height / 2;
+    const anchorX = viewport.centerX + offsetX;
+    const anchorY = viewport.centerY + offsetY;
+    const nextCenterX = anchorX * ratio - offsetX;
+    const nextCenterY = anchorY * ratio - offsetY;
+    const baseScale = 2 ** (zoom - fitted.zoom);
+    setZoomOffset(zoom - fitted.zoom);
+    setPan({ x: nextCenterX - fitted.centerX * baseScale, y: nextCenterY - fitted.centerY * baseScale });
+  };
   const zoomTo = (lat: number, lon: number) => {
     if (!fitted || !viewport) return;
     const zoom = Math.min(MAX_ZOOM, viewport.zoom + 2);
@@ -133,7 +154,7 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
     const place = located.find(entry => entry.id === visitArrival.placeId);
     if (!place) return;
     handledArrival.current = visitArrival.placeId;
-    const zoom = Math.min(MAX_ZOOM, fitted.zoom + 3);
+    const zoom = Math.min(MAX_ZOOM, Math.max(fitted.zoom + 5, 16));
     const scale = 2 ** (zoom - fitted.zoom);
     const point = worldPoint(place.place.lat, place.place.lon, zoom);
     const worldSize = TILE_SIZE * 2 ** zoom;
@@ -141,16 +162,62 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
     setPan({ x: wrap(point.x, worldSize) - fitted.centerX * scale, y: point.y - fitted.centerY * scale });
   }, [visitArrival?.placeId, fitted, located, size.height, size.width]);
   useEffect(() => {
+    if (!visitArrival) { setArrivalStage(null); return; }
+    setArrivalStage('zooming');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const pinTimer = window.setTimeout(() => setArrivalStage('pin'), reducedMotion ? 0 : 1050);
+    const nameTimer = window.setTimeout(() => setArrivalStage('name'), reducedMotion ? 150 : 2950);
+    return () => { window.clearTimeout(pinTimer); window.clearTimeout(nameTimer); };
+  }, [visitArrival?.placeId]);
+  useEffect(() => {
+    if (arrivalStage !== 'name') return;
+    const row = mapRef.current?.parentElement?.querySelector<HTMLElement>('.history-map-row.is-visit-arrival-name');
+    row?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+  }, [arrivalStage]);
+  useEffect(() => {
     if (!visitArrival || !onArrivalDone) return;
-    const timer = window.setTimeout(() => onArrivalDone(visitArrival.placeId), 3000);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timer = window.setTimeout(() => onArrivalDone(visitArrival.placeId), reducedMotion ? 700 : 4450);
     return () => window.clearTimeout(timer);
   }, [visitArrival?.placeId, visitArrival?.from]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      if (event.deltaY !== 0) zoomAt(event.deltaY > 0 ? -1 : 1, event.clientX, event.clientY);
+    };
+    map.addEventListener('wheel', onWheel, { passive: false });
+    return () => map.removeEventListener('wheel', onWheel);
+  }, [fitted, size, viewport]);
   const startPan = (event: PointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest('button,a')) return;
-    dragStart.current = { x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y };
+    activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     event.currentTarget.setPointerCapture(event.pointerId);
+    if (activePointers.current.size === 2) {
+      const points = [...activePointers.current.values()];
+      pinchStart.current = { distance: Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) };
+      dragStart.current = null;
+      return;
+    }
+    dragStart.current = { x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y };
   };
   const movePan = (event: PointerEvent<HTMLDivElement>) => {
+    if (!activePointers.current.has(event.pointerId)) return;
+    activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (activePointers.current.size >= 2) {
+      const points = [...activePointers.current.values()];
+      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      const start = pinchStart.current;
+      if (start && distance > start.distance * 1.28) {
+        zoomAt(1, (points[0].x + points[1].x) / 2, (points[0].y + points[1].y) / 2);
+        pinchStart.current = { distance };
+      } else if (start && distance < start.distance * .78) {
+        zoomAt(-1, (points[0].x + points[1].x) / 2, (points[0].y + points[1].y) / 2);
+        pinchStart.current = { distance };
+      }
+      return;
+    }
     if (!dragStart.current) return;
     pendingPan.current = { x: dragStart.current.panX - (event.clientX - dragStart.current.x), y: dragStart.current.panY - (event.clientY - dragStart.current.y) };
     if (panFrame.current !== null) return;
@@ -159,7 +226,9 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
       if (pendingPan.current) setPan(pendingPan.current);
     });
   };
-  const stopPan = () => {
+  const stopPan = (event: PointerEvent<HTMLDivElement>) => {
+    activePointers.current.delete(event.pointerId);
+    pinchStart.current = null;
     dragStart.current = null;
     if (panFrame.current !== null) window.cancelAnimationFrame(panFrame.current);
     panFrame.current = null;
@@ -183,7 +252,7 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
         <div className="history-map-tiles" aria-hidden="true">{viewport.tiles.map(tile => <img key={`${tile.z}/${tile.x}/${tile.y}`} src={`https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} style={{ left: tile.left, top: tile.top }} />)}</div>
         <div className="history-map-markers">{markers.map((marker, index) => marker.kind === 'cluster'
           ? <button key={`cluster-${index}`} className="history-map-cluster" style={{ left: marker.x, top: marker.y }} onClick={() => zoomTo(marker.lat, marker.lon)} aria-label={`Zoom in on ${marker.entries.length} nearby restaurants`} title={`${marker.entries.length} nearby restaurants`}>{marker.entries.length}</button>
-          : <button key={marker.entry.id} className={`history-map-pin ${marker.entry.isUnvisited ? 'is-nearby' : marker.entry.status === 'target' ? 'is-target' : marker.entry.status === 'visited' ? 'is-visited' : 'is-explored'}${visitArrival?.placeId === marker.entry.id && visitArrival.from !== 'visited' ? ` is-visit-arrival from-${visitArrival.from}` : ''}`} style={{ left: marker.x, top: marker.y }} onClick={() => onSelect(marker.entry)} aria-label={`Open ${marker.entry.place.name}`} title={marker.entry.place.name}><MapPin size={22}/>{marker.number && <span>{marker.number}</span>}</button>)}</div>
+          : <button key={marker.entry.id} className={`history-map-pin ${marker.entry.isUnvisited ? 'is-nearby' : marker.entry.status === 'target' ? 'is-target' : marker.entry.status === 'visited' ? 'is-visited' : 'is-explored'}${visitArrival?.placeId === marker.entry.id && visitArrival.from !== 'visited' && arrivalStage === 'pin' ? ` is-visit-arrival from-${visitArrival.from}` : ''}`} style={{ left: marker.x, top: marker.y }} onClick={() => onSelect(marker.entry)} aria-label={`Open ${marker.entry.place.name}`} title={marker.entry.place.name}><MapPin size={22}/>{marker.number && <span>{marker.number}</span>}</button>)}</div>
       </>}
       {viewport && <>
         <nav className="history-map-controls" aria-label="Map navigation">
@@ -196,8 +265,8 @@ export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalD
       <a className="history-map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>
       <span className="history-map-local">Saved on this device</span>
     </div>
-    <p className="history-map-note">Nearby pins are places not marked visited in your history. Clustered pins expand as you zoom; drag to pan, use Fit to reset, or use arrow keys when the map is focused. OpenStreetMap receives only the map tiles you view.</p>
-    <div className="history-map-list">{[...historyEntries, ...nearbyEntries.slice(0, MAX_NEARBY_ROWS)].map((entry, index) => <button key={entry.id} className="history-map-row" onClick={() => onSelect(entry)}><span className="history-map-number">{index + 1}</span><span>{entry.place.name}<small>{entry.isUnvisited ? 'Nearby · not marked visited' : entry.status === 'visited' ? 'Visited' : entry.sentiment === 'favorite' ? 'Favorite' : entry.status === 'target' ? 'To try' : 'Explored'}</small></span><MapPin size={16}/></button>)}</div>
+    <p className="history-map-note">Nearby pins are places not marked visited in your history. Scroll or pinch to zoom, drag to pan, use Fit to reset, or use arrow keys when the map is focused. OpenStreetMap receives only the map tiles you view.</p>
+    <div className="history-map-list">{[...historyEntries, ...nearbyEntries.slice(0, MAX_NEARBY_ROWS)].map((entry, index) => <button key={entry.id} className={`history-map-row${visitArrival?.placeId === entry.id && arrivalStage === 'name' ? ' is-visit-arrival-name' : ''}`} onClick={() => onSelect(entry)}><span className="history-map-number">{index + 1}</span><span>{entry.place.name}<small>{entry.isUnvisited ? 'Nearby · not marked visited' : entry.status === 'visited' ? 'Visited' : entry.sentiment === 'favorite' ? 'Favorite' : entry.status === 'target' ? 'To try' : 'Explored'}</small></span><MapPin size={16}/></button>)}</div>
     {nearbyEntries.length > MAX_NEARBY_ROWS && <p className="history-map-note">Showing your history and the 12 closest nearby suggestions in the list; all nearby places are shown on the map.</p>}
   </section>;
 }
