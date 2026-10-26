@@ -109,7 +109,8 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       return () => controller.abort();
     }
 
-    const cached = readCachedMenu(sourceUrl);
+    const menuUrl = sourceUrl;
+    const cached = readCachedMenu(menuUrl);
     if (cached) {
       setItems(cached.items);
       setCachedAt(cached.cachedAt);
@@ -125,14 +126,14 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
         const response = await fetch(menuReaderUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: sourceUrl }),
+          body: JSON.stringify({ url: menuUrl }),
           signal: controller.signal,
           credentials: 'omit',
         });
         const result = await response.json() as { text?: string; contentType?: string; error?: string };
         if (!response.ok) throw new Error(result.error || `The menu could not be fetched (${response.status}).`);
         const contentType = result.contentType || '';
-        if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(sourceUrl)) {
+        if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(menuUrl)) {
           throw new Error('This menu is a PDF and cannot be read automatically yet.');
         }
         if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
@@ -143,7 +144,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
         if (!extracted.length) throw new Error('No readable menu items were found on the restaurant page.');
         if (!controller.signal.aborted) {
           setItems(extracted);
-          setCachedAt(writeCachedMenu(sourceUrl, extracted));
+          setCachedAt(writeCachedMenu(menuUrl, extracted));
         }
       } catch (cause) {
         if (timedOut) {
