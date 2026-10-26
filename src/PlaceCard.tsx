@@ -8,6 +8,9 @@ import RestaurantPhoto from './RestaurantPhoto';
 const visitCharacterSrc = new URL('mascot/lunumi-visit.png', document.baseURI).href;
 const visitCharacterPreload = new Image();
 visitCharacterPreload.src = visitCharacterSrc;
+const visitWalkSpriteSrc = new URL('mascot/lunumi-walk-cycle.png', document.baseURI).href;
+const visitWalkSpritePreload = new Image();
+visitWalkSpritePreload.src = visitWalkSpriteSrc;
 
 const safeUrl = (value?: string) => {
   if (!value) return null;
@@ -73,6 +76,9 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         const centerLeft = (window.innerWidth - startWidth) / 2;
         const bottomTop = window.innerHeight + 12;
         const centerY = (window.innerHeight - startHeight) / 2 - bottomTop;
+        const destinationX = targetRect.left + targetRect.width / 2 - window.innerWidth / 2;
+        const destinationY = targetRect.top + targetRect.height / 2 - (bottomTop + startHeight / 2);
+        const destinationScale = targetRect.width / startWidth;
 
         overlay = document.createElement('img');
         overlay.src = visitCharacterSrc;
@@ -81,7 +87,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         overlay.className = 'visit-flight-character';
         Object.assign(overlay.style, { left: `${centerLeft}px`, top: `${bottomTop}px`, width: `${startWidth}px`, height: `${startHeight}px` });
         try {
-          await Promise.all([visitCharacterPreload.decode(), overlay.decode()]);
+          await Promise.all([visitCharacterPreload.decode(), visitWalkSpritePreload.decode(), overlay.decode()]);
         } catch {
           if (!cancelled) setVisitIntro(false);
           return;
@@ -94,8 +100,9 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
           { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.302, easing: 'cubic-bezier(.18,.85,.25,1)' },
           { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.559, easing: 'cubic-bezier(.2,.8,.35,1)' },
           { opacity: 1, transform: `translate3d(0,${centerY + 6}px,0) scale(.96) rotate(4deg)`, offset: 0.77, easing: 'cubic-bezier(.2,.7,.3,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 1, easing: 'cubic-bezier(.2,.7,.3,1)' },
-        ], { duration: 1480, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.83, easing: 'cubic-bezier(.2,.7,.25,1)' },
+          { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)`, offset: 1 },
+        ], { duration: 1780, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
         animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitFlightActive(false); setVisitIntro(false); };
       });
     });
@@ -135,7 +142,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className="visit-journey" aria-label={`Starting a visit to ${place.name}`}>
-        <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img src={new URL('mascot/lunumi-visit.png', document.baseURI).href} alt=""/></span></div>
+        <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef} style={{ backgroundImage: `url("${visitWalkSpriteSrc}")` }}/></div>
         <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>Good food is just around the corner.</span></div>
       </div> : <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} large />}
       <div className="place-detail-content">
