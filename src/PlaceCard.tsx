@@ -18,11 +18,12 @@ const safeUrl = (value?: string) => {
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
 };
 
-type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void };
+type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: () => void };
 
-export default function PlaceCard({ place, favorite, status, sentiment, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment }: Props) {
+export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn }: Props) {
   const [details, setDetails] = useState(false);
   const [visitMode, setVisitMode] = useState(false);
+  const [visitStage, setVisitStage] = useState<'journey' | 'outro'>('journey');
   const [visitIntro, setVisitIntro] = useState(false);
   const [visitFlightActive, setVisitFlightActive] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
@@ -148,34 +149,49 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
   mapUrl.searchParams.set('layer', 'mapnik');
   mapUrl.searchParams.set('marker', `${place.lat},${place.lon}`);
   const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setDetailsExpanded(false); };
-  const startVisit = () => { setVisitIntro(true); setVisitMode(true); onStatus('target'); };
+  const startVisit = () => { setVisitStage(status === 'visited' ? 'outro' : 'journey'); setVisitIntro(true); setVisitMode(true); if (status !== 'visited') onStatus('target'); };
+  const finishVisit = () => { closeDetails(); onReturn(); };
+  const feedbackComplete = Boolean(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment) && recommendationVote);
 
   return <>
-    <article className="place-card place-card-visual" onClick={() => setDetails(true)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setDetails(true); } }} tabIndex={0} role="button" aria-label={`View ${place.name}`}>
+    <article className="place-card place-card-visual" onClick={event => { if (!(event.target as HTMLElement).closest('button,a')) setDetails(true); }}>
       <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} />
       <div className="place-card-copy"><div className="place-title"><h3>{place.name}</h3><p>{cuisine.slice(0, 2).join(' · ')} <span>·</span> {place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m` : `${(place.distance / 1000).toFixed(1)} km`}</p></div>
       <button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={event => { event.stopPropagation(); onFavorite(); }}>♥</button></div>
-      <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><span className="card-open">View place <ArrowLeft size={14}/></span></div>
+      <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><button className="card-open" type="button" aria-label={`View ${place.name}`} onClick={() => setDetails(true)}>View place <ArrowLeft size={14}/></button></div>
     </article>
-    {details && createPortal(<div className="place-detail-backdrop" onClick={closeDetails} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}${visitFlightActive ? ' visit-flight-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`} onClick={event => event.stopPropagation()}>
+    {details && createPortal(<div className="place-detail-backdrop" role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}${visitFlightActive ? ' visit-flight-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`}>
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
-      {visitMode ? <div className="visit-journey" aria-label={`Starting a visit to ${place.name}`}>
-        <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
-        <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>Good food is just around the corner.</span></div>
+      {visitMode ? <div className={`visit-journey${visitStage === 'outro' ? ' visit-outro' : ''}`} aria-label={visitStage === 'outro' ? `Visit complete at ${place.name}` : `Starting a visit to ${place.name}`}>
+        {visitStage === 'journey' ? <>
+          <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
+          <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>Good food is just around the corner.</span></div>
+        </> : <>
+          <img className="visit-outro-mascot" src={visitJumpSrc} alt="" aria-hidden="true"/>
+          <div className="visit-journey-copy"><span className="eyebrow">YOU MADE IT</span><strong>A little adventure complete!</strong><span>How was {place.name}?</span></div>
+        </>}
       </div> : <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} large />}
       <div className="place-detail-content">
         {visitMode ? <>
-          <button className="back" onClick={() => setVisitMode(false)}><ArrowLeft size={17}/> Place details</button>
-          <div className="visit-title"><div><span className="eyebrow">YOUR NEXT STOP</span><h2>{place.name}</h2><p>{cuisine.join(' · ')} · {place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m away` : `${(place.distance / 1000).toFixed(1)} km away`}</p></div><Sparkles size={23}/></div>
-          <div className="visit-map"><iframe title={`Map showing ${place.name}`} src={mapUrl.toString()} loading="lazy" referrerPolicy="no-referrer"/><a href={`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}#map=16/${place.lat}/${place.lon}`} target="_blank" rel="noopener noreferrer">Open map</a></div>
-          <button className="button directions visit-directions" onClick={onDirections}><Navigation size={17}/>Directions to {place.name}<span>↗</span></button>
-          <div className="visit-feedback"><h3>{sentiment ? 'How was it?' : 'Did you like it?'}</h3><div className="visit-feedback-actions">
-            <button className={`button outline${sentiment === 'loved' ? ' selected' : ''}`} aria-pressed={sentiment === 'loved'} onClick={() => onSentiment('loved')}><Heart size={16}/>Loved it</button>
-            <button className={`button outline${sentiment === 'okay' ? ' selected' : ''}`} aria-pressed={sentiment === 'okay'} onClick={() => onSentiment('okay')}>It was okay</button>
-            <button className={`button outline${sentiment === 'disliked' ? ' selected' : ''}`} aria-pressed={sentiment === 'disliked'} onClick={() => onSentiment('disliked')}>Not for me</button>
-          </div></div>
-          <button className={`button visit-complete${status === 'visited' ? ' is-visited' : ''}`} onClick={() => onStatus('visited')}><Check size={17}/>{status === 'visited' ? 'Visited — saved to your places' : 'Mark as visited'}</button>
+          {visitStage === 'journey' ? <>
+            <button className="back visit-details-back" onClick={() => setVisitMode(false)}><ArrowLeft size={17}/>Place details</button>
+            <div className="visit-title"><div><span className="eyebrow">YOUR NEXT STOP</span><h2>{place.name}</h2><p>{cuisine.join(' · ')} · {place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m away` : `${(place.distance / 1000).toFixed(1)} km away`}</p></div><Sparkles size={23}/></div>
+            <div className="visit-map"><iframe title={`Map showing ${place.name}`} src={mapUrl.toString()} loading="lazy" referrerPolicy="no-referrer"/><a href={`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}#map=16/${place.lat}/${place.lon}`} target="_blank" rel="noopener noreferrer">Open map</a></div>
+            <button className="button directions visit-directions" onClick={onDirections}><Navigation size={17}/>Directions to {place.name}<span>↗</span></button>
+          </> : <>
+            <div className="visit-feedback"><h3>Did you like it?</h3><div className="visit-feedback-actions">
+              <button className={`button outline${sentiment === 'loved' ? ' selected' : ''}`} aria-pressed={sentiment === 'loved'} onClick={() => onSentiment('loved')}><Heart size={17}/>Loved it</button>
+              <button className={`button outline${sentiment === 'okay' ? ' selected' : ''}`} aria-pressed={sentiment === 'okay'} onClick={() => onSentiment('okay')}>It was okay</button>
+              <button className={`button outline${sentiment === 'disliked' ? ' selected' : ''}`} aria-pressed={sentiment === 'disliked'} onClick={() => onSentiment('disliked')}>Not for me</button>
+            </div></div>
+            <div className="visit-feedback"><h3>Would you recommend this place?</h3><div className="visit-feedback-actions">
+              <button className={`button outline${recommendationVote === 'yes' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'yes'} onClick={() => onRecommendation('yes')}>Yes</button>
+              <button className={`button outline${recommendationVote === 'maybe' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'maybe'} onClick={() => onRecommendation('maybe')}>Maybe</button>
+              <button className={`button outline${recommendationVote === 'no' ? ' selected' : ''}`} aria-pressed={recommendationVote === 'no'} onClick={() => onRecommendation('no')}>No</button>
+            </div></div>
+            <p className="visit-feedback-hint">Your visit is saved. Answer both questions to finish, or close to come back later.</p>
+          </>}
         </> : <>
         <div className="place-detail-heading"><div><span className="eyebrow">{cuisine.join(' · ')}</span><h2>{place.name}</h2></div><button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={onFavorite}>♥</button></div>
         <div className="detail-facts"><span><MapPin size={15}/>{place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m away` : `${(place.distance / 1000).toFixed(1)} km away`}</span>{hours && <span><Clock3 size={15}/>{hours.text}</span>}</div>
@@ -186,10 +202,10 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         <p className="reason detail-reason">{sentiment === 'loved' ? 'A place you loved before' : recommendation}</p>
         <h3 className="detail-section-title">Good to know</h3><p className="detail-description">{place.tags.opening_hours ? `Hours: ${place.tags.opening_hours}` : 'Opening hours are not listed.'}</p>
         <h3 className="detail-section-title">Menu & links</h3>{menu || website ? <div className="detail-actions">{menu && <a className="button outline" href={menu} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>{menuLabel}</a>}{website && <a className="button outline" href={website} target="_blank" rel="noopener noreferrer"><Globe2 size={15}/>Website</a>}</div> : <p className="detail-description">No menu link is listed yet. Check the restaurant website or open directions.</p>}
-        <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
+        <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'visited' ? 'Finish your visit' : status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
         </>}
       </div>
-      <div className="place-detail-bottom-bar"><button className="place-detail-bottom-back" onClick={closeDetails}><ArrowLeft size={17}/>Back to places</button></div>
+      <div className="place-detail-bottom-bar">{visitMode ? visitStage === 'journey' ? <button className="button visit-arrived" onClick={() => { onStatus('visited'); setVisitStage('outro'); }}><Check size={18}/>I’m here — mark as visited</button> : <button className="button visit-done" disabled={!feedbackComplete} onClick={finishVisit}><Check size={18}/>{feedbackComplete ? 'Done · back to places' : 'Choose both answers to finish'}</button> : <button className="place-detail-bottom-back" onClick={closeDetails}><ArrowLeft size={17}/>Back to places</button>}</div>
     </section></div>, document.body)}
   </>;
 }
