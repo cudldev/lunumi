@@ -10974,6 +10974,996 @@
       "checkedAt": "2026-10-26",
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:mcdonalds-sello",
+      "name": "McDonald's",
+      "city": "Espoo",
+      "address": {
+        "street": "Leppävaarankatu 3-9",
+        "postalCode": "02600",
+        "country": "FI"
+      },
+      "website": "https://www.sello.fi/ravintolat-espoo/mcdonalds-sello",
+      "category": "restaurant",
+      "lat": 60.2181053,
+      "lon": 24.8096771,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/12279079601",
+          "recordId": "node/12279079601",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Sello official centre page",
+          "url": "https://www.sello.fi/ravintolat-espoo/mcdonalds-sello",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:mcdonalds-lommila",
+      "name": "McDonald's",
+      "city": "Espoo",
+      "address": {
+        "street": "Lommilanrinne 2",
+        "postalCode": "02740",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-lommila/75.html",
+      "category": "restaurant",
+      "lat": 60.218318,
+      "lon": 24.6595516,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/27152416",
+          "recordId": "way/27152416",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Espoo Lommila official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-lommila/75.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:mcdonalds-niittykumpu",
+      "name": "McDonald's",
+      "city": "Espoo",
+      "address": {
+        "street": "Niittymaantie 6",
+        "postalCode": "02200",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-niittykumpu/10.html",
+      "category": "restaurant",
+      "lat": 60.1711499,
+      "lon": 24.7781924,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/87747772",
+          "recordId": "way/87747772",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Espoo Niittykumpu official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-niittykumpu/10.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:mcdonalds-kauniaistentie",
+      "name": "McDonald's",
+      "city": "Espoo",
+      "address": {
+        "street": "Palomiehentie 2",
+        "postalCode": "02750",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-kauniaistentie/53.html",
+      "category": "restaurant",
+      "lat": 60.2085379,
+      "lon": 24.7440354,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/130711993",
+          "recordId": "way/130711993",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Espoo Kauniaistentie official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-kauniaistentie/53.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:mcdonalds-iso-omena",
+      "name": "McDonald's",
+      "city": "Espoo",
+      "address": {
+        "street": "Piispansilta 11",
+        "postalCode": "02230",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-iso-omena/piispansilta-11/134.html",
+      "category": "restaurant",
+      "lat": 60.1599255,
+      "lon": 24.7381565,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/1011337677",
+          "recordId": "way/1011337677",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Espoo Iso Omena official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-iso-omena/piispansilta-11/134.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-kivikko",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kivikonlaita 2",
+        "postalCode": "00940",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-kivikko/kivikonlaita-2/106.html",
+      "category": "restaurant",
+      "lat": 60.2310583,
+      "lon": 25.0547956,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/574521947",
+          "recordId": "way/574521947",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Helsinki Kivikko official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-kivikko/kivikonlaita-2/106.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-vuosaari",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivonkatsojantie 1 A",
+        "postalCode": "00980",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-vuosaari/kaivonkatsojantie-1-a/82.html",
+      "category": "restaurant",
+      "lat": 60.2056337,
+      "lon": 25.1351632,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/44508014",
+          "recordId": "way/44508014",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Helsinki Vuosaari official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-vuosaari/kaivonkatsojantie-1-a/82.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-vallila-teollisuuskatu",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Teollisuuskatu 6",
+        "postalCode": "00500",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/teollisuuskatu-6/101.html",
+      "category": "restaurant",
+      "lat": 60.1903959,
+      "lon": 24.9562574,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/130188144",
+          "recordId": "way/130188144",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Helsinki Teollisuuskatu official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/teollisuuskatu-6/101.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-pitajanmaki",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Vanha viertotie 29",
+        "postalCode": "00380",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-pit-j-nm-ki/vanha-viertotie-29/32.html",
+      "category": "restaurant",
+      "lat": 60.2136891,
+      "lon": 24.8801151,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/60248667",
+          "recordId": "node/60248667",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Helsinki Pitäjänmäki official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-pit-j-nm-ki/vanha-viertotie-29/32.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-toolo",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 53",
+        "postalCode": "00250",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-t--l/mannerheimintie-53/29.html",
+      "category": "restaurant",
+      "lat": 60.1900433,
+      "lon": 24.9173879,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/23229457",
+          "recordId": "way/23229457",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Helsinki Töölö official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-t--l/mannerheimintie-53/29.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-pukinmaki",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Pukinmäenkaari 55",
+        "postalCode": "00720",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-pukinm-ki/17.html",
+      "category": "restaurant",
+      "lat": 60.2428903,
+      "lon": 24.9780613,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/24440909",
+          "recordId": "way/24440909",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Helsinki Pukinmäki official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-pukinm-ki/17.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-hakaniemi",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Siltasaarenkatu 12",
+        "postalCode": "00530",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-hakaniemi/20.html",
+      "category": "restaurant",
+      "lat": 60.1784751,
+      "lon": 24.9496263,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/1380991232",
+          "recordId": "node/1380991232",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Helsinki Hakaniemi official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/helsinki/helsinki-hakaniemi/20.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:mcdonalds-vaarala",
+      "name": "McDonald's Vantaa Vaarala",
+      "city": "Vantaa",
+      "address": {
+        "street": "Lähdepuistontie 2",
+        "postalCode": "01230",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-vaarala/22.html",
+      "category": "restaurant",
+      "lat": 60.267251,
+      "lon": 25.1006999,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/27297301",
+          "recordId": "way/27297301",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Vantaa Vaarala official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-vaarala/22.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:mcdonalds-tammisto",
+      "name": "McDonald's",
+      "city": "Vantaa",
+      "address": {
+        "street": "Kirkkotie 4",
+        "postalCode": "01510",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/kirkkotie-4/98.html",
+      "category": "restaurant",
+      "lat": 60.2708856,
+      "lon": 24.9747556,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/27205951",
+          "recordId": "way/27205951",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Vantaa Tammisto official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/kirkkotie-4/98.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:mcdonalds-kaivoksela",
+      "name": "McDonald's",
+      "city": "Vantaa",
+      "address": {
+        "street": "Louhijantie 1",
+        "postalCode": "01610",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-kaivoksela/14.html",
+      "category": "restaurant",
+      "lat": 60.2637355,
+      "lon": 24.871992,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11311470089",
+          "recordId": "node/11311470089",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Vantaa Kaivoksela official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-kaivoksela/14.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:mcdonalds-varisto",
+      "name": "McDonald's",
+      "city": "Vantaa",
+      "address": {
+        "street": "Maissikuja 2",
+        "postalCode": "01630",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-varisto/maissikuja-2/11.html",
+      "category": "restaurant",
+      "lat": 60.2701614,
+      "lon": 24.8043657,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/24517602",
+          "recordId": "way/24517602",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Vantaa Varisto official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-varisto/maissikuja-2/11.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:mcdonalds-porttipuisto",
+      "name": "McDonald's",
+      "city": "Vantaa",
+      "address": {
+        "street": "Porttisuontie 4",
+        "postalCode": "01200",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-porttipuisto/porttisuontie-4/122.html",
+      "category": "restaurant",
+      "lat": 60.2798051,
+      "lon": 25.087447,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/1228693530",
+          "recordId": "way/1228693530",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Vantaa Porttipuisto official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-porttipuisto/porttisuontie-4/122.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current branch page confirms this location is operating. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:mcdonalds-suomenoja",
+      "name": "McDonald's",
+      "city": "Espoo",
+      "address": {
+        "street": "Finnoonlaaksontie 14",
+        "postalCode": "02270",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-suomenoja/finnoonlaaksontie-14/107.html",
+      "category": "restaurant",
+      "lat": 60.1621861,
+      "lon": 24.7106409,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/694336963",
+          "recordId": "way/694336963",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Espoo Suomenoja official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/espoo/espoo-suomenoja/finnoonlaaksontie-14/107.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current operator listing confirms this branch or area is in the active restaurant network. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:mcdonalds-tuupakka",
+      "name": "McDonald's",
+      "city": "Vantaa",
+      "address": {
+        "street": "Tuupakantie 2b",
+        "postalCode": "01740",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-tuupakka/102.html",
+      "category": "restaurant",
+      "lat": 60.2971682,
+      "lon": 24.8845265,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11370922940",
+          "recordId": "node/11370922940",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s Vantaa Tuupakka official branch page",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/location/vantaa/vantaa-tuupakka/102.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current operator listing confirms this branch or area is in the active restaurant network. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-ala-tikkurila",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Aamuruskontie 2",
+        "postalCode": "00750",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/palvelut/mcdelivery.html",
+      "category": "restaurant",
+      "lat": 60.2834929,
+      "lon": 25.0282305,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/24550726",
+          "recordId": "way/24550726",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s official current McDelivery restaurant list",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/palvelut/mcdelivery.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current operator listing confirms this branch or area is in the active restaurant network. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-itakeskus",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 1-5",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/palvelut/mcdelivery.html",
+      "category": "restaurant",
+      "lat": 60.2111612,
+      "lon": 25.0818026,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11498103069",
+          "recordId": "node/11498103069",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s official current McDelivery restaurant list",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/palvelut/mcdelivery.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current operator listing confirms this branch or area is in the active restaurant network. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:mcdonalds-herttoniemi",
+      "name": "McDonald's",
+      "city": "Helsinki",
+      "address": {
+        "street": "Laivalahdenkatu 1",
+        "postalCode": "00880",
+        "country": "FI"
+      },
+      "website": "https://www.mcdonalds.com/fi/fi-fi/palvelut/mcdelivery.html",
+      "category": "restaurant",
+      "lat": 60.1942351,
+      "lon": 25.0377459,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/14463247",
+          "recordId": "way/14463247",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "McDonald’s official current McDelivery restaurant list",
+          "url": "https://www.mcdonalds.com/fi/fi-fi/palvelut/mcdelivery.html",
+          "fields": [
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The current operator listing confirms this branch or area is in the active restaurant network. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
