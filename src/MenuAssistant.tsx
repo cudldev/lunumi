@@ -64,6 +64,21 @@ function detectLanguage(value: string): MenuLanguage {
   return scores[0]?.score && scores[0].score > (scores[1]?.score || 0) ? scores[0].language : 'unknown';
 }
 
+function splitMenuNotice(value: string): string[] {
+  const sentences = value.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(part => part.trim()).filter(Boolean) ?? [value];
+  const chunks: string[] = [];
+  for (const sentence of sentences) {
+    let chunk = '';
+    for (const word of sentence.split(/\s+/)) {
+      const next = chunk ? `${chunk} ${word}` : word;
+      if (next.length > 220 && chunk) { chunks.push(chunk); chunk = word; }
+      else chunk = next;
+    }
+    if (chunk) chunks.push(chunk);
+  }
+  return chunks;
+}
+
 function safeMenuImage(value: string, sourceUrl?: string): string | undefined {
   try {
     const image = new URL(value, sourceUrl);
@@ -168,7 +183,13 @@ function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassi
     if (line.length < 3) continue;
     if (isSection(line)) { section = line; continue; }
     const hasAllergenInfo = isAllergenNotice(line);
-    if (hasAllergenInfo && !pricePattern.test(line)) { if (notes.length < 30 && !notes.includes(line)) notes.push(line.slice(0, 220)); continue; }
+    if (hasAllergenInfo && !pricePattern.test(line)) {
+      for (const note of splitMenuNotice(line)) {
+        if (notes.length >= 30) break;
+        if (!notes.includes(note)) notes.push(note);
+      }
+      continue;
+    }
     if (line.length > 220 || /^https?:\/\//i.test(line)) continue;
     const price = line.match(pricePattern);
     const parts = line.split(/\s+[·|—–]\s+|\s{2,}/);
