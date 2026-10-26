@@ -5907,6 +5907,100 @@
       "lastValidatedAt": "2026-10-26"
     },
     {
+      "id": "frd:helsinki:kotipizza-vuotie-45",
+      "name": "Kotipizza",
+      "branch": "Columbus",
+      "city": "Helsinki",
+      "address": {
+        "street": "Vuotie 45",
+        "postalCode": "00980",
+        "country": "FI"
+      },
+      "website": "https://columbus.fi/liikkeet/kotipizza/",
+      "category": "restaurant",
+      "lat": 60.2066941,
+      "lon": 25.1459514,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/73115787",
+          "recordId": "node/73115787",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kauppakeskus Columbus official store page",
+          "url": "https://columbus.fi/liikkeet/kotipizza/",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current listing confirms this branch. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-vihdintie-13",
+      "name": "Kotipizza",
+      "branch": "Etelä-Haaga",
+      "city": "Helsinki",
+      "address": {
+        "street": "Vihdintie 13",
+        "postalCode": "00320",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-etela-haaga-vihdintie",
+      "category": "restaurant",
+      "lat": 60.211518,
+      "lon": 24.8879283,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/281384567",
+          "recordId": "node/281384567",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-etela-haaga-vihdintie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current listing confirms this branch. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
       "id": "frd:helsinki:kotipizza-kauppakartanonkatu-16a",
       "name": "Kotipizza",
       "branch": "Helsinki Itäkeskus, Kauppakartanonkatu",
