@@ -7,3 +7,5 @@ pnpm-workspace.yaml
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+data/lunch-feed-candidates.json
+restaurant-data-repo/

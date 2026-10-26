@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "overrides": [
+    {
+      "placeId": "osm:n11328083030",
+      "menuFeed": "https://panchovilla.fi/menu/feed/",
+      "sourceName": "Pancho Villa official menu RSS",
+      "sourceUrl": "https://panchovilla.fi/menu/",
+      "checkedAt": "2026-10-25",
+      "note": "The restaurant publishes this RSS feed as its menu feed. It is a product/menu feed, not a daily lunch menu."
+    }
+  ]
+}

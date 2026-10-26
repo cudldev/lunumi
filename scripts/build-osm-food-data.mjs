@@ -258,6 +258,33 @@ export async function addCommonsPhotos(dataset, fetchImpl = fetch) {
   return dataset;
 }
 
+export function applyRestaurantLinkOverrides(dataset, registry) {
+  if (!Array.isArray(dataset?.places) || !Array.isArray(registry?.overrides)) {
+    throw new Error('Expected a restaurant dataset and a link override registry.');
+  }
+  const placesById = new Map(dataset.places.map(place => [place.id, place]));
+  for (const override of registry.overrides) {
+    const place = placesById.get(override.placeId);
+    if (!place) throw new Error(`Curated link override references missing place ${override.placeId}.`);
+    const url = override.menuFeed;
+    if (!safeWebsite(url)) throw new Error(`Invalid curated menu feed URL for ${override.placeId}.`);
+    place['menu:feed'] = new URL(url).toString();
+  }
+  const sources = new Map((dataset.sources ?? []).map(source => [source.url, source]));
+  for (const override of registry.overrides) {
+    if (override.sourceUrl && safeWebsite(override.sourceUrl)) {
+      const sourceUrl = new URL(override.sourceUrl).toString();
+      if (!sources.has(sourceUrl)) sources.set(sourceUrl, {
+        name: override.sourceName || 'Restaurant-published menu feed',
+        url: sourceUrl,
+        attribution: 'Feed link discovered on the restaurant’s own website; menu content remains hosted by the restaurant.',
+      });
+    }
+  }
+  dataset.sources = [...sources.values()];
+  return dataset;
+}
+
 async function generate(inputPath, outputPath) {
   if (!inputPath) {
     throw new Error('Pass a local OSM .pbf extract. For example: npm run data:helsinki -- ./helsinki-metro.osm.pbf public/data/helsinki-metro.json');
@@ -275,7 +302,10 @@ async function generate(inputPath, outputPath) {
     ], { stdio: 'inherit' });
     execFileSync('osmium', ['export', filteredPath, '-o', geojsonPath, '--add-unique-id=type_id'], { stdio: 'inherit' });
     const collection = JSON.parse(await readFile(geojsonPath, 'utf8'));
-    const dataset = await addCommonsPhotos(buildDataset(collection));
+    const dataset = applyRestaurantLinkOverrides(
+      await addCommonsPhotos(buildDataset(collection)),
+      JSON.parse(await readFile(path.resolve('data/restaurant-link-overrides.json'), 'utf8')),
+    );
     await mkdir(path.dirname(path.resolve(outputPath)), { recursive: true });
     await writeFile(outputPath, JSON.stringify(dataset));
     const photoCount = dataset.places.filter(place => place.photo).length;
