@@ -95,8 +95,8 @@ async function fetchMenuPage(url, hostSet, fetcher, signal) {
   throw new Error('The restaurant page could not be reached. Open the source link instead.');
 }
 
-export async function handleRequest(request, env = {}, fetcher = fetch) {
-  const origin = request.headers.get('Origin');
+export async function handleRequest(request, env = {}, contextOrFetcher) {
+  const origin = request.headers.get('Origin'); const fetcher = typeof contextOrFetcher === 'function' ? contextOrFetcher : fetch;
   if (request.method === 'OPTIONS') {
     if (!origin || !APP_ORIGINS.has(origin)) return errorResponse('This app origin is not allowed.', 403, null);
     return new Response(null, { status: 204, headers: {
