@@ -288,3 +288,31 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 @media(max-width:600px){.place-list{grid-template-columns:1fr;gap:13px}.place-card-visual{border-radius:18px}.place-card-copy{padding:12px 13px 4px}.place-card-foot{padding:4px 13px 12px}.place-detail{width:calc(100vw - 16px);max-height:78dvh;border-radius:24px 24px 0 0;transition:max-height .28s cubic-bezier(.2,.8,.2,1)}.place-detail.expanded{max-height:calc(100dvh - env(safe-area-inset-top) - 4px);border-radius:24px 24px 0 0}.place-detail-handle{position:relative;z-index:3;display:grid;place-items:center;flex:0 0 26px;width:100%;height:26px;padding:0;border:0;background:#fffdf8;touch-action:none;cursor:grab}.place-detail-handle:active{cursor:grabbing}.place-detail-handle span{width:38px;height:4px;border-radius:8px;background:#cbbca9}.restaurant-photo-large{flex:none;aspect-ratio:16/8.5;max-height:28dvh;border-radius:0}.place-detail-content{padding:17px 20px calc(24px + env(safe-area-inset-bottom))}.place-detail-heading h2{font-size:26px}.place-detail-bottom-bar{padding:9px 20px calc(9px + env(safe-area-inset-bottom))}.place-detail-bottom-back{min-height:40px}.visit-journey{flex:none;min-height:142px;padding:18px 19px}.visit-route{flex-basis:132px;height:105px}.visit-route-line{left:21px;right:16px;top:54px}.visit-route-pin{right:9px;top:23px}.visit-character{left:5px;top:28px;width:64px;height:69px}.visit-journey-copy strong{font-size:19px}.visit-journey-copy>span:last-child{font-size:11px}.visit-map{height:174px}.visit-feedback-actions{gap:6px}.visit-feedback-actions .button{padding:0 9px;font-size:12px}}
 @media(min-width:900px){.place-detail-backdrop{padding:0 24px 24px}.place-detail{width:min(72vw,760px);max-height:90dvh;border-radius:24px}.restaurant-photo-large{border-radius:24px 24px 0 0}}
 .status.verified{background:#edf5e8;color:#52744d;text-decoration:none}.status.verified:hover{text-decoration:underline}
+
+/* Keep the discovery list, fixed search controls, and detail sheet on a steady spacing rhythm. */
+.place-list{gap:18px}
+.place-card-copy{gap:12px;padding:14px 16px 5px}
+.place-card-copy .place-title h3{margin-bottom:6px}
+.place-card-foot{padding:6px 16px 14px;line-height:1.4}
+.section-heading{margin-bottom:16px}
+.search-dock{background:linear-gradient(105deg,#fffdf6f7,#f2f7eef7);border-color:#e5dfd2;box-shadow:0 8px 26px #5145331c}
+.place-detail-content{padding:22px 28px 18px}
+.place-detail-heading h2{margin:6px 0 14px}
+.detail-facts{gap:9px 20px;margin-bottom:17px;line-height:1.45}
+.detail-reason{margin-top:16px}
+.detail-section-title{margin:24px 0 8px;line-height:1.25}
+.detail-actions{gap:9px;margin-top:14px}
+.visit-start{margin-top:22px}
+.visit-feedback{margin-top:24px}
+@media(max-width:600px){
+  .place-list{gap:15px}
+  .place-card-copy{gap:9px;padding:13px 14px 4px}
+  .place-card-foot{padding:5px 14px 13px}
+  .section-heading{margin-bottom:13px}
+  .search-dock{background:linear-gradient(105deg,#fffdf6fa,#f2f7eefa)}
+  .place-detail-content{padding:19px 20px 14px}
+  .place-detail-heading h2{margin-bottom:12px}
+  .detail-facts{gap:8px 14px;margin-bottom:15px}
+  .detail-section-title{margin-top:21px}
+  .visit-start{margin-top:20px}
+}
