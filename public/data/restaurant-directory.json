@@ -673,6 +673,329 @@
       "lastValidatedAt": "2026-10-26"
     },
     {
+      "id": "frd:espoo:kotipizza-kynakatu-6",
+      "name": "Kotipizza",
+      "city": "Espoo",
+      "address": {
+        "street": "Kynäkatu 6",
+        "postalCode": "02250",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-suurpelto-kynakatu-kauppakeskus-suuris",
+      "category": "restaurant",
+      "lat": 60.1862799,
+      "lon": 24.7460677,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/7022286870",
+          "recordId": "node/7022286870",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-suurpelto-kynakatu-kauppakeskus-suuris",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-louhentie-2",
+      "name": "Kotipizza",
+      "city": "Espoo",
+      "address": {
+        "street": "Louhentie 2",
+        "postalCode": "02130",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-tapiola-louhentie",
+      "category": "restaurant",
+      "lat": 60.1832936,
+      "lon": 24.7944125,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/3442875667",
+          "recordId": "node/3442875667",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-tapiola-louhentie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-merituulentie-36",
+      "name": "Kotipizza",
+      "city": "Espoo",
+      "address": {
+        "street": "Merituulentie 36",
+        "postalCode": "02200",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-niittykumpu-merituulentie-kauppakeskus-niitty",
+      "category": "restaurant",
+      "lat": 60.1704624,
+      "lon": 24.7636479,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/926191713",
+          "recordId": "way/926191713",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-niittykumpu-merituulentie-kauppakeskus-niitty",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-espoonlahdenkatu-8",
+      "name": "Kotipizza",
+      "branch": "Espoonlahti",
+      "city": "Espoo",
+      "address": {
+        "street": "Espoonlahdenkatu 8",
+        "postalCode": "02320",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-espoonlahti-espoonlahdenkatu-kauppakeskus-lippulaiva",
+      "category": "restaurant",
+      "lat": 60.1500162,
+      "lon": 24.6548428,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/9624162308",
+          "recordId": "node/9624162308",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-espoonlahti-espoonlahdenkatu-kauppakeskus-lippulaiva",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-martinsillantie-10",
+      "name": "Kotipizza",
+      "branch": "Kauppakeskus Liila",
+      "city": "Espoo",
+      "address": {
+        "street": "Martinsillantie 10",
+        "postalCode": "02270",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-noykkio-martinsillantie-kauppakeskus-liila",
+      "category": "restaurant",
+      "lat": 60.1594386,
+      "lon": 24.6942845,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/8739065373",
+          "recordId": "node/8739065373",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-noykkio-martinsillantie-kauppakeskus-liila",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-leppavaarankatu-3-9",
+      "name": "Kotipizza",
+      "branch": "Leppävaara",
+      "city": "Espoo",
+      "address": {
+        "street": "Leppävaarankatu 3-9",
+        "postalCode": "02600",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-leppavaara-leppavaarankatu-kauppakeskus-sello",
+      "category": "restaurant",
+      "lat": 60.2181407,
+      "lon": 24.8104789,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/4470122489",
+          "recordId": "node/4470122489",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-leppavaara-leppavaarankatu-kauppakeskus-sello",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-kala-maija-2",
+      "name": "Kotipizza",
+      "branch": "Matinkylä",
+      "city": "Espoo",
+      "address": {
+        "street": "Kala-Maija 2",
+        "postalCode": "02230",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-matinkyla-kala-maija",
+      "category": "restaurant",
+      "lat": 60.1587989,
+      "lon": 24.7416059,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/76643797",
+          "recordId": "node/76643797",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-matinkyla-kala-maija",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
       "id": "frd:espoo:kotipizza-pihatorma-1",
       "name": "Kotipizza",
       "branch": "Olari",
@@ -713,6 +1036,53 @@
           ],
           "checkedAt": "2026-10-26",
           "note": "Current official branch page lists this location and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:kotipizza-westendintie-99",
+      "name": "Kotipizza",
+      "branch": "Westend",
+      "city": "Espoo",
+      "address": {
+        "street": "Westendintie 99",
+        "postalCode": "02160",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/espoo-westend-westendintie",
+      "category": "restaurant",
+      "lat": 60.1632297,
+      "lon": 24.7909359,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/10822379479",
+          "recordId": "node/10822379479",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/espoo-westend-westendintie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
         }
       ],
       "checkedAt": "2026-10-26",
@@ -5228,6 +5598,100 @@
       "lastValidatedAt": "2026-10-26"
     },
     {
+      "id": "frd:helsinki:kotipizza-porthaninkatu-11",
+      "name": "Kotipizza",
+      "branch": "Kallio Porthaninkatu",
+      "city": "Helsinki",
+      "address": {
+        "street": "Porthaninkatu 11",
+        "postalCode": "00530",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-kallio-porthaninkatu",
+      "category": "restaurant",
+      "lat": 60.1829785,
+      "lon": 24.9529871,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/445381416",
+          "recordId": "node/445381416",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-kallio-porthaninkatu",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-ristipellontie-25",
+      "name": "Kotipizza",
+      "branch": "Konala",
+      "city": "Helsinki",
+      "address": {
+        "street": "Ristipellontie 25",
+        "postalCode": "00390",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/helsinki-konala-ristipellontie",
+      "category": "restaurant",
+      "lat": 60.2420737,
+      "lon": 24.8448394,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/1850118288",
+          "recordId": "node/1850118288",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/helsinki-konala-ristipellontie",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
       "id": "frd:helsinki:la-famiglia",
       "name": "La Famiglia",
       "city": "Helsinki",
@@ -8882,6 +9346,98 @@
             "menuUrl"
           ],
           "checkedAt": "2026-10-26"
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:kotipizza-iskoskuja-3",
+      "name": "Kotipizza",
+      "city": "Vantaa",
+      "address": {
+        "street": "Iskoskuja 3",
+        "postalCode": "01600",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/vantaa-myyrmaki-iskoskuja-kauppakeskus-myyrmanni",
+      "category": "restaurant",
+      "lat": 60.2605652,
+      "lon": 24.8538177,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/4239425129",
+          "recordId": "node/4239425129",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/vantaa-myyrmaki-iskoskuja-kauppakeskus-myyrmanni",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:kotipizza-ratatie-11",
+      "name": "Kotipizza",
+      "branch": "Tikkurila Dixi",
+      "city": "Vantaa",
+      "address": {
+        "street": "Ratatie 11",
+        "postalCode": "01300",
+        "country": "FI"
+      },
+      "website": "https://dixi.fi/en/shop/kotipizza/",
+      "category": "restaurant",
+      "lat": 60.2926198,
+      "lon": 25.0436748,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/10560516689",
+          "recordId": "node/10560516689",
+          "fields": [
+            "name",
+            "branch",
+            "city",
+            "address",
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Dixi official Kotipizza page",
+          "url": "https://dixi.fi/en/shop/kotipizza/",
+          "fields": [
+            "operatingStatus",
+            "website",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre page lists this branch and regular opening hours. Location fields in this record come from OpenStreetMap."
         }
       ],
       "checkedAt": "2026-10-26",
