@@ -13254,6 +13254,50 @@
       "checkedAt": "2026-10-26",
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:subway-malmin-nova",
+      "name": "Subway",
+      "branch": "Malmin Nova",
+      "city": "Helsinki",
+      "address": {
+        "street": "Malminkaari 17-19",
+        "postalCode": "00700",
+        "country": "FI"
+      },
+      "website": "https://restaurants.subway.com/fi/suomi/helsinki/malminkaari-17-19",
+      "category": "restaurant",
+      "lat": 60.2520257,
+      "lon": 25.0138704,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/614665430",
+          "recordId": "node/614665430",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Subway Finland official restaurant locator",
+          "url": "https://restaurants.subway.com/fi/suomi/helsinki/malminkaari-17-19",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "The official Subway locator lists Helsinki Malmin Nova at Malminkaari 17-19 and shows current opening hours."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
