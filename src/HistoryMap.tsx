@@ -23,6 +23,8 @@ const wrap = (value: number, width: number) => ((value % width) + width) % width
 export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[]; onSelect: (entry: MapEntry) => void }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const pendingPan = useRef<{ x: number; y: number } | null>(null);
+  const panFrame = useRef<number | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [zoomOffset, setZoomOffset] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -36,7 +38,10 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
     if (!map) return;
     const observer = new ResizeObserver(([item]) => setSize({ width: item.contentRect.width, height: item.contentRect.height }));
     observer.observe(map);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (panFrame.current !== null) window.cancelAnimationFrame(panFrame.current);
+    };
   }, []);
 
   const fitted = useMemo(() => {
@@ -128,9 +133,20 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
   };
   const movePan = (event: PointerEvent<HTMLDivElement>) => {
     if (!dragStart.current) return;
-    setPan({ x: dragStart.current.panX - (event.clientX - dragStart.current.x), y: dragStart.current.panY - (event.clientY - dragStart.current.y) });
+    pendingPan.current = { x: dragStart.current.panX - (event.clientX - dragStart.current.x), y: dragStart.current.panY - (event.clientY - dragStart.current.y) };
+    if (panFrame.current !== null) return;
+    panFrame.current = window.requestAnimationFrame(() => {
+      panFrame.current = null;
+      if (pendingPan.current) setPan(pendingPan.current);
+    });
   };
-  const stopPan = () => { dragStart.current = null; };
+  const stopPan = () => {
+    dragStart.current = null;
+    if (panFrame.current !== null) window.cancelAnimationFrame(panFrame.current);
+    panFrame.current = null;
+    if (pendingPan.current) setPan(pendingPan.current);
+    pendingPan.current = null;
+  };
   const panByKey = (event: KeyboardEvent<HTMLDivElement>) => {
     const shifts: Record<string, [number, number]> = { ArrowLeft: [-72, 0], ArrowRight: [72, 0], ArrowUp: [0, -72], ArrowDown: [0, 72] };
     const shift = shifts[event.key];
