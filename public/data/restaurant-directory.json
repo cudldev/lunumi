@@ -2600,6 +2600,22 @@
           "license": "ODbL-1.0",
           "attribution": "© OpenStreetMap contributors",
           "note": "Coordinates only; restaurant identity, operation, and other business details are sourced separately."
+        },
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/368291252",
+          "recordId": "node/368291252",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
         }
       ],
       "checkedAt": "2026-10-26",
@@ -11959,6 +11975,664 @@
           ],
           "checkedAt": "2026-10-26",
           "note": "The current operator listing confirms this branch or area is in the active restaurant network. Location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:espresso-house-sello",
+      "name": "Espresso House",
+      "branch": "Sello",
+      "city": "Espoo",
+      "address": {
+        "street": "Leppävaarankatu 3-9",
+        "postalCode": "02600",
+        "country": "FI"
+      },
+      "website": "https://fi.espressohouse.com/loyda-meidat/sello",
+      "category": "cafe",
+      "lat": 60.2182327,
+      "lon": 24.812756,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6090324850",
+          "recordId": "node/6090324850",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Sello official branch page",
+          "url": "https://fi.espressohouse.com/loyda-meidat/sello",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:espresso-house-iso-omena",
+      "name": "Espresso House",
+      "branch": "Iso Omena",
+      "city": "Espoo",
+      "address": {
+        "street": "Piispansilta 11",
+        "postalCode": "02230",
+        "country": "FI"
+      },
+      "website": "https://no.espressohouse.com/en/find-us/iso-omena-esp",
+      "category": "cafe",
+      "lat": 60.1598842,
+      "lon": 24.7387842,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/1011337560",
+          "recordId": "way/1011337560",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Iso Omena official branch page",
+          "url": "https://no.espressohouse.com/en/find-us/iso-omena-esp",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:espresso-house-otaniemi",
+      "name": "Espresso House",
+      "branch": "Otaniemi",
+      "city": "Espoo",
+      "address": {
+        "street": "Otaniementie 12",
+        "postalCode": "02150",
+        "country": "FI"
+      },
+      "website": "https://fi.espressohouse.com/loyda-meidat/otaniemi",
+      "category": "cafe",
+      "lat": 60.1846779,
+      "lon": 24.8260562,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/5870791847",
+          "recordId": "node/5870791847",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Otaniemi official branch page",
+          "url": "https://fi.espressohouse.com/loyda-meidat/otaniemi",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:espresso-house-itis",
+      "name": "Espresso House",
+      "branch": "Itis HKI",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 1-7",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://fi.espressohouse.com/loyda-meidat/itis-hki",
+      "category": "cafe",
+      "lat": 60.2123828,
+      "lon": 25.0833451,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6103686313",
+          "recordId": "node/6103686313",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Itis official branch page",
+          "url": "https://fi.espressohouse.com/loyda-meidat/itis-hki",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:espresso-house-citycenter",
+      "name": "Espresso House",
+      "branch": "Citycenter HKI",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu 8",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://espressohouse.com/en/find-us/citycenter-hki",
+      "category": "cafe",
+      "lat": 60.170265,
+      "lon": 24.9410324,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/5012343136",
+          "recordId": "node/5012343136",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Citycenter official branch page",
+          "url": "https://espressohouse.com/en/find-us/citycenter-hki",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:espresso-house-redi-2-foodport",
+      "name": "Espresso House",
+      "branch": "Redi 2 Foodport",
+      "city": "Helsinki",
+      "address": {
+        "street": "Hermannin rantatie 5",
+        "postalCode": "00580",
+        "country": "FI"
+      },
+      "website": "https://fi.espressohouse.com/loyda-meidat/redi-2-foodport",
+      "category": "cafe",
+      "lat": 60.1872472,
+      "lon": 24.9794225,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6060938341",
+          "recordId": "node/6060938341",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Redi 2 Foodport official branch page",
+          "url": "https://fi.espressohouse.com/loyda-meidat/redi-2-foodport",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:espresso-house-kaari",
+      "name": "Espresso House",
+      "branch": "Kaari HKI",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kantelettarentie 1",
+        "postalCode": "00420",
+        "country": "FI"
+      },
+      "website": "https://fi.espressohouse.com/loyda-meidat/kaari-hki",
+      "category": "cafe",
+      "lat": 60.2367279,
+      "lon": 24.8907992,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6030442452",
+          "recordId": "node/6030442452",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Kaari official branch page",
+          "url": "https://fi.espressohouse.com/loyda-meidat/kaari-hki",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:espresso-house-kamppi",
+      "name": "Espresso House",
+      "branch": "Kamppi HKI",
+      "city": "Helsinki",
+      "address": {
+        "street": "Urho Kekkosen katu 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://fi.espressohouse.com/loyda-meidat/kamppi-hki",
+      "category": "cafe",
+      "lat": 60.1687816,
+      "lon": 24.9322823,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/5566828415",
+          "recordId": "node/5566828415",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Kamppi official branch page",
+          "url": "https://fi.espressohouse.com/loyda-meidat/kamppi-hki",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:espresso-house-helsinki-outlet",
+      "name": "Espresso House",
+      "branch": "Helsinki Outlet",
+      "city": "Helsinki",
+      "address": {
+        "street": "Tatti 17",
+        "postalCode": "00760",
+        "country": "FI"
+      },
+      "website": "https://www.helsinkioutlet.fi/fi_FI/page/espresso-house",
+      "category": "cafe",
+      "lat": 60.2749406,
+      "lon": 25.0814885,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/7658237517",
+          "recordId": "node/7658237517",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Helsinki Outlet official Espresso House listing",
+          "url": "https://www.helsinkioutlet.fi/fi_FI/page/espresso-house",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:espresso-house-forum",
+      "name": "Espresso House",
+      "branch": "Forum HKI",
+      "city": "Helsinki",
+      "address": {
+        "street": "Mannerheimintie 14-20",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://espressohouse.com/en/find-us/forum-hki",
+      "category": "cafe",
+      "lat": 60.1686976,
+      "lon": 24.9380468,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6139262620",
+          "recordId": "node/6139262620",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Forum official branch page",
+          "url": "https://espressohouse.com/en/find-us/forum-hki",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:espresso-house-flamingo",
+      "name": "Espresso House",
+      "branch": "Flamingo",
+      "city": "Vantaa",
+      "address": {
+        "street": "Tasetie 8",
+        "postalCode": "01510",
+        "country": "FI"
+      },
+      "website": "https://espressohouse.com/en/find-us/flamingo",
+      "category": "cafe",
+      "lat": 60.2908933,
+      "lon": 24.9686274,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6076101204",
+          "recordId": "node/6076101204",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Flamingo official branch page",
+          "url": "https://espressohouse.com/en/find-us/flamingo",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:espresso-house-kivisto",
+      "name": "Espresso House",
+      "branch": "Kivistö",
+      "city": "Vantaa",
+      "address": {
+        "street": "Vantaankoskentie 69",
+        "postalCode": "01700",
+        "country": "FI"
+      },
+      "website": "https://espressohouse.com/hitta-oss/kivisto",
+      "category": "cafe",
+      "lat": 60.3137378,
+      "lon": 24.8465373,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11245679423",
+          "recordId": "node/11245679423",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Kivistö official branch page",
+          "url": "https://espressohouse.com/hitta-oss/kivisto",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:espresso-house-jumbo",
+      "name": "Espresso House",
+      "branch": "Jumbo",
+      "city": "Vantaa",
+      "address": {
+        "street": "Vantaanportinkatu 7",
+        "postalCode": "01300",
+        "country": "FI"
+      },
+      "website": "https://fi.espressohouse.com/loyda-meidat/jumbo",
+      "category": "cafe",
+      "lat": 60.2921476,
+      "lon": 24.9649144,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/5679165511",
+          "recordId": "node/5679165511",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Espresso House Jumbo official branch page",
+          "url": "https://fi.espressohouse.com/loyda-meidat/jumbo",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:coffee-house-iso-omena",
+      "name": "Coffee House",
+      "branch": "Iso Omena",
+      "city": "Espoo",
+      "address": {
+        "street": "Piispansilta 11",
+        "postalCode": "02230",
+        "country": "FI"
+      },
+      "website": "https://www.raflaamo.fi/en/restaurant/espoo/coffee-house-iso-omena-espoo",
+      "category": "cafe",
+      "lat": 60.1617776,
+      "lon": 24.7372439,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/1011337661",
+          "recordId": "way/1011337661",
+          "fields": [
+            "name",
+            "city",
+            "address",
+            "lat",
+            "lon",
+            "category"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Coffee House Iso Omena official branch page",
+          "url": "https://www.raflaamo.fi/en/restaurant/espoo/coffee-house-iso-omena-espoo",
+          "fields": [
+            "branch",
+            "operatingStatus",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch page confirms this café is operating. Reusable location facts and coordinates in this record come from OpenStreetMap."
         }
       ],
       "checkedAt": "2026-10-26",
