@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { ArrowLeft, Check, Clock3, ExternalLink, Globe2, Heart, Leaf, MapPin, Navigation, Sparkles, Utensils, X } from 'lucide-react';
 import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
@@ -22,36 +23,38 @@ const safeUrl = (value?: string) => {
 };
 
 type LivePosition = { lat: number; lon: number; accuracy: number };
-function VisitNavigationMap({ place, position, banner = false }: { place: Pick<Place, 'lat' | 'lon'>; position: LivePosition | null; banner?: boolean }) {
-  const width = 900, height = 260;
-  let current = { x: 155, y: 192 };
-  let destination = { x: 750, y: 76 };
-  if (position) {
-    const meanLat = (place.lat + position.lat) / 2 * Math.PI / 180;
-    const dx = (place.lon - position.lon) * 111320 * Math.cos(meanLat);
-    const dy = (position.lat - place.lat) * 111320;
-    const scale = Math.min(600 / Math.max(Math.abs(dx), 40), 128 / Math.max(Math.abs(dy), 28));
-    current = { x: width / 2 - dx * scale / 2, y: height / 2 + dy * scale / 2 };
-    destination = { x: width / 2 + dx * scale / 2, y: height / 2 - dy * scale / 2 };
-  }
-  const control = { x: (current.x + destination.x) / 2, y: (current.y + destination.y) / 2 - 24 };
-  const label = position ? 'Live location and destination map' : 'Map preview showing the restaurant destination';
-  return <svg className={`visit-navigation-map${banner ? ' is-banner' : ''}`} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid slice" role="img" aria-label={label}>
-    <rect width={width} height={height} fill="#e8eee2"/>
-    <path d="M-30 42 C145 82 185 13 340 37 S585 125 930 30 L930 -20 -30 -20Z" fill="#dce9d5"/>
-    <path d="M80 275 C140 205 114 151 195 121 S315 121 365 62 444 10 471 -20" fill="none" stroke="#d1d9cb" strokeWidth="39"/>
-    <path d="M80 275 C140 205 114 151 195 121 S315 121 365 62 444 10 471 -20" fill="none" stroke="#fffdf4" strokeWidth="31"/>
-    <path d="M-20 156 C120 124 228 168 330 187 S508 229 595 159 765 94 930 122" fill="none" stroke="#d1d9cb" strokeWidth="42"/>
-    <path d="M-20 156 C120 124 228 168 330 187 S508 229 595 159 765 94 930 122" fill="none" stroke="#fffdf4" strokeWidth="34"/>
-    <path d="M190 -20 C215 58 254 66 319 96 S435 153 441 280" fill="none" stroke="#d1d9cb" strokeWidth="25"/>
-    <path d="M190 -20 C215 58 254 66 319 96 S435 153 441 280" fill="none" stroke="#fffdf4" strokeWidth="19"/>
-    <path d="M535 -20 C514 57 597 71 615 127 S630 210 721 280" fill="none" stroke="#d1d9cb" strokeWidth="31"/>
-    <path d="M535 -20 C514 57 597 71 615 127 S630 210 721 280" fill="none" stroke="#fffdf4" strokeWidth="25"/>
-    <path d={`M${current.x} ${current.y} Q${control.x} ${control.y} ${destination.x} ${destination.y}`} fill="none" stroke="#70976e" strokeWidth="5" strokeLinecap="round" strokeDasharray="3 11"/>
-    {position && <g className="visit-current-location"><circle cx={current.x} cy={current.y} r="19" fill="#6690a5" opacity=".18"/><circle cx={current.x} cy={current.y} r="9" fill="#fffdf4"/><circle cx={current.x} cy={current.y} r="6" fill="#608ba3"/><path d={`M${current.x} ${current.y - 24}l-4 7h8Z`} fill="#608ba3"/></g>}
-    <g transform={`translate(${destination.x} ${destination.y})`} className="visit-destination-pin"><path d="M0 23S-20 3-20-9a20 20 0 1 1 40 0C20 3 0 23 0 23Z" fill="#d77952" stroke="#fffdf4" strokeWidth="3"/><circle cy="-9" r="6" fill="#fff8e8"/></g>
-    {!position && <circle cx={current.x} cy={current.y} r="5" fill="#9eaf91" opacity=".7"/>}
-  </svg>;
+function VisitNavigationMap({ place }: { place: Pick<Place, 'lat' | 'lon'> }) {
+  const mapElement = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!mapElement.current || !Number.isFinite(place.lat) || !Number.isFinite(place.lon)) return;
+    let cancelled = false;
+    let map: import('maplibre-gl').Map | null = null;
+    void import('maplibre-gl').then(({ default: maplibregl }) => {
+      if (cancelled || !mapElement.current) return;
+      const pin = document.createElement('span');
+      pin.className = 'visit-destination-pin';
+      pin.setAttribute('aria-hidden', 'true');
+      pin.innerHTML = '<svg viewBox="0 0 40 48" focusable="false"><path d="M20 46S2 26 2 17a18 18 0 1 1 36 0c0 9-18 29-18 29Z" fill="#d77952" stroke="#fffdf4" stroke-width="3"/><circle cx="20" cy="17" r="6" fill="#fff8e8"/></svg>';
+      map = new maplibregl.Map({
+        container: mapElement.current,
+        style: 'https://tiles.openfreemap.org/styles/positron',
+        center: [place.lon, place.lat],
+        zoom: 16,
+        attributionControl: false,
+        interactive: false,
+        fadeDuration: 0,
+      });
+      map.addControl(new maplibregl.AttributionControl({ compact: true }));
+      map.once('style.load', () => {
+        for (const layer of map?.getStyle().layers ?? []) {
+          if (layer.type === 'symbol') map?.setLayoutProperty(layer.id, 'visibility', 'none');
+        }
+      });
+      new maplibregl.Marker({ element: pin, anchor: 'bottom' }).setLngLat([place.lon, place.lat]).addTo(map);
+    }).catch(() => undefined);
+    return () => { cancelled = true; map?.remove(); };
+  }, [place.lat, place.lon]);
+  return <div className="visit-navigation-map is-banner" ref={mapElement} role="img" aria-label="OpenStreetMap background centered on the restaurant, with its location marked" />;
 }
 
 type VisitOrigin = 'target' | 'explored' | 'nearby' | 'visited';
@@ -312,7 +315,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className={`visit-journey${visitStage === 'outro' ? ' visit-outro' : ''}`} aria-label={visitStage === 'outro' ? `Visit feedback for ${place.name}` : `Starting a visit to ${place.name}`}>
-        {visitStage === 'journey' && <VisitNavigationMap place={place} position={livePosition} banner/>}
+        {visitStage === 'journey' && <VisitNavigationMap place={place} />}
         {visitStage === 'journey' ? <>
           <div className="visit-route" aria-hidden="true"><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
           <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>{liveLocationStatus === 'live' ? liveStatusText : 'Good food is just around the corner.'}</span></div>
@@ -326,8 +329,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
           {visitStage === 'journey' ? <>
             <button className="back visit-details-back" onClick={() => { stopLiveLocation(); setVisitMode(false); }}><ArrowLeft size={17}/>Place details</button>
             <div className="visit-title"><div><span className="eyebrow">YOUR NEXT STOP</span><h2>{place.name}</h2><p>{cuisine.join(' · ')} · {place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m away` : `${(place.distance / 1000).toFixed(1)} km away`}</p></div><Sparkles size={23}/></div>
-            <div className="visit-map"><VisitNavigationMap place={place} position={livePosition}/><span className="visit-map-status" role="status">{liveStatusText}</span></div>
-            <p className="visit-navigation-hint">The line shows your direction to the restaurant. Open walking directions below for a road route.</p>
+            <p className="visit-live-status" role="status">{liveStatusText}</p>
           </> : <>
             {visitFeedbackStep === 'sentiment' ? <div className="visit-feedback" aria-live="polite">
               <span className="eyebrow">QUESTION 1 OF 2</span><h3>Did you like it?</h3><div className="visit-feedback-actions">
