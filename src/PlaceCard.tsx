@@ -20,6 +20,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
   const [details, setDetails] = useState(false);
   const [visitMode, setVisitMode] = useState(false);
   const [visitIntro, setVisitIntro] = useState(false);
+  const [visitFlightActive, setVisitFlightActive] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const visitCharacterRef = useRef<HTMLSpanElement>(null);
@@ -64,13 +65,6 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
     let cancelled = false;
     firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(async () => {
-        try {
-          await visitCharacterPreload.decode();
-        } catch {
-          if (!cancelled) setVisitIntro(false);
-          return;
-        }
-        if (cancelled) return;
         const target = visitCharacterRef.current;
         if (!target) { setVisitIntro(false); return; }
         const targetRect = target.getBoundingClientRect();
@@ -79,11 +73,6 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         const centerLeft = (window.innerWidth - startWidth) / 2;
         const bottomTop = window.innerHeight + 12;
         const centerY = (window.innerHeight - startHeight) / 2 - bottomTop;
-        const destinationX = targetRect.left + targetRect.width / 2 - window.innerWidth / 2;
-        const destinationY = targetRect.top + targetRect.height / 2 - (bottomTop + startHeight / 2);
-        const midX = destinationX * 0.58 - 22;
-        const midY = centerY + (destinationY - centerY) * 0.58 - 24;
-        const destinationScale = targetRect.width / startWidth;
 
         overlay = document.createElement('img');
         overlay.src = visitCharacterSrc;
@@ -91,18 +80,23 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         overlay.setAttribute('aria-hidden', 'true');
         overlay.className = 'visit-flight-character';
         Object.assign(overlay.style, { left: `${centerLeft}px`, top: `${bottomTop}px`, width: `${startWidth}px`, height: `${startHeight}px` });
+        try {
+          await Promise.all([visitCharacterPreload.decode(), overlay.decode()]);
+        } catch {
+          if (!cancelled) setVisitIntro(false);
+          return;
+        }
+        if (cancelled) return;
         document.body.appendChild(overlay);
+        setVisitFlightActive(true);
         animation = overlay.animate([
           { opacity: 0, transform: 'translate3d(0,0,0) scale(.76) rotate(-6deg)', offset: 0 },
           { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.302, easing: 'cubic-bezier(.18,.85,.25,1)' },
           { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.559, easing: 'cubic-bezier(.2,.8,.35,1)' },
           { opacity: 1, transform: `translate3d(0,${centerY + 6}px,0) scale(.96) rotate(4deg)`, offset: 0.77, easing: 'cubic-bezier(.2,.7,.3,1)' },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.83, easing: 'cubic-bezier(.2,.7,.3,1)' },
-          { opacity: 1, transform: `translate3d(${midX * 0.72}px,${centerY + (midY - centerY) * 0.72 - 8}px,0) scale(${1 + (destinationScale * 1.18 - 1) * 0.72}) rotate(-7deg)`, offset: 0.8925, easing: 'cubic-bezier(.2,.7,.25,1)' },
-          { opacity: 1, transform: `translate3d(${midX}px,${midY + 3}px,0) scale(${destinationScale * 1.42}) rotate(7deg)`, offset: 0.945, easing: 'cubic-bezier(.2,.7,.25,1)' },
-          { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)`, offset: 1 },
-        ], { duration: 1780, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
-        animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitIntro(false); };
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 1, easing: 'cubic-bezier(.2,.7,.3,1)' },
+        ], { duration: 1480, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+        animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitFlightActive(false); setVisitIntro(false); };
       });
     });
     return () => {
@@ -111,6 +105,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       window.cancelAnimationFrame(secondFrame);
       animation?.cancel();
       overlay?.remove();
+      setVisitFlightActive(false);
     };
   }, [visitIntro, visitMode]);
   const cuisine = (place.tags.cuisine || place.tags.amenity?.replace('_', ' ') || 'Food nearby').split(';').map(x => x.trim()).filter(Boolean);
@@ -126,7 +121,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
   mapUrl.searchParams.set('bbox', `${place.lon - 0.006},${place.lat - 0.0035},${place.lon + 0.006},${place.lat + 0.0035}`);
   mapUrl.searchParams.set('layer', 'mapnik');
   mapUrl.searchParams.set('marker', `${place.lat},${place.lon}`);
-  const closeDetails = () => { setDetails(false); setVisitMode(false); setDetailsExpanded(false); };
+  const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setDetailsExpanded(false); };
   const startVisit = () => { setVisitIntro(true); setVisitMode(true); onStatus('target'); };
 
   return <>
@@ -136,7 +131,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       <button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={event => { event.stopPropagation(); onFavorite(); }}>♥</button></div>
       <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><span className="card-open">View place <ArrowLeft size={14}/></span></div>
     </article>
-    {details && createPortal(<div className="place-detail-backdrop" onClick={closeDetails} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`} onClick={event => event.stopPropagation()}>
+    {details && createPortal(<div className="place-detail-backdrop" onClick={closeDetails} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}${visitFlightActive ? ' visit-flight-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`} onClick={event => event.stopPropagation()}>
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className="visit-journey" aria-label={`Starting a visit to ${place.name}`}>

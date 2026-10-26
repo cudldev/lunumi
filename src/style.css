@@ -291,10 +291,10 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 
 /* The visit intro flies a transparent mascot from the viewport center to its route. */
 .visit-flight-character{position:fixed;z-index:1200;object-fit:contain;pointer-events:none;filter:drop-shadow(0 8px 10px #574b2833);transform-origin:center center;will-change:transform,opacity}
-.visit-intro-active .visit-character{visibility:hidden}
-.visit-character{z-index:1;will-change:transform;animation:lunumi-walk 680ms steps(2,end) infinite}
+.visit-flight-active .visit-character{visibility:hidden}
+.visit-character{z-index:1;will-change:transform;animation:lunumi-walk 430ms steps(1,end) infinite alternate}
 .visit-character img{mix-blend-mode:normal;filter:drop-shadow(0 4px 4px #69573a1c)}
-@keyframes lunumi-walk{0%,100%{transform:translate(0,0) rotate(-2deg) scale(1)}25%{transform:translate(5px,-6px) rotate(2deg) scale(.98,.99)}50%{transform:translate(11px,0) rotate(-2deg) scale(1)}75%{transform:translate(6px,-6px) rotate(2deg) scale(.98,.99)}}
+@keyframes lunumi-walk{from{transform:translateY(0) rotate(-3deg) scale(1)}to{transform:translateY(-4px) rotate(3deg) scale(.98,.99)}}
 @media(prefers-reduced-motion:reduce){.visit-character{animation:none}.visit-flight-character{display:none}}
 .place-detail.visit-mode .place-detail-content,.place-detail.visit-mode .place-detail-bottom-bar,.place-detail.visit-mode .visit-journey-copy{opacity:1;transition:opacity 720ms cubic-bezier(.22,.72,.28,1)}
 .place-detail.visit-mode.visit-intro-active .place-detail-content,.place-detail.visit-mode.visit-intro-active .place-detail-bottom-bar,.place-detail.visit-mode.visit-intro-active .visit-journey-copy{opacity:0;transition:none}
