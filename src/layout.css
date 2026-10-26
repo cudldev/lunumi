@@ -1,8 +1,12 @@
 :root{--bottom-navigation-height:60px}
 html,body,#root{height:100%;overflow:hidden}
 body{height:100dvh}
-.app-shell{height:calc(100dvh - var(--bottom-navigation-height) - env(safe-area-inset-bottom));min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:20px}
-.onboard{height:100dvh;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding-bottom:96px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+/* Faint cafe-garden line art, tiled across full-width page surfaces. The top wash
+   follows the page's cream gradient, fading the doodles in smoothly. */
+.app-shell,.onboard{background-image:linear-gradient(180deg,#fff3ce 0,#fff8e9 155px,#fffaf100 320px),url('./kirby-cafe-lineart.svg');background-size:100% 320px,560px 420px;background-position:center top,center 20px;background-repeat:no-repeat,repeat;background-attachment:fixed,fixed}
+.app-shell{width:100%;max-width:none;margin:0;height:calc(100dvh - var(--bottom-navigation-height) - env(safe-area-inset-bottom));min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:20px}
+.topbar{max-width:1120px;margin-inline:auto}
+.onboard{width:100%;max-width:none;margin:0;padding-left:max(19px,calc((100% - 550px)/2 + 24px));padding-right:max(19px,calc((100% - 550px)/2 + 24px));height:100dvh;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding-bottom:96px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
 .onboard-actions{position:sticky;bottom:0;z-index:2;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#fff8f000 0%,#fff8f0ed 24%,#fff8f0 100%)}
 @supports not (height:100dvh){.app-shell{height:calc(100vh - var(--bottom-navigation-height) - env(safe-area-inset-bottom))}}
 .bottom-nav{position:fixed;z-index:5;left:50%;right:auto;bottom:0;transform:translateX(-50%);width:100vw;max-width:none;display:flex;justify-content:center;gap:8px;padding:8px 16px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(100deg,#fffdf5f2,#f8faeff2);backdrop-filter:blur(14px);border-top:1px solid #ebe2d4;box-shadow:0 -5px 20px #69573a0b}
