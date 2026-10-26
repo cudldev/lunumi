@@ -282,6 +282,7 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .menu-assistant-result-heading{display:flex;align-items:center;justify-content:space-between;color:#493a31;font-size:12px}
 .menu-assistant-results ul{display:grid;gap:8px;max-height:320px;overflow:auto;margin:10px 0;padding:0;list-style:none}
 .menu-assistant-results li{display:grid;gap:5px;padding:9px;border-radius:10px;background:#fff;font-size:12px}
+.menu-assistant-item-image{width:72px;height:72px;object-fit:cover;border-radius:9px;background:#f5f0e9}
 .menu-assistant-results li>div:first-child{display:grid;gap:3px}
 .menu-assistant-results li>div:first-child span{color:#887c6e;font-size:11px}
 .menu-assistant-empty{display:grid;gap:4px;margin-top:10px;padding:12px;border-radius:10px;background:#fff;color:#493a31;font-size:12px}
