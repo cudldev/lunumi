@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Clock3, ExternalLink, Globe2, Leaf, MapPin, Navigation, Utensils, X } from 'lucide-react';
 import type { Place } from './core';
@@ -14,6 +14,9 @@ type Props = { place: Place; favorite: boolean; status?: string; sentiment?: str
 
 export default function PlaceCard({ place, favorite, status, sentiment, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment }: Props) {
   const [details, setDetails] = useState(false);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const dragStartY = useRef<number | null>(null);
+  const suppressHandleClick = useRef(false);
   useEffect(() => {
     if (!details) return;
     const shell = document.querySelector<HTMLElement>('.app-shell');
@@ -67,7 +70,8 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       <button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={event => { event.stopPropagation(); onFavorite(); }}>♥</button></div>
       <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><span className="card-open">View place <ArrowLeft size={14}/></span></div>
     </article>
-    {details && createPortal(<div className="place-detail-backdrop" onClick={() => setDetails(false)} role="presentation"><section className="place-detail" role="dialog" aria-modal="true" aria-label={`${place.name} details`} onClick={event => event.stopPropagation()}>
+    {details && createPortal(<div className="place-detail-backdrop" onClick={() => setDetails(false)} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}`} role="dialog" aria-modal="true" aria-label={`${place.name} details`} onClick={event => event.stopPropagation()}>
+      <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={() => setDetails(false)} aria-label="Close details"><X size={20}/></button>
       <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} large />
       <div className="place-detail-content"><button className="back" onClick={() => setDetails(false)}><ArrowLeft size={17}/> Back to places</button>
