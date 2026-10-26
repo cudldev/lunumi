@@ -5,7 +5,7 @@ The assistant is a lightweight browser feature, not a hosted LLM. A small Cloudf
 ## User flow
 
 1. Opening a restaurant detail checks the device's parsed-menu cache. Otherwise, the app sends the listed public HTTPS menu URL to the Worker.
-2. The Worker accepts only generated allowlisted hosts, follows up to three allowlisted redirects, forwards no restaurant cookies or authorization headers, and returns at most 500,000 bytes.
+2. The Worker uses Cloudflare's platform fetch API, accepts only generated allowlisted hosts, follows up to three allowlisted redirects, forwards no restaurant cookies or authorization headers, and returns at most 500,000 bytes.
 3. The browser cleans and parses the returned text into up to 100 scrollable items. It shows the source link and each item's extracted source text so users can verify it.
 4. If fetching or extraction fails, the list remains empty and says **Menu not available**.
 
