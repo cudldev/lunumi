@@ -1,7 +1,11 @@
-import { useMemo, useState } from 'react';
-import { ExternalLink, LoaderCircle, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ExternalLink, LoaderCircle } from 'lucide-react';
 
 type MenuItem = { name: string; details: string; diets: string[] };
+type CachedMenu = { sourceUrl: string; cachedAt: string; items: MenuItem[] };
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v1';
+const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const MENU_CACHE_MAX_ENTRIES = 20;
 
 const dietSignals: Array<[RegExp, string]> = [
   [/\bvegan\b/i, 'Marked vegan'],
@@ -41,63 +45,132 @@ function parseMenu(value: string): MenuItem[] {
   return found;
 }
 
+function validCachedMenu(value: unknown): value is CachedMenu {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Partial<CachedMenu>;
+  return typeof entry.sourceUrl === 'string' && entry.sourceUrl.length <= 2048
+    && typeof entry.cachedAt === 'string' && Number.isFinite(Date.parse(entry.cachedAt))
+    && Array.isArray(entry.items) && entry.items.length <= 100
+    && entry.items.every(item => Boolean(item) && typeof item.name === 'string' && item.name.length <= 90
+      && typeof item.details === 'string' && item.details.length <= 240
+      && Array.isArray(item.diets) && item.diets.every(diet => typeof diet === 'string' && diet.length <= 40));
+}
+
+function readCachedMenu(sourceUrl: string): CachedMenu | null {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(MENU_CACHE_KEY) || '[]');
+    if (!Array.isArray(parsed)) return null;
+    const entry = parsed.find((candidate): candidate is CachedMenu => validCachedMenu(candidate) && candidate.sourceUrl === sourceUrl);
+    if (!entry) return null;
+    const age = Date.now() - Date.parse(entry.cachedAt);
+    return age >= 0 && age < MENU_CACHE_TTL_MS ? entry : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedMenu(sourceUrl: string, items: MenuItem[]): string | null {
+  const cachedAt = new Date().toISOString();
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(MENU_CACHE_KEY) || '[]');
+    const now = Date.now();
+    const recent = Array.isArray(parsed) ? parsed.filter((candidate): candidate is CachedMenu => {
+      if (!validCachedMenu(candidate)) return false;
+      const age = now - Date.parse(candidate.cachedAt);
+      return age >= 0 && age < MENU_CACHE_TTL_MS && candidate.sourceUrl !== sourceUrl;
+    }) : [];
+    const next: CachedMenu[] = [{ sourceUrl, cachedAt, items }, ...recent].slice(0, MENU_CACHE_MAX_ENTRIES);
+    localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(next));
+    return cachedAt;
+  } catch {
+    return null;
+  }
+}
+
 type Props = { restaurantName: string; sourceUrl?: string | null };
 const menuReaderUrl = import.meta.env.VITE_MENU_READER_URL?.trim();
 
 export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [busy, setBusy] = useState(Boolean(sourceUrl));
   const [error, setError] = useState('');
-  const items = useMemo(() => parseMenu(text), [text]);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
 
-  async function readMenu() {
-    if (!sourceUrl || busy) return;
-    setBusy(true);
-    setError('');
-    setText('');
+  useEffect(() => {
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 15_000);
-    try {
-      if (!menuReaderUrl) throw new Error('Menu reading is not connected for this deployment yet. Please open the restaurant source link.');
-      const response = await fetch(menuReaderUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: sourceUrl }),
-        signal: controller.signal,
-        credentials: 'omit',
-      });
-      const result = await response.json() as { text?: string; contentType?: string; error?: string };
-      if (!response.ok) throw new Error(result.error || `The menu could not be fetched (${response.status}).`);
-      const contentType = result.contentType || '';
-      if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(sourceUrl)) {
-        throw new Error('This menu is a PDF. Open the source link to view it; automatic PDF reading is not available yet.');
-      }
-      if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
-        throw new Error('This menu format cannot be read automatically yet.');
-      }
-      const body = (result.text || '').slice(0, 500_000);
-      const extracted = parseMenu(body);
-      if (!extracted.length) throw new Error('The page loaded, but Lunumi could not identify menu entries on it.');
-      setText(body);
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'The menu could not be read.';
-      setError(controller.signal.aborted ? 'The menu service took too long to respond. Open the restaurant source link instead.' : /failed to fetch|networkerror|load failed/i.test(message) ? 'Lunumi could not reach its menu service. Open the source link to view the menu.' : message);
-    } finally {
-      window.clearTimeout(timeout);
+    let timeout: number | undefined;
+    let timedOut = false;
+    setItems([]);
+    setError('');
+    setCachedAt(null);
+    if (!sourceUrl) {
       setBusy(false);
+      setError('No menu source is listed for this restaurant.');
+      return () => controller.abort();
     }
-  }
+
+    const cached = readCachedMenu(sourceUrl);
+    if (cached) {
+      setItems(cached.items);
+      setCachedAt(cached.cachedAt);
+      setBusy(false);
+      return () => controller.abort();
+    }
+    setBusy(true);
+
+    async function loadMenu() {
+      try {
+        if (!menuReaderUrl) throw new Error('Menu reading is not connected for this deployment yet.');
+        timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15_000);
+        const response = await fetch(menuReaderUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: sourceUrl }),
+          signal: controller.signal,
+          credentials: 'omit',
+        });
+        const result = await response.json() as { text?: string; contentType?: string; error?: string };
+        if (!response.ok) throw new Error(result.error || `The menu could not be fetched (${response.status}).`);
+        const contentType = result.contentType || '';
+        if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(sourceUrl)) {
+          throw new Error('This menu is a PDF and cannot be read automatically yet.');
+        }
+        if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
+          throw new Error('This menu format cannot be read automatically yet.');
+        }
+        const body = (result.text || '').slice(0, 500_000);
+        const extracted = parseMenu(body);
+        if (!extracted.length) throw new Error('No readable menu items were found on the restaurant page.');
+        if (!controller.signal.aborted) {
+          setItems(extracted);
+          setCachedAt(writeCachedMenu(sourceUrl, extracted));
+        }
+      } catch (cause) {
+        if (timedOut) {
+          setError('The menu service took too long to respond.');
+        } else if (!controller.signal.aborted) {
+          const message = cause instanceof Error ? cause.message : 'The menu could not be read.';
+          setError(/failed to fetch|networkerror|load failed/i.test(message) ? 'Lunumi could not reach its menu service.' : message);
+        }
+      } finally {
+        if (timeout !== undefined) window.clearTimeout(timeout);
+        if (!controller.signal.aborted || timedOut) setBusy(false);
+      }
+    }
+
+    void loadMenu();
+    return () => {
+      controller.abort();
+      if (timeout !== undefined) window.clearTimeout(timeout);
+    };
+  }, [sourceUrl]);
 
   return <section className="menu-assistant" aria-label={`Local menu assistant for ${restaurantName}`}>
-    <div className="menu-assistant-heading"><Sparkles size={17}/><div><strong>Menu helper</strong><span>Reads available menu text on this device</span></div></div>
-    {sourceUrl ? <a className="menu-assistant-source" href={sourceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>Restaurant menu or website</a> : <p className="menu-assistant-note">No menu source link is listed for this restaurant yet.</p>}
-    <button type="button" className="button menu-assistant-read" onClick={() => void readMenu()} disabled={!sourceUrl || busy}>{busy ? <><LoaderCircle size={16} className="menu-assistant-spinner"/>Reading menu…</> : <><Sparkles size={16}/>Read menu</>}</button>
-    {error && <p className="menu-assistant-error" role="status">{error}{sourceUrl && <> <a href={sourceUrl} target="_blank" rel="noopener noreferrer">Open restaurant menu</a>.</>}</p>}
-    {text && <div className="menu-assistant-results" aria-live="polite">
-      <div className="menu-assistant-result-heading"><strong>{items.length} menu entries found</strong><button type="button" className="text-button" onClick={() => { setText(''); setError(''); }}>Clear</button></div>
-      {items.length > 0 && <ul>{items.map((item, index) => <li key={`${item.name}-${index}`}><div><strong>{item.name}</strong>{item.details && <span>{item.details}</span>}</div><div className="menu-assistant-diets">{item.diets.length ? item.diets.map(diet => <span key={diet}>{diet}</span>) : <span>Dietary details not stated</span>}</div></li>)}</ul>}
-      <p className="menu-assistant-note">Best-effort reading of the linked page. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
-      {sourceUrl && <a className="menu-assistant-source" href={sourceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>Verify on the restaurant’s page</a>}
-    </div>}
+    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? <><LoaderCircle size={13} className="menu-assistant-spinner"/> Loading items…</> : items.length ? `${items.length} items${cachedAt ? ' · saved on this device' : ''}` : 'Items from the restaurant’s own page'}</span></div></div>
+    {items.length > 0 ? <>
+      <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}><div><strong>{item.name}</strong>{item.details && <span>{item.details}</span>}</div><div className="menu-assistant-diets">{item.diets.length ? item.diets.map(diet => <span key={diet}>{diet}</span>) : <span>Dietary details not stated</span>}</div></li>)}</ul>
+      <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
+    </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
+    {sourceUrl && <a className="menu-assistant-source" href={sourceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
   </section>;
 }

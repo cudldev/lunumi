@@ -4,11 +4,10 @@ The menu assistant is a lightweight browser feature. It does not download an LLM
 
 ## User flow
 
-1. The assistant appears in a restaurant detail when a menu URL or website URL is listed.
-2. The user presses **Read menu**. Lunumi sends the selected URL to the menu reader Worker.
-3. The Worker permits only HTTPS hosts in the generated restaurant host allowlist, follows up to three allowlisted redirects, and requests the page without cookies or authorization headers.
-4. It returns up to 500,000 bytes of readable text to the browser. The browser strips common non-content HTML elements, splits text into lines, and shows up to 100 likely menu entries. The original source link is displayed so users can verify it.
-5. If the host is not in the allowlist, the request is blocked, the page is too large or slow, or the content is not supported, Lunumi explains the issue and offers the source link.
+1. Opening a restaurant detail first checks the device's menu cache. If there's no fresh entry, Lunumi automatically loads its listed menu URL, or website if no menu URL is listed.
+2. The Worker permits only HTTPS hosts in the generated restaurant host allowlist, follows up to three allowlisted redirects, and requests the page without cookies or authorization headers.
+3. It returns up to 500,000 bytes of readable text to the browser. The browser strips common non-content HTML elements, splits text into lines, and shows up to 100 likely menu entries in a scrollable list. The source link stays visible for verification.
+4. While loading, the menu area shows a loading state. If the host is blocked, the page is too large or slow, the content is unsupported, or no entries can be identified, it shows **Menu not available** and keeps the source link available.
 
 ## What it extracts
 
@@ -16,10 +15,11 @@ Each entry may show its name, nearby description text, and a price when a simple
 
 ## Privacy and limits
 
-- The request sends the restaurant source URL to the Worker. The Worker fetches the public page and returns text to the browser; menu parsing remains on the device.
-- Worker code does not persist or log menu contents, and the browser does not store menu text in IndexedDB, profiles, or restaurant datasets. Content is not sent to an AI service. Cloudflare processes the request to run the Worker.
+- On a cache miss, the request sends the restaurant source URL to the Worker. The Worker fetches the public page and returns text to the browser; menu parsing remains on the device.
+- Worker code does not persist or log menu contents. The browser caches only extracted item names, descriptions, prices and explicit dietary labels in local storage for 24 hours, up to 20 source URLs. Raw menu text is not saved in browser storage, profiles, or restaurant datasets. Users can clear this cache by clearing Lunumi's site data. Content is not sent to an AI service. Cloudflare processes cache-miss requests to run the Worker.
 - The endpoint only accepts HTTPS hosts generated from Lunumi's Helsinki OSM and official restaurant datasets. Links to unlisted hosts, including many places found outside those datasets, remain source-link-only until the host is added to the reviewed data.
 - Responses are capped at 500,000 bytes and fetches time out after 10 seconds. The browser request times out after 15 seconds.
+- Each cache miss makes one Worker request when a source URL and Worker URL are configured. Cloudflare Workers Free currently allows 100,000 requests per day; excess requests fail on the Free plan. A paid Workers plan can incur charges under its current pricing. Check [Cloudflare's limits](https://developers.cloudflare.com/workers/platform/limits/), [pricing](https://developers.cloudflare.com/workers/platform/pricing/) and the account's plan before deployment.
 - PDF and image menus are not parsed. JavaScript-rendered content may not appear in the returned HTML. A site may still deny requests or return a page that does not contain its menu.
 - Extraction is heuristic. It may include unrelated text, combine a dish with its price or description, or miss valid items.
 - Explicit labels do not establish allergy safety. The helper does not interpret ingredient/allergen statements, cross-contamination warnings, or restaurant-specific symbol legends.
