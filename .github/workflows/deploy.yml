@@ -75,6 +75,8 @@ jobs:
           npm run typecheck
           npm test
       - name: Build
+        env:
+          VITE_MENU_READER_URL: ${{ vars.MENU_READER_WORKER_URL_LIVE }}
         run: npm run build
       - name: Install staging dependencies
         working-directory: staging
@@ -88,6 +90,7 @@ jobs:
         working-directory: staging
         env:
           VITE_BASE_PATH: /lunumi/staging/
+          VITE_MENU_READER_URL: ${{ vars.MENU_READER_WORKER_URL_STAGING }}
         run: npm run build -- --outDir ../dist/staging
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
