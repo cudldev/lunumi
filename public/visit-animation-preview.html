@@ -15,7 +15,7 @@
     .journey{position:relative;display:flex;align-items:center;min-height:188px;padding:20px 28px;overflow:hidden;background:linear-gradient(120deg,#f7e6b5,#f4efd9 48%,#dcebd5)}
     .journey:before,.journey:after{position:absolute;content:"";width:240px;height:240px;border:1px solid #ffffff70;border-radius:50%;pointer-events:none}.journey:before{right:-112px;top:-145px}.journey:after{left:-173px;bottom:-188px;width:280px;height:280px}
     .route{position:relative;z-index:1;flex:0 0 180px;height:116px}.route-line{position:absolute;left:35px;right:25px;top:57px;border-top:3px dashed #8ba17d;transform:rotate(-15deg);transform-origin:left center;animation:route-draw .7s ease-out both}.pin{position:absolute;right:18px;top:22px;color:#d17c5c}
-    .target{position:absolute;left:17px;top:30px;width:78px;height:78px;display:block;filter:drop-shadow(0 4px 4px #69573a1c)}.walk-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:50% 86%;user-select:none;pointer-events:none}.walk-frame-a{transform:rotate(0deg)}.arrived .walk-frame-a{animation:walk-a 860ms ease-in-out infinite}.flight{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 4px #69573a1c)}
+    .target{position:absolute;left:17px;top:30px;width:78px;height:78px;display:block;filter:drop-shadow(0 4px 4px #69573a1c)}.walk-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:50% 50%;user-select:none;pointer-events:none}.walk-frame-a{transform:rotate(12deg)}.arrived .walk-frame-a{animation:walk-a 430ms ease-in-out infinite alternate}.flight{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 4px #69573a1c)}
     .journey-copy{position:relative;z-index:1;display:grid;gap:8px;max-width:360px;transition:opacity .65s cubic-bezier(.22,.72,.28,1)}.eyebrow{color:#6d8066;font-size:11px;font-weight:800;letter-spacing:1.5px}.journey-copy strong{font-family:Georgia,serif;font-size:24px;line-height:1.15}.journey-copy span:last-child{font-size:13px;color:#796e60}
     .panel{padding:22px 28px 26px;transition:opacity .72s cubic-bezier(.22,.72,.28,1)}.panel h2{margin:0 0 8px;font-family:Georgia,serif;font-size:21px}.panel p{margin:0 0 14px;color:#887c6e;font-size:13px;line-height:1.6}.map{height:178px;margin:12px 0 16px;border:1px solid #e9e0d4;border-radius:17px;background-color:#edf1e8;background-image:linear-gradient(28deg,transparent 47%,#fff 48% 51%,transparent 52%),linear-gradient(110deg,transparent 45%,#fff 46% 49%,transparent 50%),radial-gradient(circle at 73% 35%,#d17c5c 0 5px,transparent 6px);background-size:150px 100px,180px 140px,100% 100%;position:relative}.map:after{content:"Restaurant";position:absolute;top:28%;right:18%;font-size:11px;color:#746a5d}.actions{display:flex;gap:8px}.actions button{flex:1;min-height:43px;border:1px solid #e9e0d4;border-radius:13px;background:#fff;color:#6d8066;font:700 12px inherit}.actions button:first-child{background:#6f9c68;color:#fff;border-color:#6f9c68}
     .flight{position:fixed;z-index:10;pointer-events:none;transform-origin:center center;will-change:transform,opacity;filter:drop-shadow(0 8px 10px #574b2833)}
@@ -42,29 +42,27 @@
       card.classList.remove('active','arrived');
       await new Promise(requestAnimationFrame); await new Promise(requestAnimationFrame);
       const rect=target.getBoundingClientRect(), width=rect.width*2, height=rect.height*2;
-      const left=(innerWidth-width)/2, bottom=innerHeight+12, centerY=(innerHeight-height)/2-bottom;
-      const destX=rect.left+rect.width/2-innerWidth/2, destY=rect.top+rect.height/2-(bottom+height/2), scale=rect.width/width;
+      const centerX=innerWidth/2, centerY=innerHeight/2, bottom=innerHeight+12, startCenterY=bottom+height/2;
+      const targetCenterX=rect.left+rect.width/2, targetCenterY=rect.top+rect.height/2;
+      const jumpFrame=(center,scale,rotation,offset,opacity=1,easing)=>{const w=width*scale,h=height*scale;return{opacity,left:`${centerX-w/2}px`,top:`${center-h/2}px`,width:`${w}px`,height:`${h}px`,transform:`rotate(${rotation}deg)`,offset,easing}};
+      const travelFrame=(progress,rotation,offset)=>{const w=width+(rect.width-width)*progress,h=height+(rect.height-height)*progress,x=centerX+(targetCenterX-centerX)*progress,y=centerY+(targetCenterY-centerY)*progress;return{opacity:1,left:`${x-w/2}px`,top:`${y-h/2}px`,width:`${w}px`,height:`${h}px`,transform:`rotate(${rotation}deg)`,offset,easing:'cubic-bezier(.2,.72,.25,1)'}};
       const sprite=document.createElement('img'); sprite.className='flight'; sprite.src='./mascot/lunumi-jump.webp';
-      Object.assign(sprite.style,{left:`${left}px`,top:`${bottom}px`,width:`${width}px`,height:`${height}px`});
-      const jump=new Image(); jump.src='./mascot/lunumi-jump.webp'; const settle=new Image(); settle.src='./mascot/lunumi-visit.webp';
-      await Promise.all([walkSprite.decode(), jump.decode(), settle.decode()]);
+      Object.assign(sprite.style,{left:`${centerX-width/2}px`,top:`${bottom}px`,width:`${width}px`,height:`${height}px`,transformOrigin:'center center'});
+      const jump=new Image(); jump.src='./mascot/lunumi-jump.webp';
+      await Promise.all([walkSprite.decode(), jump.decode()]);
       document.body.appendChild(sprite);
       card.classList.add('active','flight-ready');
-      const jumpMotion=sprite.animate([
-        {opacity:0,transform:'translate3d(0,0,0) scale(.76) rotate(-6deg)',offset:0},
-        {opacity:1,transform:`translate3d(0,${centerY-42}px,0) scale(1.04) rotate(-4deg)`,offset:.62,easing:'cubic-bezier(.18,.85,.25,1)'},
-        {opacity:1,transform:`translate3d(0,${centerY+7}px,0) scale(.97) rotate(3deg)`,offset:.84,easing:'cubic-bezier(.2,.7,.3,1)'},
-        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:1}
-      ],{duration:1050,easing:'cubic-bezier(.22,.72,.28,1)',fill:'forwards'});
-      await jumpMotion.finished; sprite.src='./mascot/lunumi-visit.webp'; await new Promise(r=>setTimeout(r,110));
-      sprite.src='./mascot/lunumi-walk-right-a.webp';
-      const move=sprite.animate([
-        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:0},
-        {opacity:1,transform:`translate3d(${destX/3}px,${destY/3}px,0) scale(${(2+scale)/3}) rotate(12deg)`,offset:.33},
-        {opacity:1,transform:`translate3d(${destX*2/3}px,${destY*2/3}px,0) scale(${(1+2*scale)/3}) rotate(-12deg)`,offset:.66},
-        {opacity:1,transform:`translate3d(${destX}px,${destY}px,0) scale(${scale}) rotate(0deg)`,offset:1}
-      ],{duration:500,easing:'cubic-bezier(.2,.72,.25,1)',fill:'forwards'});
-      await move.finished; sprite.remove(); card.classList.remove('active','flight-ready'); card.classList.add('arrived');
+      const motion=sprite.animate([
+        jumpFrame(startCenterY,.76,-6,0,0,'cubic-bezier(.22,.72,.28,1)'),
+        jumpFrame(centerY-42,1.04,-4,.344,1,'cubic-bezier(.18,.85,.25,1)'),
+        jumpFrame(centerY,.97,3,.467,1,'cubic-bezier(.2,.7,.3,1)'),
+        jumpFrame(centerY,1,0,.58,1,'cubic-bezier(.2,.72,.25,1)'),
+        travelFrame(.25,12,.685),
+        travelFrame(.75,-12,.895),
+        travelFrame(1,12,1)
+      ],{duration:1810,fill:'forwards'});
+      setTimeout(()=>{sprite.src='./mascot/lunumi-walk-right-a.webp'},1050);
+      await motion.finished; sprite.remove(); card.classList.remove('active','flight-ready'); card.classList.add('arrived');
     }
     document.querySelector('#replay').addEventListener('click',replay); replay();
   </script>
