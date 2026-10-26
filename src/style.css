@@ -258,3 +258,4 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 @keyframes detail-enter{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:600px){.place-list{grid-template-columns:1fr;gap:13px}.place-card-visual{border-radius:18px}.place-card-copy{padding:12px 13px 4px}.place-card-foot{padding:4px 13px 12px}.place-detail-backdrop{padding:0;align-items:end}.place-detail{width:100%;max-height:94dvh;border-radius:24px 24px 0 0}.restaurant-photo-large{border-radius:24px 24px 0 0}.place-detail-content{padding:17px 20px calc(24px + env(safe-area-inset-bottom))}.place-detail-heading h2{font-size:26px}}
+.status.verified{background:#edf5e8;color:#52744d;text-decoration:none}.status.verified:hover{text-decoration:underline}
