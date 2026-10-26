@@ -278,12 +278,14 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .menu-assistant textarea{min-height:84px;background:#fff;font-size:12px}
 .menu-assistant-upload{position:relative;overflow:hidden;margin-top:8px;cursor:pointer}
 .menu-assistant-upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-.menu-assistant-results{margin-top:12px;padding-top:10px;border-top:1px solid #eee2d8}
+.menu-assistant-results{display:grid;gap:8px;max-height:320px;overflow:auto;margin:10px 0 0;padding:0 4px 0 0;list-style:none;overscroll-behavior:contain}
 .menu-assistant-result-heading{display:flex;align-items:center;justify-content:space-between;color:#493a31;font-size:12px}
 .menu-assistant-results ul{display:grid;gap:8px;max-height:320px;overflow:auto;margin:10px 0;padding:0;list-style:none}
 .menu-assistant-results li{display:grid;gap:5px;padding:9px;border-radius:10px;background:#fff;font-size:12px}
 .menu-assistant-results li>div:first-child{display:grid;gap:3px}
 .menu-assistant-results li>div:first-child span{color:#887c6e;font-size:11px}
+.menu-assistant-empty{display:grid;gap:4px;margin-top:10px;padding:12px;border-radius:10px;background:#fff;color:#493a31;font-size:12px}
+.menu-assistant-empty span{color:#887c6e;font-size:11px;line-height:1.5}
 .menu-assistant-diets{display:flex;flex-wrap:wrap;gap:5px}
 .menu-assistant-diets span{padding:3px 7px;border-radius:20px;background:#edf3e9;color:#607d5b;font-size:10px}
 .visit-start,.visit-directions{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:48px;margin-top:19px;border-radius:15px}
