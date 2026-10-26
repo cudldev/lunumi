@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LocateFixed, MapPin, Minus, Plus } from 'lucide-react';
+import type { KeyboardEvent, PointerEvent } from 'react';
 import type { Place } from './core';
 import './history-map.css';
 
 type MapEntry = { id: string; place: Place; when: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; status?: 'target' | 'visited'; visitedAt?: string; tags: string[]; isUnvisited?: boolean };
 type Tile = { x: number; y: number; z: number; left: number; top: number };
+type Marker = { kind: 'place'; entry: MapEntry; x: number; y: number; number?: number } | { kind: 'cluster'; entries: MapEntry[]; x: number; y: number; lat: number; lon: number };
 const TILE_SIZE = 256;
 const MIN_ZOOM = 2;
 const MAX_ZOOM = 18;
+const CLUSTER_SIZE = 54;
+const MAX_NEARBY_ROWS = 12;
 const clampLat = (lat: number) => Math.max(-85.05112878, Math.min(85.05112878, lat));
 const worldPoint = (lat: number, lon: number, zoom: number) => {
   const scale = TILE_SIZE * 2 ** zoom;
@@ -23,6 +27,8 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
   const [zoomOffset, setZoomOffset] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const located = useMemo(() => entries.filter(entry => Number.isFinite(entry.place.lat) && Number.isFinite(entry.place.lon)), [entries]);
+  const historyEntries = useMemo(() => located.filter(entry => !entry.isUnvisited), [located]);
+  const nearbyEntries = useMemo(() => located.filter(entry => entry.isUnvisited), [located]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -70,21 +76,58 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
     return { zoom, centerX, centerY, tiles };
   }, [fitted, pan, size, zoomOffset]);
 
+  const markers = useMemo<Marker[]>(() => {
+    if (!viewport) return [];
+    const worldSize = TILE_SIZE * 2 ** viewport.zoom;
+    const position = (entry: MapEntry) => {
+      const point = worldPoint(entry.place.lat, entry.place.lon, viewport.zoom);
+      return { x: wrap(point.x, worldSize) - viewport.centerX + size.width / 2, y: point.y - viewport.centerY + size.height / 2 };
+    };
+    const historyNumbers = new Map(historyEntries.map((entry, index) => [entry.id, index + 1]));
+    const result: Marker[] = historyEntries.map(entry => ({ kind: 'place', entry, ...position(entry), number: historyNumbers.get(entry.id) }));
+    const groups = new Map<string, Array<{ entry: MapEntry; x: number; y: number }>>();
+    nearbyEntries.forEach(entry => {
+      const point = position(entry);
+      const key = `${Math.floor(point.x / CLUSTER_SIZE)}:${Math.floor(point.y / CLUSTER_SIZE)}`;
+      const group = groups.get(key) || [];
+      group.push({ entry, ...point });
+      groups.set(key, group);
+    });
+    groups.forEach(group => {
+      if (group.length === 1) {
+        const item = group[0];
+        result.push({ kind: 'place', entry: item.entry, x: item.x, y: item.y });
+        return;
+      }
+      result.push({ kind: 'cluster', entries: group.map(item => item.entry), x: group.reduce((sum, item) => sum + item.x, 0) / group.length, y: group.reduce((sum, item) => sum + item.y, 0) / group.length, lat: group.reduce((sum, item) => sum + item.entry.place.lat, 0) / group.length, lon: group.reduce((sum, item) => sum + item.entry.place.lon, 0) / group.length });
+    });
+    return result;
+  }, [historyEntries, nearbyEntries, size, viewport]);
+
   const zoomBy = (delta: number) => {
     if (!fitted || !viewport) return;
     setZoomOffset(current => Math.max(MIN_ZOOM - fitted.zoom, Math.min(MAX_ZOOM - fitted.zoom, current + delta)));
   };
-  const startPan = (event: React.PointerEvent<HTMLDivElement>) => {
+  const zoomTo = (lat: number, lon: number) => {
+    if (!fitted || !viewport) return;
+    const zoom = Math.min(MAX_ZOOM, viewport.zoom + 2);
+    const scale = 2 ** (zoom - fitted.zoom);
+    const point = worldPoint(lat, lon, zoom);
+    const worldSize = TILE_SIZE * 2 ** zoom;
+    setZoomOffset(zoom - fitted.zoom);
+    setPan({ x: wrap(point.x, worldSize) - fitted.centerX * scale, y: point.y - fitted.centerY * scale });
+  };
+  const startPan = (event: PointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest('button,a')) return;
     dragStart.current = { x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
-  const movePan = (event: React.PointerEvent<HTMLDivElement>) => {
+  const movePan = (event: PointerEvent<HTMLDivElement>) => {
     if (!dragStart.current) return;
     setPan({ x: dragStart.current.panX - (event.clientX - dragStart.current.x), y: dragStart.current.panY - (event.clientY - dragStart.current.y) });
   };
   const stopPan = () => { dragStart.current = null; };
-  const panByKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  const panByKey = (event: KeyboardEvent<HTMLDivElement>) => {
     const shifts: Record<string, [number, number]> = { ArrowLeft: [-72, 0], ArrowRight: [72, 0], ArrowUp: [0, -72], ArrowDown: [0, 72] };
     const shift = shifts[event.key];
     if (!shift) return;
@@ -94,15 +137,12 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
 
   if (!located.length) return <section className="history-map-empty"><MapPin size={30}/><h2>Your map is waiting</h2><p>Nearby places will appear after a location is set. Saved restaurants stay on the map.</p></section>;
   return <section className="history-map-section" aria-label="Restaurant history and nearby map">
-    <div className="history-map" ref={mapRef} tabIndex={0} onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan} onPointerCancel={stopPan} onKeyDown={panByKey} aria-label={`${located.length} restaurants on OpenStreetMap. Drag to move, use arrow keys to pan.`}>
+    <div className="history-map" ref={mapRef} tabIndex={0} onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan} onPointerCancel={stopPan} onKeyDown={panByKey} aria-label={`${historyEntries.length} history places and ${nearbyEntries.length} nearby places on OpenStreetMap. Drag to move, use arrow keys to pan.`}>
       {viewport && <>
         <div className="history-map-tiles" aria-hidden="true">{viewport.tiles.map(tile => <img key={`${tile.z}/${tile.x}/${tile.y}`} src={`https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} style={{ left: tile.left, top: tile.top }} />)}</div>
-        <div className="history-map-markers">{located.map((entry, index) => {
-          const point = worldPoint(entry.place.lat, entry.place.lon, viewport.zoom);
-          const x = wrap(point.x, TILE_SIZE * 2 ** viewport.zoom);
-          const stateClass = entry.isUnvisited ? 'is-nearby' : entry.status === 'target' ? 'is-target' : entry.status === 'visited' ? 'is-visited' : 'is-explored';
-          return <button key={entry.id} className={`history-map-pin ${stateClass}`} style={{ left: x - viewport.centerX + size.width / 2, top: point.y - viewport.centerY + size.height / 2 }} onClick={() => onSelect(entry)} aria-label={`Open ${entry.place.name}`} title={entry.place.name}><MapPin size={22}/><span>{index + 1}</span></button>;
-        })}</div>
+        <div className="history-map-markers">{markers.map((marker, index) => marker.kind === 'cluster'
+          ? <button key={`cluster-${index}`} className="history-map-cluster" style={{ left: marker.x, top: marker.y }} onClick={() => zoomTo(marker.lat, marker.lon)} aria-label={`Zoom in on ${marker.entries.length} nearby restaurants`} title={`${marker.entries.length} nearby restaurants`}>{marker.entries.length}</button>
+          : <button key={marker.entry.id} className={`history-map-pin ${marker.entry.isUnvisited ? 'is-nearby' : marker.entry.status === 'target' ? 'is-target' : marker.entry.status === 'visited' ? 'is-visited' : 'is-explored'}`} style={{ left: marker.x, top: marker.y }} onClick={() => onSelect(marker.entry)} aria-label={`Open ${marker.entry.place.name}`} title={marker.entry.place.name}><MapPin size={22}/>{marker.number && <span>{marker.number}</span>}</button>)}</div>
       </>}
       {viewport && <>
         <nav className="history-map-controls" aria-label="Map navigation">
@@ -115,7 +155,8 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
       <a className="history-map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>
       <span className="history-map-local">Saved on this device</span>
     </div>
-    <p className="history-map-note">Nearby pins show places not marked visited in your food history. Drag to pan, use the controls to zoom, or press the arrow keys when the map is focused. Map tiles come from OpenStreetMap; your history stays on this device.</p>
-    <div className="history-map-list">{located.map((entry, index) => <button key={entry.id} className="history-map-row" onClick={() => onSelect(entry)}><span className="history-map-number">{index + 1}</span><span>{entry.place.name}<small>{entry.isUnvisited ? 'Nearby · not marked visited' : entry.status === 'visited' ? 'Visited' : entry.sentiment === 'favorite' ? 'Favorite' : entry.status === 'target' ? 'To try' : 'Explored'}</small></span><MapPin size={16}/></button>)}</div>
+    <p className="history-map-note">Nearby pins are places not marked visited in your history. Clustered pins expand as you zoom; drag to pan, use Fit to reset, or use arrow keys when the map is focused. OpenStreetMap receives only the map tiles you view.</p>
+    <div className="history-map-list">{[...historyEntries, ...nearbyEntries.slice(0, MAX_NEARBY_ROWS)].map((entry, index) => <button key={entry.id} className="history-map-row" onClick={() => onSelect(entry)}><span className="history-map-number">{index + 1}</span><span>{entry.place.name}<small>{entry.isUnvisited ? 'Nearby · not marked visited' : entry.status === 'visited' ? 'Visited' : entry.sentiment === 'favorite' ? 'Favorite' : entry.status === 'target' ? 'To try' : 'Explored'}</small></span><MapPin size={16}/></button>)}</div>
+    {nearbyEntries.length > MAX_NEARBY_ROWS && <p className="history-map-note">Showing your history and the 12 closest nearby suggestions in the list; all nearby places are shown on the map.</p>}
   </section>;
 }
