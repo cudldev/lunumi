@@ -10,7 +10,7 @@ type Marker = { kind: 'place'; entry: MapEntry; x: number; y: number; number?: n
 const TILE_SIZE = 256;
 const MIN_ZOOM = 2;
 const MAX_ZOOM = 18;
-const CLUSTER_SIZE = 54;
+const CLUSTER_SIZE = 80;
 const MAX_NEARBY_ROWS = 12;
 const clampLat = (lat: number) => Math.max(-85.05112878, Math.min(85.05112878, lat));
 const worldPoint = (lat: number, lon: number, zoom: number) => {
@@ -29,6 +29,7 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
   const located = useMemo(() => entries.filter(entry => Number.isFinite(entry.place.lat) && Number.isFinite(entry.place.lon)), [entries]);
   const historyEntries = useMemo(() => located.filter(entry => !entry.isUnvisited), [located]);
   const nearbyEntries = useMemo(() => located.filter(entry => entry.isUnvisited), [located]);
+  const projected = useMemo(() => new Map(located.map(entry => [entry.id, worldPoint(entry.place.lat, entry.place.lon, 0)])), [located]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -80,7 +81,8 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
     if (!viewport) return [];
     const worldSize = TILE_SIZE * 2 ** viewport.zoom;
     const position = (entry: MapEntry) => {
-      const point = worldPoint(entry.place.lat, entry.place.lon, viewport.zoom);
+      const base = projected.get(entry.id)!;
+      const point = { x: base.x * 2 ** viewport.zoom, y: base.y * 2 ** viewport.zoom };
       return { x: wrap(point.x, worldSize) - viewport.centerX + size.width / 2, y: point.y - viewport.centerY + size.height / 2 };
     };
     const historyNumbers = new Map(historyEntries.map((entry, index) => [entry.id, index + 1]));
@@ -88,6 +90,7 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
     const groups = new Map<string, Array<{ entry: MapEntry; x: number; y: number }>>();
     nearbyEntries.forEach(entry => {
       const point = position(entry);
+      if (point.x < -CLUSTER_SIZE || point.x > size.width + CLUSTER_SIZE || point.y < -CLUSTER_SIZE || point.y > size.height + CLUSTER_SIZE) return;
       const key = `${Math.floor(point.x / CLUSTER_SIZE)}:${Math.floor(point.y / CLUSTER_SIZE)}`;
       const group = groups.get(key) || [];
       group.push({ entry, ...point });
@@ -102,7 +105,7 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
       result.push({ kind: 'cluster', entries: group.map(item => item.entry), x: group.reduce((sum, item) => sum + item.x, 0) / group.length, y: group.reduce((sum, item) => sum + item.y, 0) / group.length, lat: group.reduce((sum, item) => sum + item.entry.place.lat, 0) / group.length, lon: group.reduce((sum, item) => sum + item.entry.place.lon, 0) / group.length });
     });
     return result;
-  }, [historyEntries, nearbyEntries, size, viewport]);
+  }, [historyEntries, nearbyEntries, projected, size, viewport]);
 
   const zoomBy = (delta: number) => {
     if (!fitted || !viewport) return;
