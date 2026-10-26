@@ -10,7 +10,7 @@ type Marker = { kind: 'place'; entry: MapEntry; x: number; y: number; number?: n
 const TILE_SIZE = 256;
 const MIN_ZOOM = 2;
 const MAX_ZOOM = 18;
-const CLUSTER_SIZE = 80;
+const CLUSTER_SIZE = 120;
 const MAX_NEARBY_ROWS = 12;
 const clampLat = (lat: number) => Math.max(-85.05112878, Math.min(85.05112878, lat));
 const worldPoint = (lat: number, lon: number, zoom: number) => {
@@ -90,7 +90,8 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
     const groups = new Map<string, Array<{ entry: MapEntry; x: number; y: number }>>();
     nearbyEntries.forEach(entry => {
       const point = position(entry);
-      if (point.x < -CLUSTER_SIZE || point.x > size.width + CLUSTER_SIZE || point.y < -CLUSTER_SIZE || point.y > size.height + CLUSTER_SIZE) return;
+      const overscan = CLUSTER_SIZE / 2;
+      if (point.x < -overscan || point.x > size.width + overscan || point.y < -overscan || point.y > size.height + overscan) return;
       const key = `${Math.floor(point.x / CLUSTER_SIZE)}:${Math.floor(point.y / CLUSTER_SIZE)}`;
       const group = groups.get(key) || [];
       group.push({ entry, ...point });
