@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="preload" as="image" href="./mascot/lunumi-walk-right-a.png">
   <link rel="preload" as="image" href="./mascot/lunumi-walk-right-b.png">
+  <link rel="preload" as="image" href="./mascot/lunumi-jump.png">
+  <link rel="preload" as="image" href="./mascot/lunumi-visit.png">
   <title>Lunumi visit animation preview</title>
   <style>
     *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f5f0e5;color:#493a31;font-family:Nunito,Arial,sans-serif}
@@ -43,20 +45,25 @@
       const rect=target.getBoundingClientRect(), width=rect.width*2, height=rect.height*2;
       const left=(innerWidth-width)/2, bottom=innerHeight+12, centerY=(innerHeight-height)/2-bottom;
       const destX=rect.left+rect.width/2-innerWidth/2, destY=rect.top+rect.height/2-(bottom+height/2), scale=rect.width/width;
-      const sprite=document.createElement('img'); sprite.className='flight'; sprite.src='./mascot/lunumi-visit.png';
+      const sprite=document.createElement('img'); sprite.className='flight'; sprite.src='./mascot/lunumi-jump.png';
       Object.assign(sprite.style,{left:`${left}px`,top:`${bottom}px`,width:`${width}px`,height:`${height}px`});
-      await Promise.all([...walkSprites.map(image=>image.decode()), sprite.decode()]);
+      const jump=new Image(); jump.src='./mascot/lunumi-jump.png'; const settle=new Image(); settle.src='./mascot/lunumi-visit.png';
+      await Promise.all([...walkSprites.map(image=>image.decode()), jump.decode(), settle.decode()]);
       document.body.appendChild(sprite);
       card.classList.add('active','flight-ready');
-      const motion=sprite.animate([
+      const jumpMotion=sprite.animate([
         {opacity:0,transform:'translate3d(0,0,0) scale(.76) rotate(-6deg)',offset:0},
-        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.302,easing:'cubic-bezier(.18,.85,.25,1)'},
-        {opacity:1,transform:`translate3d(0,${centerY-38}px,0) scale(1.08) rotate(-6deg)`,offset:.559,easing:'cubic-bezier(.2,.8,.35,1)'},
-        {opacity:1,transform:`translate3d(0,${centerY+6}px,0) scale(.96) rotate(4deg)`,offset:.77,easing:'cubic-bezier(.2,.7,.3,1)'},
-        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:.83,easing:'cubic-bezier(.2,.7,.25,1)'},
-        {opacity:1,transform:`translate3d(${destX}px,${destY}px,0) scale(${scale}) rotate(0deg)`,offset:1}
-      ],{duration:1780,easing:'cubic-bezier(.22,.72,.28,1)',fill:'forwards'});
-      await motion.finished; sprite.remove(); card.classList.remove('active','flight-ready'); card.classList.add('arrived');
+        {opacity:1,transform:`translate3d(0,${centerY-42}px,0) scale(1.04) rotate(-4deg)`,offset:.62,easing:'cubic-bezier(.18,.85,.25,1)'},
+        {opacity:1,transform:`translate3d(0,${centerY+7}px,0) scale(.97) rotate(3deg)`,offset:.84,easing:'cubic-bezier(.2,.7,.3,1)'},
+        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`,offset:1}
+      ],{duration:1050,easing:'cubic-bezier(.22,.72,.28,1)',fill:'forwards'});
+      await jumpMotion.finished; sprite.src='./mascot/lunumi-visit.png'; await new Promise(r=>setTimeout(r,110));
+      sprite.src='./mascot/lunumi-walk-right-a.png'; let walk=0; const walkTimer=setInterval(()=>{sprite.src=walkSprites[walk++%2].src;},150);
+      const move=sprite.animate([
+        {opacity:1,transform:`translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`},
+        {opacity:1,transform:`translate3d(${destX}px,${destY}px,0) scale(${scale}) rotate(0deg)`}
+      ],{duration:500,easing:'cubic-bezier(.2,.72,.25,1)',fill:'forwards'});
+      await move.finished; clearInterval(walkTimer); sprite.remove(); card.classList.remove('active','flight-ready'); card.classList.add('arrived');
     }
     document.querySelector('#replay').addEventListener('click',replay); replay();
   </script>
