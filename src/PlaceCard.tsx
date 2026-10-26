@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Clock3, ExternalLink, Globe2, Leaf, MapPin, Navigation, Utensils, X } from 'lucide-react';
 import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
@@ -13,6 +14,32 @@ type Props = { place: Place; favorite: boolean; status?: string; sentiment?: str
 
 export default function PlaceCard({ place, favorite, status, sentiment, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment }: Props) {
   const [details, setDetails] = useState(false);
+  useEffect(() => {
+    if (!details) return;
+    const shell = document.querySelector<HTMLElement>('.app-shell');
+    const previousOverflowY = shell?.style.overflowY ?? '';
+    const previousOverscrollBehavior = shell?.style.overscrollBehavior ?? '';
+    const previousBodyOverflow = document.body.style.overflow;
+    const scrollTop = shell?.scrollTop ?? 0;
+    if (shell) {
+      shell.style.overflowY = 'hidden';
+      shell.style.overscrollBehavior = 'none';
+    }
+    document.body.style.overflow = 'hidden';
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDetails(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      if (shell) {
+        shell.style.overflowY = previousOverflowY;
+        shell.style.overscrollBehavior = previousOverscrollBehavior;
+        shell.scrollTop = scrollTop;
+      }
+      document.body.style.overflow = previousBodyOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [details]);
   const cuisine = (place.tags.cuisine || place.tags.amenity?.replace('_', ' ') || 'Food nearby').split(';').map(x => x.trim()).filter(Boolean);
   const hours = openingHoursStatus(place.tags.opening_hours);
   const lunchFeed = safeUrl(place.tags['lunch:feed']), menuFeed = safeUrl(place.tags['menu:feed']);
@@ -40,7 +67,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       <button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={event => { event.stopPropagation(); onFavorite(); }}>♥</button></div>
       <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><span className="card-open">View place <ArrowLeft size={14}/></span></div>
     </article>
-    {details && <div className="place-detail-backdrop" onClick={() => setDetails(false)} role="presentation"><section className="place-detail" role="dialog" aria-modal="true" aria-label={`${place.name} details`} onClick={event => event.stopPropagation()}>
+    {details && createPortal(<div className="place-detail-backdrop" onClick={() => setDetails(false)} role="presentation"><section className="place-detail" role="dialog" aria-modal="true" aria-label={`${place.name} details`} onClick={event => event.stopPropagation()}>
       <button className="place-detail-close" onClick={() => setDetails(false)} aria-label="Close details"><X size={20}/></button>
       <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} large />
       <div className="place-detail-content"><button className="back" onClick={() => setDetails(false)}><ArrowLeft size={17}/> Back to places</button>
@@ -54,6 +81,6 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         <h3 className="detail-section-title">Menu & links</h3>{menu || website ? actions : <p className="detail-description">No menu link is listed yet. Check the restaurant website or open directions.</p>}
         {!(menu || website) && actions}
       </div>
-    </section></div>}
+    </section></div>, document.body)}
   </>;
 }
