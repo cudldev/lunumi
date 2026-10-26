@@ -5427,7 +5427,14 @@
       ],
       "checkedAt": "2026-10-26",
       "validated": true,
-      "lastValidatedAt": "2026-10-26"
+      "lastValidatedAt": "2026-10-26",
+      "photo": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Interior_of_Esplanadikappeli_restaurant_in_Helsinki%2C_Finland%2C_2021_January.jpg/960px-Interior_of_Esplanadikappeli_restaurant_in_Helsinki%2C_Finland%2C_2021_January.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Interior_of_Esplanadikappeli_restaurant_in_Helsinki,_Finland,_2021_January.jpg",
+        "attribution": "Ninara / Wikimedia Commons",
+        "license": "CC BY 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+      }
     },
     {
       "id": "frd:helsinki:korttelikonttori-myllypuro",
@@ -13293,6 +13300,270 @@
           ],
           "checkedAt": "2026-10-26",
           "note": "The official Subway locator lists Helsinki Malmin Nova at Malminkaari 17-19 and shows current opening hours."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:kotipizza-myllypuro",
+      "name": "Kotipizza",
+      "branch": "Myllypuro",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kiviparintie 2",
+        "postalCode": "00920",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/kotipizza-helsinki-helsinki-myllypuro",
+      "category": "restaurant",
+      "lat": 60.2240373,
+      "lon": 25.0733404,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/4506604789",
+          "recordId": "node/4506604789",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Myllypuron Ostari official restaurant listing",
+          "url": "https://myllypuronostari.fi/en/ravintolat-kahvilat/kotipizza-myllypuro/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch listing confirms this restaurant and its address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:kauniainen:kotipizza-kauniainen",
+      "name": "Kotipizza",
+      "branch": "Kauniainen",
+      "city": "Kauniainen",
+      "address": {
+        "street": "Kauniaistentie 7",
+        "postalCode": "02700",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/kauniainen-kauniaistentie-kauppakeskus-grani",
+      "category": "restaurant",
+      "lat": 60.2103657,
+      "lon": 24.7284047,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6893416249",
+          "recordId": "node/6893416249",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza Finland official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/kauniainen-kauniaistentie-kauppakeskus-grani",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch listing confirms this restaurant and its address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:kotipizza-koivukyl",
+      "name": "Kotipizza",
+      "branch": "Koivukylä",
+      "city": "Vantaa",
+      "address": {
+        "street": "Ojalehdonkuja 1",
+        "postalCode": "01400",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/vantaa-koivukyla-ojalehdonkuja-kauppakeskus-koivukeskus",
+      "category": "restaurant",
+      "lat": 60.3240224,
+      "lon": 25.056639,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/9196047678",
+          "recordId": "node/9196047678",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza Finland official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/vantaa-koivukyla-ojalehdonkuja-kauppakeskus-koivukeskus",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch listing confirms this restaurant and its address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:kotipizza-martinlaakso",
+      "name": "Kotipizza",
+      "branch": "Martinlaakso",
+      "city": "Vantaa",
+      "address": {
+        "street": "Kivivuorentie 4",
+        "postalCode": "01600",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/vantaa-martinlaakso-kivivuorentie-martinlaakson-ostari",
+      "category": "restaurant",
+      "lat": 60.2783812,
+      "lon": 24.8537484,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11347454979",
+          "recordId": "node/11347454979",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza Finland official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/vantaa-martinlaakso-kivivuorentie-martinlaakson-ostari",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch listing confirms this restaurant and its address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:kotipizza-hakunila",
+      "name": "Kotipizza",
+      "branch": "Hakunila",
+      "city": "Vantaa",
+      "address": {
+        "street": "Laukkarinne 6",
+        "postalCode": "01200",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/",
+      "category": "restaurant",
+      "lat": 60.2785868,
+      "lon": 25.1039761,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6679906125",
+          "recordId": "node/6679906125",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Hakunilan ostoskeskus official tenant listing",
+          "url": "https://hakunilanostoskeskus.fi/liikkeet.html?i=8",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch listing confirms this restaurant and its address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:kotipizza-tammisto",
+      "name": "Kotipizza",
+      "branch": "Tammisto",
+      "city": "Vantaa",
+      "address": {
+        "street": "Säätökuja 2",
+        "postalCode": "01510",
+        "country": "FI"
+      },
+      "website": "https://www.kotipizza.fi/ravintolat/vantaa-tammisto-saatokuja",
+      "category": "restaurant",
+      "lat": 60.2730223,
+      "lon": 24.9691302,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/4652723791",
+          "recordId": "node/4652723791",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Kotipizza Finland official restaurant page",
+          "url": "https://www.kotipizza.fi/ravintolat/vantaa-tammisto-saatokuja",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Current operator or shopping-centre branch listing confirms this restaurant and its address."
         }
       ],
       "checkedAt": "2026-10-26",
