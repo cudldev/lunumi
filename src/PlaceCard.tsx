@@ -82,13 +82,14 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         document.body.appendChild(overlay);
         animation = overlay.animate([
           { opacity: 0, transform: 'translate3d(0,0,0) scale(.76) rotate(-6deg)', offset: 0 },
-          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.2 },
-          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.31 },
-          { opacity: 1, transform: `translate3d(0,${centerY + 5}px,0) scale(.96) rotate(4deg)`, offset: 0.42 },
-          { opacity: 1, transform: `translate3d(0,${centerY - 16}px,0) scale(1.02) rotate(-2deg)`, offset: 0.5 },
-          { opacity: 1, transform: `translate3d(${midX}px,${midY}px,0) scale(${destinationScale * 1.42}) rotate(5deg)`, offset: 0.72 },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.2, easing: 'cubic-bezier(.18,.85,.25,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.37, easing: 'cubic-bezier(.2,.8,.35,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY + 6}px,0) scale(.96) rotate(4deg)`, offset: 0.51, easing: 'cubic-bezier(.2,.7,.3,1)' },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.58 },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.68, easing: 'cubic-bezier(.2,.7,.2,1)' },
+          { opacity: 1, transform: `translate3d(${midX}px,${midY}px,0) scale(${destinationScale * 1.42}) rotate(5deg)`, offset: 0.86 },
           { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)`, offset: 1 },
-        ], { duration: 2700, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+        ], { duration: 1700, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
         animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitIntro(false); };
       });
     });
