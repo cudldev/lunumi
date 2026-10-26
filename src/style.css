@@ -238,12 +238,12 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .place-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 14px 13px;color:#9b8578;font-size:11px}
 .place-card-foot .card-open{display:inline-flex;align-items:center;gap:4px;color:#d86237;font-weight:700}
 .place-card-foot .card-open svg{transform:rotate(180deg)}
-.place-detail-backdrop{position:fixed;z-index:20;inset:0;display:grid;place-items:center;padding:22px;background:#211a17a6;backdrop-filter:blur(5px)}
-.place-detail{position:relative;width:min(100%,620px);max-height:min(92dvh,900px);overflow-y:auto;border-radius:24px;background:#fffdf8;box-shadow:0 24px 80px #20181355;animation:detail-enter .2s ease-out}
+.place-detail-backdrop{position:fixed;z-index:1000;inset:0;isolation:isolate;display:flex;align-items:flex-end;justify-content:center;padding:0;background:#211a17a6;backdrop-filter:blur(5px)}
+.place-detail{position:relative;display:grid;grid-template-rows:auto minmax(0,1fr);width:min(calc(100vw - 16px),760px);max-height:calc(100dvh - env(safe-area-inset-top) - 8px);overflow:hidden;border-radius:24px 24px 0 0;background:#fffdf8;box-shadow:0 24px 80px #20181355;animation:detail-enter .32s cubic-bezier(.2,.8,.2,1)}
 .place-detail-close{position:absolute;z-index:2;top:12px;right:12px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:50%;background:#fffdf0e8;color:#4b2c21}
-.restaurant-photo-large{aspect-ratio:16/8.5;border-radius:24px 24px 0 0}
+.restaurant-photo-large{aspect-ratio:16/8.5;max-height:31dvh;border-radius:24px 24px 0 0}
 .restaurant-photo-large .food-illustration{width:120px;height:120px}
-.place-detail-content{padding:19px 24px 26px}
+.place-detail-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:19px 24px calc(26px + env(safe-area-inset-bottom))}
 .place-detail-content>.back{margin-bottom:17px}
 .place-detail-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .place-detail-heading h2{font-family:Georgia,serif;font-size:29px;letter-spacing:-.5px;margin:5px 0 12px;color:#493a31}
@@ -256,6 +256,7 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .detail-section-title{font-family:Georgia,serif;font-size:17px;margin:21px 0 6px;color:#493a31}
 .detail-description{font-size:12px;color:#887c6e;line-height:1.6;margin:0}
 .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-@keyframes detail-enter{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
-@media(max-width:600px){.place-list{grid-template-columns:1fr;gap:13px}.place-card-visual{border-radius:18px}.place-card-copy{padding:12px 13px 4px}.place-card-foot{padding:4px 13px 12px}.place-detail-backdrop{padding:0;align-items:end}.place-detail{width:100%;max-height:94dvh;border-radius:24px 24px 0 0}.restaurant-photo-large{border-radius:24px 24px 0 0}.place-detail-content{padding:17px 20px calc(24px + env(safe-area-inset-bottom))}.place-detail-heading h2{font-size:26px}}
+@keyframes detail-enter{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.place-list{grid-template-columns:1fr;gap:13px}.place-card-visual{border-radius:18px}.place-card-copy{padding:12px 13px 4px}.place-card-foot{padding:4px 13px 12px}.place-detail{width:calc(100vw - 16px);max-height:calc(100dvh - env(safe-area-inset-top) - 8px)}.restaurant-photo-large{aspect-ratio:16/8.5;max-height:28dvh;border-radius:24px 24px 0 0}.place-detail-content{padding:17px 20px calc(24px + env(safe-area-inset-bottom))}.place-detail-heading h2{font-size:26px}}
+@media(min-width:900px){.place-detail-backdrop{padding:0 24px 24px}.place-detail{width:min(72vw,760px);max-height:90dvh;border-radius:24px}.restaurant-photo-large{border-radius:24px 24px 0 0}}
 .status.verified{background:#edf5e8;color:#52744d;text-decoration:none}.status.verified:hover{text-decoration:underline}
