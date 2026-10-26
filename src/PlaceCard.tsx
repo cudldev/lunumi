@@ -15,8 +15,10 @@ type Props = { place: Place; favorite: boolean; status?: string; sentiment?: str
 export default function PlaceCard({ place, favorite, status, sentiment, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment }: Props) {
   const [details, setDetails] = useState(false);
   const [visitMode, setVisitMode] = useState(false);
+  const [visitIntro, setVisitIntro] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const dragStartY = useRef<number | null>(null);
+  const visitCharacterRef = useRef<HTMLSpanElement>(null);
   const suppressHandleClick = useRef(false);
   useEffect(() => {
     if (!details) return;
@@ -44,6 +46,52 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       document.removeEventListener('keydown', closeOnEscape);
     };
   }, [details]);
+  useEffect(() => {
+    if (!visitIntro || !visitMode) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setVisitIntro(false);
+      return;
+    }
+
+    let overlay: HTMLImageElement | null = null;
+    let animation: Animation | null = null;
+    let firstFrame = 0;
+    let secondFrame = 0;
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        const target = visitCharacterRef.current;
+        if (!target) { setVisitIntro(false); return; }
+        const targetRect = target.getBoundingClientRect();
+        const startWidth = Math.max(104, targetRect.width * 1.7);
+        const startHeight = Math.max(112, targetRect.height * 1.7);
+        const startLeft = (window.innerWidth - startWidth) / 2;
+        const startTop = (window.innerHeight - startHeight) / 2;
+        const midLeft = startLeft + (targetRect.left - startLeft) * 0.58 - 26;
+        const midTop = startTop + (targetRect.top - startTop) * 0.58 - 32;
+
+        overlay = document.createElement('img');
+        overlay.src = new URL('mascot/lunumi-visit.png', document.baseURI).href;
+        overlay.alt = '';
+        overlay.setAttribute('aria-hidden', 'true');
+        overlay.className = 'visit-flight-character';
+        Object.assign(overlay.style, { left: `${startLeft}px`, top: `${startTop}px`, width: `${startWidth}px`, height: `${startHeight}px` });
+        document.body.appendChild(overlay);
+        animation = overlay.animate([
+          { left: `${startLeft}px`, top: `${startTop}px`, width: `${startWidth}px`, height: `${startHeight}px`, opacity: 0, transform: 'scale(.72) rotate(-5deg)', offset: 0 },
+          { left: `${startLeft}px`, top: `${startTop}px`, width: `${startWidth}px`, height: `${startHeight}px`, opacity: 1, transform: 'scale(1.08) rotate(3deg)', offset: 0.2 },
+          { left: `${midLeft}px`, top: `${midTop}px`, width: `${startWidth * 0.82}px`, height: `${startHeight * 0.82}px`, opacity: 1, transform: 'scale(.96) rotate(-4deg)', offset: 0.62 },
+          { left: `${targetRect.left}px`, top: `${targetRect.top}px`, width: `${targetRect.width}px`, height: `${targetRect.height}px`, opacity: 1, transform: 'scale(1) rotate(0deg)', offset: 1 },
+        ], { duration: 1250, easing: 'cubic-bezier(.2,.72,.28,1)', fill: 'forwards' });
+        animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitIntro(false); };
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+      animation?.cancel();
+      overlay?.remove();
+    };
+  }, [visitIntro, visitMode]);
   const cuisine = (place.tags.cuisine || place.tags.amenity?.replace('_', ' ') || 'Food nearby').split(';').map(x => x.trim()).filter(Boolean);
   const hours = openingHoursStatus(place.tags.opening_hours);
   const lunchFeed = safeUrl(place.tags['lunch:feed']), menuFeed = safeUrl(place.tags['menu:feed']);
@@ -58,7 +106,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
   mapUrl.searchParams.set('layer', 'mapnik');
   mapUrl.searchParams.set('marker', `${place.lat},${place.lon}`);
   const closeDetails = () => { setDetails(false); setVisitMode(false); setDetailsExpanded(false); };
-  const startVisit = () => { setVisitMode(true); onStatus('target'); };
+  const startVisit = () => { setVisitIntro(true); setVisitMode(true); onStatus('target'); };
 
   return <>
     <article className="place-card place-card-visual" onClick={() => setDetails(true)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setDetails(true); } }} tabIndex={0} role="button" aria-label={`View ${place.name}`}>
@@ -67,11 +115,11 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
       <button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={event => { event.stopPropagation(); onFavorite(); }}>♥</button></div>
       <div className="place-card-foot"><span>{hours?.text || 'Nearby food spot'}</span><span className="card-open">View place <ArrowLeft size={14}/></span></div>
     </article>
-    {details && createPortal(<div className="place-detail-backdrop" onClick={closeDetails} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`} onClick={event => event.stopPropagation()}>
+    {details && createPortal(<div className="place-detail-backdrop" onClick={closeDetails} role="presentation"><section className={`place-detail${detailsExpanded ? ' expanded' : ''}${visitMode ? ' visit-mode' : ''}${visitIntro ? ' visit-intro-active' : ''}`} role="dialog" aria-modal="true" aria-label={visitMode ? `Visit ${place.name}` : `${place.name} details`} onClick={event => event.stopPropagation()}>
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className="visit-journey" aria-label={`Starting a visit to ${place.name}`}>
-        <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character"><img src={new URL('mascot/lunumi-front.png', document.baseURI).href} alt=""/></span></div>
+        <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img src={new URL('mascot/lunumi-visit.png', document.baseURI).href} alt=""/></span></div>
         <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>Good food is just around the corner.</span></div>
       </div> : <RestaurantPhoto name={place.name} photo={place.photo} cuisine={cuisine[0]} large />}
       <div className="place-detail-content">
