@@ -1,6 +1,6 @@
 # Local menu assistant
 
-The menu assistant is a lightweight browser feature. It does not download an LLM. Restaurant-page fetching runs through a small Cloudflare Worker because a static GitHub Pages app cannot read most cross-origin restaurant sites directly. Menu extraction and dietary-label matching still run in the user's browser.
+The menu assistant is a lightweight browser feature, not a hosted LLM. A Cloudflare Worker fetches approved restaurant pages; menu parsing and dietary-label matching run in the browser. A bundled 234 KB character n-gram classifier filters likely non-menu lines in English. Finnish and Swedish use local language rules.
 
 ## User flow
 
@@ -11,7 +11,7 @@ The menu assistant is a lightweight browser feature. It does not download an LLM
 
 ## What it extracts
 
-Each entry may show its name, nearby description text, and a price when a simple currency pattern is found. Dietary labels appear only when the same line explicitly includes **vegan**, **vegetarian**, **gluten-free**, **dairy-free**, **halal**, or **keto/ketogenic**. Otherwise the UI says dietary details are not stated. It does not infer ingredients, dietary suitability, or allergen safety from a dish name or description. Users should verify menu information with the restaurant, especially for allergies.
+Each entry may show its name, nearby description text, and a price when a simple currency pattern is found. The English classifier loads on-device only when an English menu is read. It is trained on USDA FoodData Central FNDDS food names, categories, portions, and nutrient labels (CC0), not restaurant pages; it only suppresses high-confidence non-menu lines and cannot identify menu links or infer ingredients. Dietary labels appear only when the same line explicitly includes a recognized phrase in Finnish, Swedish, or English. Otherwise the UI says dietary details are not stated. It does not infer dietary suitability or allergen safety from a dish name or description. Users should verify menu information with the restaurant, especially for allergies.
 
 ## Privacy and limits
 
@@ -22,6 +22,7 @@ Each entry may show its name, nearby description text, and a price when a simple
 - Each cache miss makes one Worker request when a source URL and Worker URL are configured. Cloudflare Workers Free currently allows 100,000 requests per day; excess requests fail on the Free plan. A paid Workers plan can incur charges under its current pricing. Check [Cloudflare's limits](https://developers.cloudflare.com/workers/platform/limits/), [pricing](https://developers.cloudflare.com/workers/platform/pricing/) and the account's plan before deployment.
 - PDF and image menus are not parsed. JavaScript-rendered content may not appear in the returned HTML. A site may still deny requests or return a page that does not contain its menu.
 - Extraction is heuristic. It may include unrelated text, combine a dish with its price or description, or miss valid items.
+- The English model scored 90.2% on an exact-text held-out split from the source data; this is not a restaurant-page evaluation. Section predictions were too imprecise to use. The English filter may still suppress valid dishes, and it does not provide Finnish or Swedish model coverage.
 - Explicit labels do not establish allergy safety. The helper does not interpret ingredient/allergen statements, cross-contamination warnings, or restaurant-specific symbol legends.
 
 ## Setup and deployment
@@ -38,6 +39,7 @@ Then push to `staging` or run the **Deploy Lunumi menu reader** workflow on the 
 ## Implementation map
 
 - Browser UI, parsing, dietary labels, and Worker call: `src/MenuAssistant.tsx`.
+- On-device English classifier loading/inference: `src/menu-classifier.ts`; published weights: `public/models/menu-line-classifier.json`.
 - Menu source selection and placement: `src/PlaceCard.tsx`.
 - Worker endpoint and security limits: `menu-reader-worker/index.mjs` and `menu-reader-worker/wrangler.jsonc`.
 - Host allowlist generation: `scripts/build-menu-reader-hosts.mjs`.

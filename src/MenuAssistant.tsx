@@ -1,20 +1,43 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
+import { classifyMenuLine, loadMenuClassifier, type MenuClassifier } from './menu-classifier';
 
 type MenuItem = { name: string; details: string; diets: string[] };
-type CachedMenu = { sourceUrl: string; cachedAt: string; items: MenuItem[] };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v1';
+type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
+type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; language?: MenuLanguage };
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v2';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 
-const dietSignals: Array<[RegExp, string]> = [
-  [/\bvegan\b/i, 'Marked vegan'],
-  [/\bvegetarian\b/i, 'Marked vegetarian'],
-  [/\bgluten[- ]free\b/i, 'Marked gluten-free'],
-  [/\bdairy[- ]free\b/i, 'Marked dairy-free'],
-  [/\bhalal\b/i, 'Marked halal'],
-  [/\bketo(?:genic)?\b/i, 'Marked keto'],
-];
+type LanguageModule = { name: string; clues: RegExp[]; dietSignals: Array<[RegExp, string]>; headings: RegExp };
+const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> = {
+  fi: {
+    name: 'Finnish',
+    clues: [/\blounas\b/i, /\bmaanantai|tiistai|keskiviikko|torstai|perjantai\b/i, /\bkeitto|salaatti|kasvisruoka|gluteeniton\b/i],
+    dietSignals: [[/\bvegaan\w*\b/i, 'Marked vegan'], [/\bkasvisruoka\b/i, 'Marked vegetarian'], [/\bgluteeniton\b/i, 'Marked gluten-free'], [/\bmaidoton\b/i, 'Marked dairy-free'], [/\blaktoositon\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:geeninen)?\b/i, 'Marked keto']],
+    headings: /^(?:lounas|ruokalista|ruokalistat|jälkiruoat?|juomat|allergeenit|maanantai|tiistai|keskiviikko|torstai|perjantai)$/i,
+  },
+  sv: {
+    name: 'Swedish',
+    clues: [/\bdagens\b/i, /\bmåndag|tisdag|onsdag|torsdag|fredag\b/i, /\bsallad|soppa|kyckling|glutenfri\b/i],
+    dietSignals: [[/\bvegansk\w*\b/i, 'Marked vegan'], [/\bvegetarisk\w*\b/i, 'Marked vegetarian'], [/\bglutenfri\w*\b/i, 'Marked gluten-free'], [/\bmejerifri\w*\b/i, 'Marked dairy-free'], [/\blaktosfri\w*\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:genisk)?\b/i, 'Marked keto']],
+    headings: /^(?:lunch|meny|dagens|förrätter|huvudrätter|efterrätter|drycker|allergener|måndag|tisdag|onsdag|torsdag|fredag)$/i,
+  },
+  en: {
+    name: 'English',
+    clues: [/\bmonday|tuesday|wednesday|thursday|friday\b/i, /\blunch|menu|allergens\b/i, /\bsalad|soup|chicken|gluten[- ]free\b/i],
+    dietSignals: [[/\bvegan\b/i, 'Marked vegan'], [/\bvegetarian\b/i, 'Marked vegetarian'], [/\bgluten[- ]free\b/i, 'Marked gluten-free'], [/\bdairy[- ]free\b/i, 'Marked dairy-free'], [/\blactose[- ]free\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:genic)?\b/i, 'Marked keto']],
+    headings: /^(?:menu|food|drinks|desserts?|starters?|mains?|lunch|dinner|allergens?|monday|tuesday|wednesday|thursday|friday)$/i,
+  },
+};
+
+function detectLanguage(value: string): MenuLanguage {
+  const sample = value.slice(0, 20_000);
+  const scores = (Object.entries(languageModules) as Array<[Exclude<MenuLanguage, 'unknown'>, LanguageModule]>)
+    .map(([language, module]) => ({ language, score: module.clues.reduce((sum, clue) => sum + Number(clue.test(sample)), 0) }))
+    .sort((a, b) => b.score - a.score);
+  return scores[0]?.score && scores[0].score > (scores[1]?.score || 0) ? scores[0].language : 'unknown';
+}
 
 function cleanMenuText(value: string): string {
   if (!value.includes('<')) return value;
@@ -23,21 +46,49 @@ function cleanMenuText(value: string): string {
   return document.body.innerText || document.body.textContent || '';
 }
 
-function parseMenu(value: string): MenuItem[] {
+function feedText(value: string, contentType: string): string {
+  if (/json/i.test(contentType) || /^\s*[\[{]/.test(value)) {
+    try {
+      const data = JSON.parse(value) as { items?: unknown[]; [key: string]: unknown };
+      const entries = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
+      return entries.map(item => {
+        if (!item || typeof item !== 'object') return '';
+        const fields = item as Record<string, unknown>;
+        return ['title', 'name', 'description', 'summary', 'content_text', 'content_html', 'price']
+          .map(key => fields[key]).filter((part): part is string | number => typeof part === 'string' || typeof part === 'number')
+          .map(String).join(' · ');
+      }).filter(Boolean).join('\n');
+    } catch { /* try the HTML/text fallback */ }
+  }
+  if (/xml|rss|atom/i.test(contentType) || /<(?:rss|feed|channel|item|entry)\b/i.test(value)) {
+    const document = new DOMParser().parseFromString(value, 'application/xml');
+    const entries = [...document.querySelectorAll('item, entry')];
+    if (entries.length) return entries.map(entry => ['title', 'description', 'summary', 'content', 'encoded', 'price']
+      .map(tag => entry.getElementsByTagName(tag).item(0)?.textContent?.trim()).filter(Boolean).join(' · ')).join('\n');
+  }
+  return cleanMenuText(value);
+}
+
+function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassifier | null): MenuItem[] {
   const lines = cleanMenuText(value).split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const found: MenuItem[] = [];
   const seen = new Set<string>();
+  const modules = language === 'unknown' ? Object.values(languageModules) : [languageModules[language]];
   for (const line of lines) {
     if (line.length < 3 || line.length > 220 || /^https?:\/\//i.test(line)) continue;
     const price = line.match(/(?:^|\s)(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\b\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)/);
     const parts = line.split(/\s+[·|—–]\s+|\s{2,}/);
     const name = (parts[0] || line).replace(/\s+(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?.*$/, '').trim();
-    if (name.length < 3 || name.length > 90 || /^(menu|food|drinks|desserts?|starters?|mains?|lunch|dinner|allergens?)$/i.test(name)) continue;
+    if (name.length < 3 || name.length > 90 || modules.some(module => module.headings.test(name))) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
+    if (language === 'en' && classifier) {
+      const prediction = classifyMenuLine(name, classifier);
+      if (prediction?.label === 'other' && prediction.confidence >= 0.9) continue;
+    }
     const key = name.toLocaleLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    const diets = dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label);
+    const diets = [...new Set(modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)))];
     const details = [parts.slice(1).join(' · '), price?.[0]?.trim()].filter(Boolean).join(' · ');
     found.push({ name, details, diets });
     if (found.length >= 100) break;
@@ -49,7 +100,9 @@ function validCachedMenu(value: unknown): value is CachedMenu {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Partial<CachedMenu>;
   return typeof entry.sourceUrl === 'string' && entry.sourceUrl.length <= 2048
+    && (entry.resolvedSourceUrl === undefined || (typeof entry.resolvedSourceUrl === 'string' && entry.resolvedSourceUrl.length <= 2048))
     && typeof entry.cachedAt === 'string' && Number.isFinite(Date.parse(entry.cachedAt))
+    && (entry.language === undefined || ['fi', 'sv', 'en', 'unknown'].includes(entry.language))
     && Array.isArray(entry.items) && entry.items.length <= 100
     && entry.items.every(item => Boolean(item) && typeof item.name === 'string' && item.name.length <= 90
       && typeof item.details === 'string' && item.details.length <= 240
@@ -69,7 +122,7 @@ function readCachedMenu(sourceUrl: string): CachedMenu | null {
   }
 }
 
-function writeCachedMenu(sourceUrl: string, items: MenuItem[]): string | null {
+function writeCachedMenu(sourceUrl: string, resolvedSourceUrl: string, items: MenuItem[], language: MenuLanguage): string | null {
   const cachedAt = new Date().toISOString();
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(MENU_CACHE_KEY) || '[]');
@@ -79,7 +132,7 @@ function writeCachedMenu(sourceUrl: string, items: MenuItem[]): string | null {
       const age = now - Date.parse(candidate.cachedAt);
       return age >= 0 && age < MENU_CACHE_TTL_MS && candidate.sourceUrl !== sourceUrl;
     }) : [];
-    const next: CachedMenu[] = [{ sourceUrl, cachedAt, items }, ...recent].slice(0, MENU_CACHE_MAX_ENTRIES);
+    const next: CachedMenu[] = [{ sourceUrl, resolvedSourceUrl, cachedAt, items, language }, ...recent].slice(0, MENU_CACHE_MAX_ENTRIES);
     localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(next));
     return cachedAt;
   } catch {
@@ -95,6 +148,9 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
   const [busy, setBusy] = useState(Boolean(sourceUrl));
   const [error, setError] = useState('');
   const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const [language, setLanguage] = useState<MenuLanguage>('unknown');
+  const [modelUsed, setModelUsed] = useState(false);
+  const [verifiedSourceUrl, setVerifiedSourceUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -103,16 +159,22 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     setItems([]);
     setError('');
     setCachedAt(null);
+    setLanguage('unknown');
+    setModelUsed(false);
+    setVerifiedSourceUrl(null);
     if (!sourceUrl) {
       setBusy(false);
       setError('No menu source is listed for this restaurant.');
       return () => controller.abort();
     }
+    const menuUrl = sourceUrl;
 
-    const cached = readCachedMenu(sourceUrl);
+    const cached = readCachedMenu(menuUrl);
     if (cached) {
       setItems(cached.items);
       setCachedAt(cached.cachedAt);
+      setLanguage(cached.language ?? 'unknown');
+      setVerifiedSourceUrl(cached.resolvedSourceUrl ?? menuUrl);
       setBusy(false);
       return () => controller.abort();
     }
@@ -125,25 +187,34 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
         const response = await fetch(menuReaderUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: sourceUrl }),
+          body: JSON.stringify({ url: menuUrl }),
           signal: controller.signal,
           credentials: 'omit',
         });
-        const result = await response.json() as { text?: string; contentType?: string; error?: string };
+        const result = await response.json() as { text?: string; contentType?: string; sourceUrl?: string; error?: string };
         if (!response.ok) throw new Error(result.error || `The menu could not be fetched (${response.status}).`);
         const contentType = result.contentType || '';
-        if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(sourceUrl)) {
+        if (/application\/pdf/i.test(contentType) || /\.pdf(?:$|[?#])/i.test(menuUrl)) {
           throw new Error('This menu is a PDF and cannot be read automatically yet.');
         }
         if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
           throw new Error('This menu format cannot be read automatically yet.');
         }
         const body = (result.text || '').slice(0, 500_000);
-        const extracted = parseMenu(body);
+        const readable = feedText(body, contentType);
+        const detectedLanguage = detectLanguage(readable);
+        let classifier: MenuClassifier | null = null;
+        if (detectedLanguage === 'en') {
+          try { classifier = await loadMenuClassifier(); } catch { /* keep rule-based extraction if model weights fail to load */ }
+        }
+        const extracted = parseMenu(readable, detectedLanguage, classifier);
         if (!extracted.length) throw new Error('No readable menu items were found on the restaurant page.');
         if (!controller.signal.aborted) {
           setItems(extracted);
-          setCachedAt(writeCachedMenu(sourceUrl, extracted));
+          setLanguage(detectedLanguage);
+          setModelUsed(Boolean(classifier));
+          setVerifiedSourceUrl(result.sourceUrl ?? menuUrl);
+          setCachedAt(writeCachedMenu(menuUrl, result.sourceUrl ?? menuUrl, extracted, detectedLanguage));
         }
       } catch (cause) {
         if (timedOut) {
@@ -170,7 +241,9 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     {items.length > 0 ? <>
       <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}><div><strong>{item.name}</strong>{item.details && <span>{item.details}</span>}</div><div className="menu-assistant-diets">{item.diets.length ? item.diets.map(diet => <span key={diet}>{diet}</span>) : <span>Dietary details not stated</span>}</div></li>)}</ul>
       <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
+      {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
+      {modelUsed && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>.</p>}
     </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
-    {sourceUrl && <a className="menu-assistant-source" href={sourceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
+    {(verifiedSourceUrl || sourceUrl) && <a className="menu-assistant-source" href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
   </section>;
 }
