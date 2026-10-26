@@ -87,7 +87,6 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
           </div></div>
           <button className={`button visit-complete${status === 'visited' ? ' is-visited' : ''}`} onClick={() => onStatus('visited')}><Check size={17}/>{status === 'visited' ? 'Visited — saved to your places' : 'Mark as visited'}</button>
         </> : <>
-        <button className="back" onClick={closeDetails}><ArrowLeft size={17}/> Back to places</button>
         <div className="place-detail-heading"><div><span className="eyebrow">{cuisine.join(' · ')}</span><h2>{place.name}</h2></div><button className={`heart${favorite ? ' hearted' : ''}`} aria-label={favorite ? 'Remove favorite' : 'Add favorite'} onClick={onFavorite}>♥</button></div>
         <div className="detail-facts"><span><MapPin size={15}/>{place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m away` : `${(place.distance / 1000).toFixed(1)} km away`}</span>{hours && <span><Clock3 size={15}/>{hours.text}</span>}</div>
         {place.stale && <p className="smallprint">Saved result · may be out of date</p>}
@@ -99,6 +98,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
         </>}
       </div>
+      <div className="place-detail-bottom-bar"><button className="place-detail-bottom-back" onClick={closeDetails}><ArrowLeft size={17}/>Back to places</button></div>
     </section></div>, document.body)}
   </>;
 }
