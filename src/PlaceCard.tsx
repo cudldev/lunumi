@@ -18,10 +18,10 @@ const safeUrl = (value?: string) => {
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
 };
 
-type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: () => void };
+type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
 
-export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn }: Props) {
-  const [details, setDetails] = useState(false);
+export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn, initiallyOpen = false, onDismiss }: Props) {
+  const [details, setDetails] = useState(initiallyOpen);
   const [visitMode, setVisitMode] = useState(false);
   const [visitStage, setVisitStage] = useState<'journey' | 'outro'>('journey');
   const [visitIntro, setVisitIntro] = useState(false);
@@ -148,7 +148,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
   mapUrl.searchParams.set('bbox', `${place.lon - 0.006},${place.lat - 0.0035},${place.lon + 0.006},${place.lat + 0.0035}`);
   mapUrl.searchParams.set('layer', 'mapnik');
   mapUrl.searchParams.set('marker', `${place.lat},${place.lon}`);
-  const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setDetailsExpanded(false); };
+  const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setDetailsExpanded(false); onDismiss?.(); };
   const startVisit = () => { setVisitStage(status === 'visited' ? 'outro' : 'journey'); setVisitIntro(true); setVisitMode(true); if (status !== 'visited') onStatus('target'); };
   const finishVisit = () => { closeDetails(); onReturn(); };
   const feedbackComplete = Boolean(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment) && recommendationVote);
