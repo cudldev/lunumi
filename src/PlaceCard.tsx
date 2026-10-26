@@ -62,26 +62,33 @@ export default function PlaceCard({ place, favorite, status, sentiment, dietary,
         const target = visitCharacterRef.current;
         if (!target) { setVisitIntro(false); return; }
         const targetRect = target.getBoundingClientRect();
-        const startWidth = Math.max(104, targetRect.width * 1.7);
-        const startHeight = Math.max(112, targetRect.height * 1.7);
-        const startLeft = (window.innerWidth - startWidth) / 2;
-        const startTop = (window.innerHeight - startHeight) / 2;
-        const midLeft = startLeft + (targetRect.left - startLeft) * 0.58 - 26;
-        const midTop = startTop + (targetRect.top - startTop) * 0.58 - 32;
+        const startWidth = targetRect.width * 2;
+        const startHeight = targetRect.height * 2;
+        const centerLeft = (window.innerWidth - startWidth) / 2;
+        const bottomTop = window.innerHeight + 12;
+        const centerY = (window.innerHeight - startHeight) / 2 - bottomTop;
+        const destinationX = targetRect.left + targetRect.width / 2 - window.innerWidth / 2;
+        const destinationY = targetRect.top + targetRect.height / 2 - (bottomTop + startHeight / 2);
+        const midX = destinationX * 0.58 - 22;
+        const midY = centerY + (destinationY - centerY) * 0.58 - 24;
+        const destinationScale = targetRect.width / startWidth;
 
         overlay = document.createElement('img');
         overlay.src = new URL('mascot/lunumi-visit.png', document.baseURI).href;
         overlay.alt = '';
         overlay.setAttribute('aria-hidden', 'true');
         overlay.className = 'visit-flight-character';
-        Object.assign(overlay.style, { left: `${startLeft}px`, top: `${startTop}px`, width: `${startWidth}px`, height: `${startHeight}px` });
+        Object.assign(overlay.style, { left: `${centerLeft}px`, top: `${bottomTop}px`, width: `${startWidth}px`, height: `${startHeight}px` });
         document.body.appendChild(overlay);
         animation = overlay.animate([
-          { left: `${startLeft}px`, top: `${startTop}px`, width: `${startWidth}px`, height: `${startHeight}px`, opacity: 0, transform: 'scale(.72) rotate(-5deg)', offset: 0 },
-          { left: `${startLeft}px`, top: `${startTop}px`, width: `${startWidth}px`, height: `${startHeight}px`, opacity: 1, transform: 'scale(1.08) rotate(3deg)', offset: 0.2 },
-          { left: `${midLeft}px`, top: `${midTop}px`, width: `${startWidth * 0.82}px`, height: `${startHeight * 0.82}px`, opacity: 1, transform: 'scale(.96) rotate(-4deg)', offset: 0.62 },
-          { left: `${targetRect.left}px`, top: `${targetRect.top}px`, width: `${targetRect.width}px`, height: `${targetRect.height}px`, opacity: 1, transform: 'scale(1) rotate(0deg)', offset: 1 },
-        ], { duration: 1250, easing: 'cubic-bezier(.2,.72,.28,1)', fill: 'forwards' });
+          { opacity: 0, transform: 'translate3d(0,0,0) scale(.76) rotate(-6deg)', offset: 0 },
+          { opacity: 1, transform: `translate3d(0,${centerY}px,0) scale(1) rotate(0deg)`, offset: 0.2 },
+          { opacity: 1, transform: `translate3d(0,${centerY - 38}px,0) scale(1.08) rotate(-6deg)`, offset: 0.31 },
+          { opacity: 1, transform: `translate3d(0,${centerY + 5}px,0) scale(.96) rotate(4deg)`, offset: 0.42 },
+          { opacity: 1, transform: `translate3d(0,${centerY - 16}px,0) scale(1.02) rotate(-2deg)`, offset: 0.5 },
+          { opacity: 1, transform: `translate3d(${midX}px,${midY}px,0) scale(${destinationScale * 1.42}) rotate(5deg)`, offset: 0.72 },
+          { opacity: 1, transform: `translate3d(${destinationX}px,${destinationY}px,0) scale(${destinationScale}) rotate(0deg)`, offset: 1 },
+        ], { duration: 2700, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
         animation.onfinish = () => { overlay?.remove(); overlay = null; setVisitIntro(false); };
       });
     });
