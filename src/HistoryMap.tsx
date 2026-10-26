@@ -26,7 +26,7 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
       })}
       <span className="history-map-local">Saved on this device</span>
     </div>
-    <p className="history-map-note">Pins are positioned by restaurant coordinates. No location data is sent to a map service.</p>
+    <p className="history-map-note">Pins are plotted on-device. Selecting a place opens a Google Maps search.</p>
     <div className="history-map-list">{located.map((entry, index) => <button key={entry.id} className="history-map-row" onClick={() => onSelect(entry)}><span className="history-map-number">{index + 1}</span><span>{entry.place.name}<small>{entry.status === 'visited' ? 'Visited' : entry.sentiment === 'favorite' ? 'Favorite' : entry.status === 'target' ? 'To try' : 'Explored'}</small></span><MapPin size={16}/></button>)}</div>
   </section>;
 }
