@@ -21,10 +21,43 @@ const safeUrl = (value?: string) => {
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
 };
 
+type LivePosition = { lat: number; lon: number; accuracy: number };
+function VisitNavigationMap({ place, position, banner = false }: { place: Pick<Place, 'lat' | 'lon'>; position: LivePosition | null; banner?: boolean }) {
+  const width = 900, height = 260;
+  let current = { x: 155, y: 192 };
+  let destination = { x: 750, y: 76 };
+  if (position) {
+    const meanLat = (place.lat + position.lat) / 2 * Math.PI / 180;
+    const dx = (place.lon - position.lon) * 111320 * Math.cos(meanLat);
+    const dy = (position.lat - place.lat) * 111320;
+    const scale = Math.min(600 / Math.max(Math.abs(dx), 40), 128 / Math.max(Math.abs(dy), 28));
+    current = { x: width / 2 - dx * scale / 2, y: height / 2 + dy * scale / 2 };
+    destination = { x: width / 2 + dx * scale / 2, y: height / 2 - dy * scale / 2 };
+  }
+  const control = { x: (current.x + destination.x) / 2, y: (current.y + destination.y) / 2 - 24 };
+  const label = position ? 'Live location and destination map' : 'Map preview showing the restaurant destination';
+  return <svg className={`visit-navigation-map${banner ? ' is-banner' : ''}`} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid slice" role="img" aria-label={label}>
+    <rect width={width} height={height} fill="#e8eee2"/>
+    <path d="M-30 42 C145 82 185 13 340 37 S585 125 930 30 L930 -20 -30 -20Z" fill="#dce9d5"/>
+    <path d="M80 275 C140 205 114 151 195 121 S315 121 365 62 444 10 471 -20" fill="none" stroke="#d1d9cb" strokeWidth="39"/>
+    <path d="M80 275 C140 205 114 151 195 121 S315 121 365 62 444 10 471 -20" fill="none" stroke="#fffdf4" strokeWidth="31"/>
+    <path d="M-20 156 C120 124 228 168 330 187 S508 229 595 159 765 94 930 122" fill="none" stroke="#d1d9cb" strokeWidth="42"/>
+    <path d="M-20 156 C120 124 228 168 330 187 S508 229 595 159 765 94 930 122" fill="none" stroke="#fffdf4" strokeWidth="34"/>
+    <path d="M190 -20 C215 58 254 66 319 96 S435 153 441 280" fill="none" stroke="#d1d9cb" strokeWidth="25"/>
+    <path d="M190 -20 C215 58 254 66 319 96 S435 153 441 280" fill="none" stroke="#fffdf4" strokeWidth="19"/>
+    <path d="M535 -20 C514 57 597 71 615 127 S630 210 721 280" fill="none" stroke="#d1d9cb" strokeWidth="31"/>
+    <path d="M535 -20 C514 57 597 71 615 127 S630 210 721 280" fill="none" stroke="#fffdf4" strokeWidth="25"/>
+    <path d={`M${current.x} ${current.y} Q${control.x} ${control.y} ${destination.x} ${destination.y}`} fill="none" stroke="#70976e" strokeWidth="5" strokeLinecap="round" strokeDasharray="3 11"/>
+    {position && <g className="visit-current-location"><circle cx={current.x} cy={current.y} r="19" fill="#6690a5" opacity=".18"/><circle cx={current.x} cy={current.y} r="9" fill="#fffdf4"/><circle cx={current.x} cy={current.y} r="6" fill="#608ba3"/><path d={`M${current.x} ${current.y - 24}l-4 7h8Z`} fill="#608ba3"/></g>}
+    <g transform={`translate(${destination.x} ${destination.y})`} className="visit-destination-pin"><path d="M0 23S-20 3-20-9a20 20 0 1 1 40 0C20 3 0 23 0 23Z" fill="#d77952" stroke="#fffdf4" strokeWidth="3"/><circle cy="-9" r="6" fill="#fff8e8"/></g>
+    {!position && <circle cx={current.x} cy={current.y} r="5" fill="#9eaf91" opacity=".7"/>}
+  </svg>;
+}
+
 type VisitOrigin = 'target' | 'explored' | 'nearby' | 'visited';
 type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; onTransitionStart?: () => void; onTransitionCancel?: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
 
-export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn, onTransitionStart, onTransitionCancel, initiallyOpen = false, onDismiss }: Props) {
+export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onStatus, onSentiment, onRecommendation, onReturn, onTransitionStart, onTransitionCancel, initiallyOpen = false, onDismiss }: Props) {
   const [details, setDetails] = useState(initiallyOpen);
   const [visitMode, setVisitMode] = useState(false);
   const [visitStage, setVisitStage] = useState<'journey' | 'outro'>('journey');
@@ -33,11 +66,14 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
   const [visitFinishing, setVisitFinishing] = useState(false);
   const [visitFeedbackStep, setVisitFeedbackStep] = useState<'sentiment' | 'recommendation'>('sentiment');
   const [visitSaveError, setVisitSaveError] = useState('');
+  const [livePosition, setLivePosition] = useState<LivePosition | null>(null);
+  const [liveLocationStatus, setLiveLocationStatus] = useState<'idle' | 'locating' | 'live' | 'denied' | 'unavailable' | 'error'>('idle');
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const visitCharacterRef = useRef<HTMLSpanElement>(null);
   const visitOutroMascotRef = useRef<HTMLImageElement>(null);
   const visitFinishingRef = useRef(false);
+  const liveLocationWatch = useRef<number | null>(null);
   const suppressHandleClick = useRef(false);
   useEffect(() => {
     if (!details) return;
@@ -153,11 +189,39 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
   const dietTags = Object.entries(place.tags).filter(([key, value]) => key.startsWith('diet:') && ['yes', 'only', 'limited'].includes(value.toLowerCase()));
   const foodTags = Object.entries(place.tags).filter(([key, value]) => (key === 'food' || key.startsWith('food:')) && value.toLowerCase() === 'yes').map(([key]) => key === 'food' ? 'Food served' : key.slice(5).replace(/_/g, ' '));
 
-  const mapUrl = new URL('https://www.openstreetmap.org/export/embed.html');
-  mapUrl.searchParams.set('bbox', `${place.lon - 0.006},${place.lat - 0.0035},${place.lon + 0.006},${place.lat + 0.0035}`);
-  mapUrl.searchParams.set('layer', 'mapnik');
-  mapUrl.searchParams.set('marker', `${place.lat},${place.lon}`);
-  const closeDetails = () => { setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setVisitFinishing(false); visitFinishingRef.current = false; setDetailsExpanded(false); onDismiss?.(); };
+  const stopLiveLocation = (reset = true) => {
+    if (liveLocationWatch.current !== null && navigator.geolocation) navigator.geolocation.clearWatch(liveLocationWatch.current);
+    liveLocationWatch.current = null;
+    if (reset) { setLivePosition(null); setLiveLocationStatus('idle'); }
+  };
+  const startLiveLocation = () => {
+    if (!navigator.geolocation) { setLiveLocationStatus('unavailable'); return; }
+    if (liveLocationWatch.current !== null) return;
+    setLiveLocationStatus('locating');
+    try {
+      liveLocationWatch.current = navigator.geolocation.watchPosition(position => {
+        setLivePosition({ lat: position.coords.latitude, lon: position.coords.longitude, accuracy: position.coords.accuracy });
+        setLiveLocationStatus('live');
+      }, error => {
+        if (liveLocationWatch.current !== null) navigator.geolocation.clearWatch(liveLocationWatch.current);
+        liveLocationWatch.current = null;
+        setLiveLocationStatus(error.code === error.PERMISSION_DENIED ? 'denied' : 'error');
+      }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+    } catch { setLiveLocationStatus('error'); }
+  };
+  useEffect(() => () => { if (liveLocationWatch.current !== null && navigator.geolocation) navigator.geolocation.clearWatch(liveLocationWatch.current); }, []);
+  const openWalkingDirections = () => {
+    const url = new URL('https://www.google.com/maps/dir/');
+    url.searchParams.set('api', '1');
+    if (livePosition) url.searchParams.set('origin', `${livePosition.lat},${livePosition.lon}`);
+    url.searchParams.set('destination', `${place.lat},${place.lon}`);
+    url.searchParams.set('travelmode', 'walking');
+    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+  };
+  useEffect(() => { if (!details || !visitMode || visitStage !== 'journey') stopLiveLocation(); }, [details, visitMode, visitStage]);
+  const liveDistance = livePosition ? Math.round(6371000 * 2 * Math.asin(Math.sqrt(Math.sin((place.lat - livePosition.lat) * Math.PI / 360) ** 2 + Math.cos(livePosition.lat * Math.PI / 180) * Math.cos(place.lat * Math.PI / 180) * Math.sin((place.lon - livePosition.lon) * Math.PI / 360) ** 2))) : null;
+  const liveStatusText = liveLocationStatus === 'live' && liveDistance !== null ? liveDistance < 30 ? 'You’re at the restaurant.' : `${liveDistance < 1000 ? `${liveDistance} m` : `${(liveDistance / 1000).toFixed(1)} km`} away · live location` : liveLocationStatus === 'locating' ? 'Finding your current location…' : liveLocationStatus === 'denied' ? 'Location permission was declined. You can still open directions.' : liveLocationStatus === 'unavailable' ? 'Live location is not available in this browser.' : liveLocationStatus === 'error' ? 'Could not update your location. Try again or open directions.' : 'Use live location to see your position and distance.';
+  const closeDetails = () => { stopLiveLocation(); setDetails(false); setVisitMode(false); setVisitIntro(false); setVisitFlightActive(false); setVisitFinishing(false); visitFinishingRef.current = false; setDetailsExpanded(false); onDismiss?.(); };
   const startVisit = () => { const hasSentiment = Boolean(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment)); setVisitStage(status === 'visited' || visitStage === 'outro' ? 'outro' : 'journey'); setVisitFeedbackStep(hasSentiment ? 'recommendation' : 'sentiment'); setVisitSaveError(''); setVisitIntro(true); setVisitMode(true); if (status !== 'visited') onStatus('target'); };
   const feedbackComplete = Boolean(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment) && recommendationVote);
   const finishVisit = async () => {
@@ -248,9 +312,10 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className={`visit-journey${visitStage === 'outro' ? ' visit-outro' : ''}`} aria-label={visitStage === 'outro' ? `Visit feedback for ${place.name}` : `Starting a visit to ${place.name}`}>
+        {visitStage === 'journey' && <VisitNavigationMap place={place} position={livePosition} banner/>}
         {visitStage === 'journey' ? <>
-          <div className="visit-route" aria-hidden="true"><span className="visit-route-line"/><MapPin className="visit-route-pin" size={22}/><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
-          <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>Good food is just around the corner.</span></div>
+          <div className="visit-route" aria-hidden="true"><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
+          <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>{liveLocationStatus === 'live' ? liveStatusText : 'Good food is just around the corner.'}</span></div>
         </> : <>
           <img className="visit-outro-mascot" ref={visitOutroMascotRef} src={visitJumpSrc} alt="" aria-hidden="true"/>
           <div className="visit-journey-copy"><span className="eyebrow">YOU MADE IT</span><strong>How was {place.name}?</strong><span>Your visit is complete after your quick rating.</span></div>
@@ -259,10 +324,10 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       <div className="place-detail-content">
         {visitMode ? <>
           {visitStage === 'journey' ? <>
-            <button className="back visit-details-back" onClick={() => setVisitMode(false)}><ArrowLeft size={17}/>Place details</button>
+            <button className="back visit-details-back" onClick={() => { stopLiveLocation(); setVisitMode(false); }}><ArrowLeft size={17}/>Place details</button>
             <div className="visit-title"><div><span className="eyebrow">YOUR NEXT STOP</span><h2>{place.name}</h2><p>{cuisine.join(' · ')} · {place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m away` : `${(place.distance / 1000).toFixed(1)} km away`}</p></div><Sparkles size={23}/></div>
-            <div className="visit-map"><iframe title={`Map showing ${place.name}`} src={mapUrl.toString()} loading="lazy" referrerPolicy="no-referrer"/><a href={`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}#map=16/${place.lat}/${place.lon}`} target="_blank" rel="noopener noreferrer">Open map</a></div>
-            <button className="button directions visit-directions" onClick={onDirections}><Navigation size={17}/>Directions to {place.name}<span>↗</span></button>
+            <div className="visit-map"><VisitNavigationMap place={place} position={livePosition}/><span className="visit-map-status" role="status">{liveStatusText}</span></div>
+            <p className="visit-navigation-hint">The line shows your direction to the restaurant. Open walking directions below for a road route.</p>
           </> : <>
             {visitFeedbackStep === 'sentiment' ? <div className="visit-feedback" aria-live="polite">
               <span className="eyebrow">QUESTION 1 OF 2</span><h3>Did you like it?</h3><div className="visit-feedback-actions">
@@ -290,7 +355,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'visited' ? 'Finish your visit' : status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
         </>}
       </div>
-      <div className="place-detail-bottom-bar">{visitMode ? visitStage === 'journey' ? <button className="button visit-arrived" onClick={() => { setVisitFeedbackStep(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment) ? 'recommendation' : 'sentiment'); setVisitSaveError(''); setVisitStage('outro'); }}><Check size={18}/>I’m here — mark as visited</button> : <button className="button visit-done" disabled={!feedbackComplete || visitFinishing} onClick={() => void finishVisit()}><Check size={18}/>{visitFinishing ? 'Heading to the Map…' : feedbackComplete ? 'Complete visit · open Map' : 'Answer both questions to finish'}</button> : <button className="place-detail-bottom-back" onClick={closeDetails}><ArrowLeft size={17}/>Back to places</button>}</div>
+      <div className="place-detail-bottom-bar">{visitMode ? visitStage === 'journey' ? <div className="visit-navigation-bar"><div className="visit-navigation-buttons"><button className="button outline" onClick={liveLocationStatus === 'live' ? () => stopLiveLocation() : startLiveLocation} disabled={liveLocationStatus === 'locating'}><MapPin size={16}/>{liveLocationStatus === 'live' ? 'Stop live location' : liveLocationStatus === 'locating' ? 'Finding you…' : 'Use my location'}</button><button className="button directions visit-directions" onClick={openWalkingDirections}><Navigation size={17}/>Open walking directions<ExternalLink size={14}/></button></div><p className="visit-location-privacy">Your live position stays on this screen. Opening directions shares your start point with Google Maps.</p><button className="button visit-arrived" onClick={() => { stopLiveLocation(); setVisitFeedbackStep(sentiment && ['loved', 'okay', 'disliked'].includes(sentiment) ? 'recommendation' : 'sentiment'); setVisitSaveError(''); setVisitStage('outro'); }}><Check size={18}/>I’m here — mark as visited</button></div> : <button className="button visit-done" disabled={!feedbackComplete || visitFinishing} onClick={() => void finishVisit()}><Check size={18}/>{visitFinishing ? 'Heading to the Map…' : feedbackComplete ? 'Complete visit · open Map' : 'Answer both questions to finish'}</button> : <button className="place-detail-bottom-back" onClick={closeDetails}><ArrowLeft size={17}/>Back to places</button>}</div>
     </section></div>, document.body)}
   </>;
 }
