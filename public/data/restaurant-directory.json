@@ -12638,6 +12638,622 @@
       "checkedAt": "2026-10-26",
       "validated": true,
       "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:burger-king-lippulaiva",
+      "name": "Burger King",
+      "branch": "Lippulaiva",
+      "city": "Espoo",
+      "address": {
+        "street": "Espoonlahdenkatu 4",
+        "postalCode": "02320",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-pikkulaiva/",
+      "category": "restaurant",
+      "lat": 60.1496142,
+      "lon": 24.6555677,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/9610710875",
+          "recordId": "node/9610710875",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-pikkulaiva/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:burger-king-muurala",
+      "name": "Burger King",
+      "branch": "Muurala",
+      "city": "Espoo",
+      "address": {
+        "street": "Teirinsyrjä 2a",
+        "postalCode": "02770",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-muurala/",
+      "category": "restaurant",
+      "lat": 60.2094874,
+      "lon": 24.6364649,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/way/577849916",
+          "recordId": "way/577849916",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-muurala/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:espoo:burger-king-nihtisilta",
+      "name": "Burger King",
+      "branch": "Nihtisilta",
+      "city": "Espoo",
+      "address": {
+        "street": "Nihtisilta 4",
+        "postalCode": "02630",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-nihtisilta/",
+      "category": "restaurant",
+      "lat": 60.2073491,
+      "lon": 24.7491482,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6893416252",
+          "recordId": "node/6893416252",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-nihtisilta/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-malmi",
+      "name": "Burger King",
+      "branch": "Malmi",
+      "city": "Helsinki",
+      "address": {
+        "street": "Ala-Malmin tori 4",
+        "postalCode": "00700",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-malmi/",
+      "category": "restaurant",
+      "lat": 60.2507161,
+      "lon": 25.0123898,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/614665429",
+          "recordId": "node/614665429",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-malmi/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-ala-tikkurila",
+      "name": "Burger King",
+      "branch": "Ala-Tikkurila",
+      "city": "Helsinki",
+      "address": {
+        "street": "Härkävaljakontie 31",
+        "postalCode": "00750",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-ala-tikkurila/",
+      "category": "restaurant",
+      "lat": 60.284191,
+      "lon": 25.0303758,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/13676621070",
+          "recordId": "node/13676621070",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-ala-tikkurila/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-itis",
+      "name": "Burger King",
+      "branch": "Itis",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itäkatu 1-5",
+        "postalCode": "00930",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-itis/",
+      "category": "restaurant",
+      "lat": 60.2119224,
+      "lon": 25.0825557,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/4323447189",
+          "recordId": "node/4323447189",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-itis/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-ruoholahti",
+      "name": "Burger King",
+      "branch": "Ruoholahti",
+      "city": "Helsinki",
+      "address": {
+        "street": "Itämerenkatu 21",
+        "postalCode": "00180",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-ruoholahti/",
+      "category": "restaurant",
+      "lat": 60.1636262,
+      "lon": 24.9121783,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/3495109602",
+          "recordId": "node/3495109602",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-ruoholahti/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-rautatieasema",
+      "name": "Burger King",
+      "branch": "Rautatieasema",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-rautatieasema-helsinki/",
+      "category": "restaurant",
+      "lat": 60.1711725,
+      "lon": 24.9409195,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/12688142626",
+          "recordId": "node/12688142626",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-rautatieasema-helsinki/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-citycenter",
+      "name": "Burger King",
+      "branch": "Citycenter",
+      "city": "Helsinki",
+      "address": {
+        "street": "Kaivokatu 8",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-citycenter/",
+      "category": "restaurant",
+      "lat": 60.1701983,
+      "lon": 24.9423457,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/316414960",
+          "recordId": "node/316414960",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-citycenter/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-kamppi",
+      "name": "Burger King",
+      "branch": "Kamppi",
+      "city": "Helsinki",
+      "address": {
+        "street": "Urho Kekkosen katu 1",
+        "postalCode": "00100",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-kamppi-helsinki/",
+      "category": "restaurant",
+      "lat": 60.1689421,
+      "lon": 24.9322084,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/3410374701",
+          "recordId": "node/3410374701",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-kamppi-helsinki/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:helsinki:burger-king-meilahti",
+      "name": "Burger King",
+      "branch": "Meilahti",
+      "city": "Helsinki",
+      "address": {
+        "street": "Tukholmankatu 2",
+        "postalCode": "00250",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-meilahti/",
+      "category": "restaurant",
+      "lat": 60.1908043,
+      "lon": 24.9112316,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/4253223605",
+          "recordId": "node/4253223605",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-meilahti/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:burger-king-myyrmanni",
+      "name": "Burger King",
+      "branch": "Myyrmanni",
+      "city": "Vantaa",
+      "address": {
+        "street": "Iskoskuja 3",
+        "postalCode": "01600",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-myyrmanni/",
+      "category": "restaurant",
+      "lat": 60.2597325,
+      "lon": 24.8531672,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/3103948782",
+          "recordId": "node/3103948782",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-myyrmanni/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:burger-king-dixi",
+      "name": "Burger King",
+      "branch": "Dixi",
+      "city": "Vantaa",
+      "address": {
+        "street": "Ratatie 11",
+        "postalCode": "01300",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-dixi/",
+      "category": "restaurant",
+      "lat": 60.2922634,
+      "lon": 25.0435157,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/6139263845",
+          "recordId": "node/6139263845",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-dixi/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
+    },
+    {
+      "id": "frd:vantaa:burger-king-neste-tammisto",
+      "name": "Burger King",
+      "branch": "Neste Tammisto",
+      "city": "Vantaa",
+      "address": {
+        "street": "Tammiston kauppatie 10 b",
+        "postalCode": "01510",
+        "country": "FI"
+      },
+      "website": "https://burgerking.fi/toimipiste/burger-king-neste-tammisto/",
+      "category": "restaurant",
+      "lat": 60.2809535,
+      "lon": 24.9716534,
+      "sourceRecords": [
+        {
+          "source": "OpenStreetMap",
+          "url": "https://www.openstreetmap.org/node/11814478749",
+          "recordId": "node/11814478749",
+          "fields": [
+            "lat",
+            "lon"
+          ],
+          "checkedAt": "2026-10-26",
+          "license": "ODbL-1.0",
+          "attribution": "© OpenStreetMap contributors"
+        },
+        {
+          "source": "Burger King Finland official restaurant page",
+          "url": "https://burgerking.fi/toimipiste/burger-king-neste-tammisto/",
+          "fields": [
+            "operatingStatus",
+            "name",
+            "address",
+            "website"
+          ],
+          "checkedAt": "2026-10-26",
+          "note": "Official Burger King Finland branch listing confirms the restaurant is operating and provides its current address."
+        }
+      ],
+      "checkedAt": "2026-10-26",
+      "validated": true,
+      "lastValidatedAt": "2026-10-26"
     }
   ]
 }
