@@ -321,8 +321,8 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .visit-change-rating{display:block;margin:10px auto 0}
 .visit-feedback>.eyebrow{display:block;margin-bottom:5px}
 .visit-return-flight-character{z-index:1400}
-.bottom-nav [data-nav-tab="map"].visit-return-target{animation:visit-map-landing .72s .35s cubic-bezier(.2,.8,.25,1) both}
-@keyframes visit-map-landing{0%,100%{transform:translateY(0) scale(1)}45%{transform:translateY(-5px) scale(1.06)}72%{transform:translateY(1px) scale(.98)}}
+.bottom-nav [data-nav-tab="map"].visit-return-target{animation:visit-map-landing 1.05s 1.5s cubic-bezier(.2,.8,.25,1) both}
+@keyframes visit-map-landing{0%,100%{transform:translateY(0) scale(1)}38%{transform:translateY(-7px) scale(1.1)}68%{transform:translateY(2px) scale(.96)}84%{transform:translateY(-2px) scale(1.03)}}
 @keyframes lunumi-travel{0%,100%{transform:translate(0,0) rotate(-3deg)}50%{transform:translate(24px,-11px) rotate(4deg)}}
 @keyframes route-draw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 @keyframes pin-arrive{from{opacity:0;transform:translateY(-10px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -336,6 +336,11 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 
 /* The visit intro flies a transparent mascot from the viewport center to its route. */
 .visit-flight-character{position:fixed;z-index:1200;object-fit:contain;pointer-events:none;filter:drop-shadow(0 8px 10px #574b2833);transform-origin:center center;will-change:transform,opacity}
+.visit-return-flight-character{z-index:1400;display:block;overflow:visible}
+.visit-return-flight-character>img{display:block;width:100%;height:100%;object-fit:contain}
+.visit-carried-map-marker{position:absolute;left:21%;top:34%;display:grid;place-items:center;width:28%;aspect-ratio:1;border:2px solid #fff9e8;border-radius:50% 50% 50% 8px;background:#fff2d2;color:#d77952;box-shadow:0 3px 8px #51453355;transform:rotate(-18deg)}
+.visit-carried-map-marker svg{width:78%;height:78%;fill:#fff8e8;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.visit-carried-map-marker circle{fill:#d77952;stroke:#fff8e8;stroke-width:1.3}
 .visit-flight-active .visit-character{visibility:hidden}
 .visit-character{z-index:1;will-change:opacity}
 @keyframes lunumi-step-a{from{transform:rotate(12deg)}to{transform:rotate(-12deg)}}

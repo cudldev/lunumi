@@ -18,7 +18,8 @@ const safeUrl = (value?: string) => {
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
 };
 
-type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
+type VisitOrigin = 'target' | 'explored' | 'nearby' | 'visited';
+type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; initiallyOpen?: boolean; onDismiss?: () => void };
 
 export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onDirections, onStatus, onSentiment, onRecommendation, onReturn, initiallyOpen = false, onDismiss }: Props) {
   const [details, setDetails] = useState(initiallyOpen);
@@ -161,29 +162,39 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
     visitFinishingRef.current = true;
     setVisitFinishing(true);
     setVisitSaveError('');
-    try {
-      await onStatus('visited');
-    } catch {
-      visitFinishingRef.current = false;
-      setVisitFinishing(false);
-      setVisitSaveError('Your visit could not be saved. Please try again.');
-      return;
-    }
-
     const mascot = visitOutroMascotRef.current;
     const mapTab = document.querySelector<HTMLElement>('[data-nav-tab="map"]');
     const mapIcon = mapTab?.querySelector<SVGElement>('svg');
     const sourceRect = mascot?.getBoundingClientRect();
     const targetRect = mapIcon?.getBoundingClientRect();
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const arrivalFrom: VisitOrigin = status === 'visited' ? 'visited' : 'target';
+    let flight: HTMLDivElement | null = null;
+    let flightFrames: Keyframe[] = [];
 
     if (mascot && mapTab && sourceRect && targetRect && !reducedMotion && typeof mascot.animate === 'function') {
-      const flight = document.createElement('img');
-      flight.src = visitJumpSrc;
-      flight.alt = '';
+      flight = document.createElement('div');
       flight.setAttribute('aria-hidden', 'true');
       flight.className = 'visit-flight-character visit-return-flight-character';
       Object.assign(flight.style, { left: `${sourceRect.left}px`, top: `${sourceRect.top}px`, width: `${sourceRect.width}px`, height: `${sourceRect.height}px` });
+      const flightMascot = document.createElement('img');
+      flightMascot.src = visitJumpSrc;
+      flightMascot.alt = '';
+      flightMascot.draggable = false;
+      const carriedMarker = document.createElement('span');
+      carriedMarker.className = 'visit-carried-map-marker';
+      const pin = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      pin.setAttribute('viewBox', '0 0 24 24');
+      pin.setAttribute('aria-hidden', 'true');
+      const pinPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pinPath.setAttribute('d', 'M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z');
+      const pinCenter = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      pinCenter.setAttribute('cx', '12');
+      pinCenter.setAttribute('cy', '10');
+      pinCenter.setAttribute('r', '2.7');
+      pin.append(pinPath, pinCenter);
+      carriedMarker.appendChild(pin);
+      flight.append(flightMascot, carriedMarker);
       document.body.appendChild(flight);
       mascot.style.visibility = 'hidden';
       mapTab.classList.add('visit-return-target');
@@ -192,29 +203,45 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       const startY = sourceRect.top + sourceRect.height / 2;
       const targetX = targetRect.left + targetRect.width / 2;
       const targetY = targetRect.top + targetRect.height / 2;
-      const endWidth = 28;
-      const endHeight = 34;
-      const endLeft = targetX - endWidth / 2;
-      const endTop = targetY - endHeight / 2;
-      const middleX = startX + (targetX - startX) * 0.48;
-      const middleY = startY + (targetY - startY) * 0.48 - 92;
-      closeDetails();
+      const control1 = { x: startX + (targetX - startX) * 0.18, y: startY - Math.max(150, Math.abs(targetX - startX) * 0.2) };
+      const control2 = { x: startX + (targetX - startX) * 0.84, y: targetY - Math.max(100, Math.abs(targetX - startX) * 0.12) };
+      flightFrames = [0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.84, 0.94, 1].map(offset => {
+        const inverse = 1 - offset;
+        const x = inverse ** 3 * startX + 3 * inverse ** 2 * offset * control1.x + 3 * inverse * offset ** 2 * control2.x + offset ** 3 * targetX;
+        const y = inverse ** 3 * startY + 3 * inverse ** 2 * offset * control1.y + 3 * inverse * offset ** 2 * control2.y + offset ** 3 * targetY;
+        const scale = 1 - offset * 0.84;
+        const rotation = -8 + offset * 34;
+        const opacity = offset < 0.84 ? 1 : Math.max(0, 1 - (offset - 0.84) / 0.16);
+        return { transform: `translate3d(${x - startX}px,${y - startY}px,0) scale(${scale}) rotate(${rotation}deg)`, opacity, offset, ...(offset < 1 ? { easing: 'cubic-bezier(.22,.72,.28,1)' } : {}) };
+      });
+    }
+
+    try {
+      await onStatus('visited');
+    } catch {
+      flight?.remove();
+      if (mascot?.isConnected) mascot.style.visibility = '';
+      mapTab?.classList.remove('visit-return-target');
+      visitFinishingRef.current = false;
+      setVisitFinishing(false);
+      setVisitSaveError('Your visit could not be saved. Please try again.');
+      return;
+    }
+
+    if (flight && mapTab) {
+      if (mascot?.isConnected) closeDetails();
       try {
-        await flight.animate([
-          { left: `${sourceRect.left}px`, top: `${sourceRect.top}px`, width: `${sourceRect.width}px`, height: `${sourceRect.height}px`, opacity: 1, transform: 'rotate(-8deg) scale(1)', offset: 0 },
-          { left: `${middleX - sourceRect.width * 0.38}px`, top: `${middleY - sourceRect.height * 0.38}px`, width: `${sourceRect.width * 0.76}px`, height: `${sourceRect.height * 0.76}px`, opacity: 1, transform: 'rotate(16deg) scale(.86)', offset: 0.58, easing: 'cubic-bezier(.2,.8,.25,1)' },
-          { left: `${endLeft}px`, top: `${endTop}px`, width: `${endWidth}px`, height: `${endHeight}px`, opacity: 0.2, transform: 'rotate(380deg) scale(.55)', offset: 1 },
-        ], { duration: 760, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' }).finished.catch(() => undefined);
+        await flight.animate(flightFrames, { duration: 2100, fill: 'forwards' }).finished.catch(() => undefined);
       } finally {
         flight.remove();
-        onReturn();
-        window.setTimeout(() => mapTab.classList.remove('visit-return-target'), 900);
+        onReturn(place.id, arrivalFrom);
+        window.setTimeout(() => mapTab.classList.remove('visit-return-target'), 2400);
       }
       return;
     }
 
-    closeDetails();
-    onReturn();
+    if (mascot?.isConnected) closeDetails();
+    onReturn(place.id, arrivalFrom);
   };
 
   return <>

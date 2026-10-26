@@ -5,6 +5,7 @@ import type { Place } from './core';
 import './history-map.css';
 
 type MapEntry = { id: string; place: Place; when: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; status?: 'target' | 'visited'; visitedAt?: string; tags: string[]; isUnvisited?: boolean };
+type VisitArrival = { placeId: string; from: 'target' | 'explored' | 'nearby' | 'visited' };
 type Tile = { x: number; y: number; z: number; left: number; top: number };
 type Marker = { kind: 'place'; entry: MapEntry; x: number; y: number; number?: number } | { kind: 'cluster'; entries: MapEntry[]; x: number; y: number; lat: number; lon: number };
 const TILE_SIZE = 256;
@@ -20,11 +21,12 @@ const worldPoint = (lat: number, lon: number, zoom: number) => {
 };
 const wrap = (value: number, width: number) => ((value % width) + width) % width;
 
-export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[]; onSelect: (entry: MapEntry) => void }) {
+export default function HistoryMap({ entries, onSelect, visitArrival, onArrivalDone }: { entries: MapEntry[]; onSelect: (entry: MapEntry) => void; visitArrival?: VisitArrival | null; onArrivalDone?: (placeId: string) => void }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const pendingPan = useRef<{ x: number; y: number } | null>(null);
   const panFrame = useRef<number | null>(null);
+  const handledArrival = useRef<string | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [zoomOffset, setZoomOffset] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -126,6 +128,23 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
     setZoomOffset(zoom - fitted.zoom);
     setPan({ x: wrap(point.x, worldSize) - fitted.centerX * scale, y: point.y - fitted.centerY * scale });
   };
+  useEffect(() => {
+    if (!visitArrival || !fitted || !size.width || !size.height || handledArrival.current === visitArrival.placeId) return;
+    const place = located.find(entry => entry.id === visitArrival.placeId);
+    if (!place) return;
+    handledArrival.current = visitArrival.placeId;
+    const zoom = Math.min(MAX_ZOOM, fitted.zoom + 3);
+    const scale = 2 ** (zoom - fitted.zoom);
+    const point = worldPoint(place.place.lat, place.place.lon, zoom);
+    const worldSize = TILE_SIZE * 2 ** zoom;
+    setZoomOffset(zoom - fitted.zoom);
+    setPan({ x: wrap(point.x, worldSize) - fitted.centerX * scale, y: point.y - fitted.centerY * scale });
+  }, [visitArrival?.placeId, fitted, located, size.height, size.width]);
+  useEffect(() => {
+    if (!visitArrival || !onArrivalDone) return;
+    const timer = window.setTimeout(() => onArrivalDone(visitArrival.placeId), 3000);
+    return () => window.clearTimeout(timer);
+  }, [visitArrival?.placeId, visitArrival?.from]);
   const startPan = (event: PointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest('button,a')) return;
     dragStart.current = { x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y };
@@ -156,13 +175,15 @@ export default function HistoryMap({ entries, onSelect }: { entries: MapEntry[];
   };
 
   if (!located.length) return <section className="history-map-empty"><MapPin size={30}/><h2>Your map is waiting</h2><p>Nearby places will appear after a location is set. Saved restaurants stay on the map.</p></section>;
+  const arrivalEntry = visitArrival && located.find(entry => entry.id === visitArrival.placeId);
   return <section className="history-map-section" aria-label="Restaurant history and nearby map">
-    <div className="history-map" ref={mapRef} tabIndex={0} onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan} onPointerCancel={stopPan} onKeyDown={panByKey} aria-label={`${historyEntries.length} history places and ${nearbyEntries.length} nearby places on OpenStreetMap. Drag to move, use arrow keys to pan.`}>
+    {arrivalEntry && <p className="sr" role="status" aria-live="polite">{arrivalEntry.place.name} is now marked visited on your map.</p>}
+    <div className={`history-map${visitArrival ? ' has-visit-arrival' : ''}`} ref={mapRef} tabIndex={0} onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan} onPointerCancel={stopPan} onKeyDown={panByKey} aria-label={`${historyEntries.length} history places and ${nearbyEntries.length} nearby places on OpenStreetMap. Drag to move, use arrow keys to pan.`}>
       {viewport && <>
         <div className="history-map-tiles" aria-hidden="true">{viewport.tiles.map(tile => <img key={`${tile.z}/${tile.x}/${tile.y}`} src={`https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} style={{ left: tile.left, top: tile.top }} />)}</div>
         <div className="history-map-markers">{markers.map((marker, index) => marker.kind === 'cluster'
           ? <button key={`cluster-${index}`} className="history-map-cluster" style={{ left: marker.x, top: marker.y }} onClick={() => zoomTo(marker.lat, marker.lon)} aria-label={`Zoom in on ${marker.entries.length} nearby restaurants`} title={`${marker.entries.length} nearby restaurants`}>{marker.entries.length}</button>
-          : <button key={marker.entry.id} className={`history-map-pin ${marker.entry.isUnvisited ? 'is-nearby' : marker.entry.status === 'target' ? 'is-target' : marker.entry.status === 'visited' ? 'is-visited' : 'is-explored'}`} style={{ left: marker.x, top: marker.y }} onClick={() => onSelect(marker.entry)} aria-label={`Open ${marker.entry.place.name}`} title={marker.entry.place.name}><MapPin size={22}/>{marker.number && <span>{marker.number}</span>}</button>)}</div>
+          : <button key={marker.entry.id} className={`history-map-pin ${marker.entry.isUnvisited ? 'is-nearby' : marker.entry.status === 'target' ? 'is-target' : marker.entry.status === 'visited' ? 'is-visited' : 'is-explored'}${visitArrival?.placeId === marker.entry.id && visitArrival.from !== 'visited' ? ` is-visit-arrival from-${visitArrival.from}` : ''}`} style={{ left: marker.x, top: marker.y }} onClick={() => onSelect(marker.entry)} aria-label={`Open ${marker.entry.place.name}`} title={marker.entry.place.name}><MapPin size={22}/>{marker.number && <span>{marker.number}</span>}</button>)}</div>
       </>}
       {viewport && <>
         <nav className="history-map-controls" aria-label="Map navigation">
