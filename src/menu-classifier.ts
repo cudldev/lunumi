@@ -8,6 +8,8 @@ export type MenuClassifier = {
   logLikelihood: Record<string, number[]>;
 };
 
+export const MENU_OTHER_FILTER_THRESHOLD = 0.9;
+
 const classifierRequests: Partial<Record<'fi' | 'sv' | 'en', Promise<MenuClassifier>>> = {};
 
 export function loadMenuClassifier(language: 'fi' | 'sv' | 'en'): Promise<MenuClassifier> {

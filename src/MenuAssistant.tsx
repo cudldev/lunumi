@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
-import { classifyMenuLine, loadMenuClassifier, type MenuClassifier } from './menu-classifier';
+import { classifyMenuLine, loadMenuClassifier, MENU_OTHER_FILTER_THRESHOLD, type MenuClassifier } from './menu-classifier';
 
 type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; dietaryInfo?: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v24';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v25';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -706,14 +706,23 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   const seen = new Set<string>();
   const dietaryLegend = new Map<string, string>();
   const legendLabels: Array<[RegExp, string]> = [
-    [/laktoositon|lactose[- ]free/i, 'Marked lactose-free'],
+    [/laktoositon|lactose[- ]free|laktosfri/i, 'Marked lactose-free'],
     [/vähälaktoosinen|low[- ]lactose/i, 'Marked low-lactose'],
-    [/gluteeniton|gluten[- ]free/i, 'Marked gluten-free'],
-    [/vegaaninen|vegan/i, 'Marked vegan'],
-    [/maidoton|dairy[- ]free/i, 'Marked dairy-free'],
+    [/gluteeniton|gluten[- ]free|glutenfri/i, 'Marked gluten-free'],
+    [/vegaan\w*|vegan|vegansk/i, 'Marked vegan'],
+    [/kasvis(?:ruoka)?|vegetarian|vegetarisk/i, 'Marked vegetarian'],
+    [/maidoton|dairy[- ]free|mejerifri/i, 'Marked dairy-free'],
     [/sis\.\s*valkosipulia|contains garlic/i, 'Marked contains garlic'],
   ];
+  const inlineLegendLines = new Set<string>();
+  const inlineDefinition = /\b([A-ZÅÄÖ]{1,4})\s*[:=]\s*(gluteeniton|gluten[- ]free|glutenfri|laktoositon|lactose[- ]free|laktosfri|vähälaktoosinen|low[- ]lactose|vegaan\w*|vegan|vegansk|kasvis(?:ruoka)?|vegetarian|vegetarisk|maidoton|dairy[- ]free|mejerifri|sis\.\s*valkosipulia|contains garlic)\b/gi;
   for (const line of lines) {
+    const definitions = [...line.matchAll(inlineDefinition)];
+    for (const definition of definitions) {
+      const mapping = legendLabels.find(([pattern]) => pattern.test(definition[2]));
+      if (mapping) dietaryLegend.set(definition[1].toLocaleUpperCase(), mapping[1]);
+    }
+    if (definitions.length && !/\d/.test(line)) inlineLegendLines.add(line);
     const explicitLegend = line.match(/^menu-diet-legend:\s*([A-ZÅÄÖ]{1,4})=(.+)$/i);
     if (explicitLegend) {
       const mapping = legendLabels.find(([pattern]) => pattern.test(explicitLegend[2]));
@@ -727,10 +736,20 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const mapping = legendLabels.find(([pattern]) => pattern.test(label));
     if (mapping) dietaryLegend.set(code, mapping[1]);
   }
-  const inlineCodes = (line: string) => [...line.matchAll(/\(([^()]*)\)/g)].flatMap(match => {
-    const codes = match[1].match(/[A-ZÅÄÖ]{1,4}(?=\s*(?:[+,/)]|$))/g) || [];
-    return codes.length ? [codes.join('+')] : [];
-  });
+  const mappedCodeSuffix = (line: string) => {
+    const match = line.match(/\s+([A-ZÅÄÖ]{1,4}(?:\s*[+,/]\s*[A-ZÅÄÖ]{1,4})*)$/);
+    if (!match) return null;
+    const codes = match[1].split(/[+,/]/).map(code => code.trim().toLocaleUpperCase()).filter(Boolean);
+    return codes.length && codes.every(code => dietaryLegend.has(code)) ? match : null;
+  };
+  const inlineCodes = (line: string) => {
+    const parenthetical = [...line.matchAll(/\(([^()]*)\)/g)].flatMap(match => {
+      const codes = match[1].match(/[A-ZÅÄÖ]{1,4}(?=\s*(?:[+,/)]|$))/g) || [];
+      return codes.length ? [codes.join('+')] : [];
+    });
+    const suffix = mappedCodeSuffix(line.replace(pricePattern, ''));
+    return suffix ? [...parenthetical, suffix[1].split(/[+,/]/).map(code => code.trim()).join('+')] : parenthetical;
+  };
   const modules = language === 'unknown' ? Object.values(languageModules) : [languageModules[language]];
   const activeLanguage = language === 'unknown' ? 'en' : language;
   const pricePattern = /(?:^|\s)(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\b\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)/;
@@ -749,6 +768,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   let pendingImageUrl: string | undefined;
   let pendingMenuPriceLabel = '';
   for (const originalLine of lines) { let line = originalLine;
+    if (inlineLegendLines.has(originalLine)) continue;
     if (line.startsWith('menu-section:')) { section = line.slice('menu-section:'.length).trim(); continue; }
     if (line.startsWith('menu-diet-legend:')) continue;
     const structured = line.match(/^menu-schema-item:\s*(\{.*\})$/i);
@@ -860,7 +880,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
     if (language !== 'unknown' && classifier) {
       const prediction = classifyMenuLine(name, classifier);
-      if (prediction?.label === 'other' && prediction.confidence >= 0.9) {
+      if (prediction?.label === 'other' && prediction.confidence >= MENU_OTHER_FILTER_THRESHOLD) {
         const last = found[found.length - 1];
         const looksLikeDescription = last && last.section === section && line.length >= 35 && line.length <= 180 && !pricePattern.test(line) && !isDietLine(line) && /[.!,:;]/.test(line);
         if (looksLikeDescription) {
@@ -1200,7 +1220,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       {ocrUsed && <p className="menu-assistant-note">Text was recognized from the linked menu image on this device; OCR can make mistakes. Check the source image.</p>}
       {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
       {modelUsed && language === 'en' && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>.</p>}
-      {modelUsed && language !== 'en' && language !== 'unknown' && <p className="menu-assistant-note">{languageModules[language].name} line filter uses a small local model trained from approved menu examples.</p>}
+      {modelUsed && language !== 'en' && language !== 'unknown' && <p className="menu-assistant-note">{languageModules[language].name} line filter uses Fineli food names (CC BY 4.0) and CC0 synthetic text. <a href="https://fineli.fi/fineli/fi/avoin-data" target="_blank" rel="noopener noreferrer">Fineli open data</a> is provided by THL.</p>}
     </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
     {(verifiedSourceUrl || sourceUrl) && <a className="menu-assistant-source" href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
   </section>;

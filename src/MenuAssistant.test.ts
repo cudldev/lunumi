@@ -71,6 +71,9 @@ describe('structured menu extraction', () => {
       block('H1', 'Our Menus'),
       block('P', 'Mochi Donut'),
       block('P', 'Mochi Ice Cream'),
+      block('P', 'Matcha Drinks'),
+      block('P', 'Sando'),
+      block('P', 'Coffee & Others'),
       block('H2', 'Matcha'),
       block('H4', 'Matcha Latte'),
       block('P', '5.9€'),
@@ -78,6 +81,7 @@ describe('structured menu extraction', () => {
       block('H4', 'Strawberry Mochi'),
       block('P', '4.8€'),
       block('H1', 'Mochi Donut'),
+      block('H2', 'Coffee & Others'),
       block('H4', 'Filter coffee 3.6€ Double espresso 3.9€ Espresso macchiato 4.3€'),
     ];
     const original = globalThis.DOMParser;
@@ -96,13 +100,18 @@ describe('structured menu extraction', () => {
 
     expect(extracted).toContain('menu-section: Matcha');
     expect(extracted).toContain('menu-section: Mochi Ice Cream');
+    expect(extracted).toContain('menu-section: Coffee & Others');
     expect(extracted).not.toContain('menu-section: Our Menus');
+    expect(parsed.items.map(item => item.name)).not.toContain('Mochi Donut');
+    expect(parsed.items.map(item => item.name)).not.toContain('Matcha Drinks');
+    expect(parsed.items.map(item => item.name)).not.toContain('Sando');
+    expect(parsed.items.map(item => item.name)).not.toContain('Coffee & Others');
     expect(parsed.items.map(item => [item.section, item.name])).toEqual([
       ['Matcha', 'Matcha Latte'],
       ['Mochi Ice Cream', 'Strawberry Mochi'],
-      ['Mochi Donut', 'Filter coffee'],
-      ['Mochi Donut', 'Double espresso'],
-      ['Mochi Donut', 'Espresso macchiato'],
+      ['Coffee & Others', 'Filter coffee'],
+      ['Coffee & Others', 'Double espresso'],
+      ['Coffee & Others', 'Espresso macchiato'],
     ]);
     expect(parsed.items.map(item => item.price)).toEqual(['5.9€', '4.8€', '3.6€', '3.9€', '4.3€']);
   });
@@ -112,6 +121,43 @@ describe('structured menu extraction', () => {
 
     expect(parsed.items).toHaveLength(1);
     expect(parsed.items[0]).toMatchObject({
+      name: 'Strawbry Mochi',
+      price: '4.8€',
+      dietaryInfo: ['L. G.'],
+    });
+    expect(parsed.items[0].sourceText).toContain('L. G. 4.8€');
+  });
+
+  it('keeps Momochi menu navigation labels out of the item list and attaches the printed dietary code', () => {
+    const block = (tagName: string, textContent: string) => ({ tagName, textContent });
+    const blocks = [
+      block('H1', 'Our Menus'),
+      block('P', 'Mochi Donut'),
+      block('P', 'Mochi Ice Cream'),
+      block('P', 'Matcha Drinks'),
+      block('P', 'Sando'),
+      block('P', 'Coffee & Others'),
+      block('H2', 'Mochi Ice Cream'),
+      block('H4', 'Strawbry Mochi'),
+      block('P', 'L. G. 4.8€'),
+    ];
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      body: { textContent: '', querySelectorAll: () => blocks },
+      querySelectorAll: () => [],
+      querySelector: () => null,
+    } as unknown as Document; } } as typeof DOMParser;
+    let extracted: string;
+    try {
+      extracted = cleanMenuText('<html></html>', 'https://momochi.fi/menu/');
+    } finally {
+      globalThis.DOMParser = original;
+    }
+    const parsed = parseMenu(extracted, 'en', null);
+
+    expect(parsed.items).toHaveLength(1);
+    expect(parsed.items[0]).toMatchObject({
+      section: 'Mochi Ice Cream',
       name: 'Strawbry Mochi',
       price: '4.8€',
       dietaryInfo: ['L. G.'],
@@ -318,6 +364,29 @@ it('keeps Finnish lunch dishes and source dietary codes while dropping page meta
   expect(parsed.items[0].diets).toEqual([]);
   expect(parsed.items[0].sourceText).toContain('A, G, L, M');
   expect(parsed.notes).toContain('Lounasbuffet: 13,70 €');
+});
+
+it('expands inline diet-code legends only when the same page defines them', () => {
+  const parsed = parseMenu([
+    'menu-section: Pääruoat',
+    'G = Gluteeniton · L = Laktoositon · VEG: Kasvis · V: Vegaani',
+    'Kuhakeitto (L, G)',
+    'Kasvisrisotto (VEG)',
+    'Vegaaninen keitto (V)',
+  ].join('\n'), 'fi', null);
+
+  expect(parsed.items.map(item => item.name)).toEqual([
+    'Kuhakeitto',
+    'Kasvisrisotto',
+    'Vegaaninen keitto',
+  ]);
+  expect(parsed.items[0].diets).toEqual(expect.arrayContaining(['Marked gluten-free', 'Marked lactose-free']));
+  expect(parsed.items[1].diets).toContain('Marked vegetarian');
+  expect(parsed.items[2].diets).toContain('Marked vegan');
+
+  const unexplained = parseMenu('menu-section: Pääruoat\nKuhakeitto (L, G)', 'fi', null);
+  expect(unexplained.items[0].diets).toEqual([]);
+  expect(unexplained.items[0].dietaryInfo).toEqual(['L+G']);
 });
 
 it('extracts daily dishes from weekday menu blocks and expands only source-listed dietary codes', () => {
