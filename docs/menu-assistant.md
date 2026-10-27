@@ -27,6 +27,8 @@ The static app reads `VITE_MENU_READER_URL` at build time. Set GitHub Actions re
 
 The Staging Worker deploy runs from `staging` when `MENU_READER_DEPLOY_ENABLED=true`. It builds the host allowlist from the `staging` branch of `cudldev/finland-restaurant-data`, matching the Staging Pages directory. It uses the repository variable `CLOUDFLARE_ACCOUNT_ID` and the GitHub Actions secret `CLOUDFLARE_API_TOKEN`; keep the token only in GitHub Actions Secrets. The existing Worker uses Cloudflare's free request tier and has a 100,000-request daily cap.
 
+The GitHub Pages workflow builds the live and Staging sites from their respective branches, then publishes the artifact to the free GitHub Pages site through the `github-pages` environment.
+
 ## Implementation map
 
 - UI, parsing, labels, and device caches: `src/MenuAssistant.tsx`.
