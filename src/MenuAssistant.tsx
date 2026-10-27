@@ -530,6 +530,56 @@ async function requestMenuAsset(assetUrl: string, signal: AbortSignal): Promise<
   return blob;
 }
 
+export function normalizePdfGlyphSpacing(value: string): string {
+  const tokens = value.trim().split(/\s+/).filter(Boolean);
+  const normalized: string[] = [];
+  for (let index = 0; index < tokens.length;) {
+    if (tokens[index].length === 1 && /[\p{L}\p{N}]/u.test(tokens[index])) {
+      const glyphs: string[] = [];
+      while (index < tokens.length && tokens[index].length === 1 && /[\p{L}\p{N}]/u.test(tokens[index])) {
+        glyphs.push(tokens[index]);
+        index += 1;
+      }
+      normalized.push(glyphs.length > 1 ? glyphs.join('') : glyphs[0]);
+    } else {
+      normalized.push(tokens[index]);
+      index += 1;
+    }
+  }
+  return normalized.join(' ')
+    .replace(/(\d)\s+([.,])\s+(\d)/g, '$1$2$3')
+    .replace(/\s+([’'])\s*/g, '$1');
+}
+
+export function formatPdfMenuRows(rows: Array<Array<{ x: number; text: string }>>, pageWidth: number): string[] {
+  const lines: string[] = [];
+  let section = '';
+  for (const row of rows) {
+    const sorted = [...row].sort((a, b) => a.x - b.x);
+    const text = sorted.map(part => normalizePdfGlyphSpacing(part.text)).filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    if (!text) continue;
+    const left = sorted[0]?.x ?? 0;
+    const isCenteredHeading = left >= pageWidth * 0.4 && text.length <= 60
+      && text === text.toLocaleUpperCase() && !/\d+[.,]\d{1,2}/.test(text);
+    if (isCenteredHeading) {
+      section = text;
+      lines.push(`menu-section: ${section}`);
+      continue;
+    }
+    const price = text.match(/(?:€|\$|£)?\s*\d+[.,]\d{1,2}\s*(?:€|\$|£)?\s*$/)?.[0].trim() || '';
+    const isPricedDescription = text.length >= 35 && (text.match(/,/g) || []).length >= 2 && Boolean(price);
+    const previous = lines.at(-1);
+    if (isPricedDescription && previous && !previous.startsWith('menu-section:') && !/\d+[.,]\d{1,2}/.test(previous)) {
+      const description = text.slice(0, text.length - price.length).replace(/\s*\/\/+\s*$/, '').trim();
+      const item = { section, name: previous, description, price, diets: [], dietaryInfo: [], allergenInfo: [], sourceText: `${previous} · ${text}` };
+      lines[lines.length - 1] = `menu-schema-item: ${JSON.stringify(item)}`;
+    } else {
+      lines.push(text);
+    }
+  }
+  return lines;
+}
+
 async function extractMenuPdf(pdf: Blob, signal: AbortSignal): Promise<string> {
   if (pdf.type !== 'application/pdf' || pdf.size > 5_000_000) throw new Error('This menu PDF is not supported or is larger than 5 MB.');
   const pdfjsUrl = new URL('https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/build/pdf.min.mjs');
@@ -559,12 +609,11 @@ async function extractMenuPdf(pdf: Blob, signal: AbortSignal): Promise<string> {
         const transform = item.transform;
         const y = Math.round(transform[5] / 2) * 2;
         const row = rows.get(y) || [];
-        row.push({ x: transform[4], text: item.str.trim() });
+        row.push({ x: transform[4], text: normalizePdfGlyphSpacing(item.str) });
         rows.set(y, row);
       }
-      const pageText = [...rows.entries()].sort((a, b) => b[0] - a[0])
-        .map(([, row]) => row.sort((a, b) => a.x - b.x).map(part => part.text).join(' ').replace(/\s+/g, ' ').trim())
-        .filter(Boolean).join('\n');
+      const pageWidth = Math.abs(page.view[2] - page.view[0]);
+      const pageText = formatPdfMenuRows([...rows.entries()].sort((a, b) => b[0] - a[0]).map(([, row]) => row), pageWidth).join('\n');
       charCount += pageText.length;
       if (charCount > 120_000) throw new Error('This menu PDF contains too much text to read automatically.');
       pages.push(pageText);
@@ -574,7 +623,7 @@ async function extractMenuPdf(pdf: Blob, signal: AbortSignal): Promise<string> {
     if (!text.trim()) throw new Error('This PDF has no selectable text. Open the source link to view it.');
     return text;
   } finally {
-    await document.destroy();
+    await task.destroy();
   }
 }
 

@@ -1,7 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { cleanMenuText, discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
+import { cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('restores PDF headings and attaches priced descriptions to their dish', () => {
+    const lines = formatPdfMenuRows([
+      [{ x: 273, text: 'P O K E' }, { x: 345, text: 'B O W L' }],
+      [{ x: 183, text: 'C H I C K E N' }, { x: 243, text: 'P O K E' }, { x: 281, text: 'B O W L' }],
+      [{ x: 183, text: 'Chicken, Rice, Carrots, Cucumber, Edamame, Seaweed, Salad // 12,50' }],
+    ], 595);
+    expect(lines[0]).toBe('menu-section: POKE BOWL');
+    expect(lines[1]).toMatch(/^menu-schema-item: /);
+    expect(parseMenu(lines.join('\n'), 'en', null).items[0]).toMatchObject({
+      section: 'POKE BOWL',
+      name: 'CHICKEN POKE BOWL',
+      price: '12,50',
+      description: 'Chicken, Rice, Carrots, Cucumber, Edamame, Seaweed, Salad',
+    });
+  });
+
+  it('rejoins spaced PDF glyphs without changing ordinary menu text', () => {
+    expect(normalizePdfGlyphSpacing('C H I C K E N P O K E B O W L')).toBe('CHICKENPOKEBOWL');
+    expect(normalizePdfGlyphSpacing('D R I N K & F O O D')).toBe('DRINK & FOOD');
+    expect(normalizePdfGlyphSpacing('R I C H I E ’ S')).toBe('RICHIE’S');
+    expect(normalizePdfGlyphSpacing('Chicken, Rice, Carrots // 12,50')).toBe('Chicken, Rice, Carrots // 12,50');
+  });
+
   it('discovers same-site menu PDFs while excluding unrelated documents and images', () => {
     const html = '<a href="/files/lunch-menu.pdf">Lunch menu</a><a href="/privacy.pdf">Privacy policy</a><a href="/lunch.jpg">Lunch menu image</a><a href="https://other.fi/menu.pdf">Menu</a>';
     const original = globalThis.DOMParser;
