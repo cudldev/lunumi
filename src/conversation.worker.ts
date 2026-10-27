@@ -2,7 +2,7 @@ import { env, pipeline, TextStreamer, type TextGenerationPipeline } from '@huggi
 import type { PromptMessage } from './ai-context';
 import type { ModelStage } from './model-state';
 import { MODEL_CONFIGS, type ModelSize } from './conversation-config';
-export type AIEvent = { type: 'fallback'; text: string } | { type: 'status'; text: string; stage?: ModelStage; progress?: number } | { type: 'token'; text: string } | { type: 'done'; text: string } | { type: 'error'; text: string };
+export type AIEvent = { type: 'fallback'; text: string; cause?: string } | { type: 'status'; text: string; stage?: ModelStage; progress?: number } | { type: 'token'; text: string } | { type: 'done'; text: string } | { type: 'error'; text: string };
 type Request = { messages: PromptMessage[]; mode: 'chat' | 'plan' | 'prepare'; device?: 'auto' | 'wasm'; modelSize?: ModelSize };
 const scope = self as unknown as { postMessage: (event: AIEvent) => void; onmessage: ((event: MessageEvent<Request>) => void) | null };
 let generator: TextGenerationPipeline | null = null, running = false, usingGPU = false;
@@ -54,7 +54,7 @@ scope.onmessage = async event => {
     scope.postMessage({ type: 'done', text: text.trim() });
   } catch (error) {
     generator = null;
-    if (usingGPU && event.data.device !== 'wasm' && !producedText) scope.postMessage({ type: 'fallback', text: 'Graphics initialization failed. Preparing the AI on the CPU…' });
+    if (usingGPU && event.data.device !== 'wasm' && !producedText) scope.postMessage({ type: 'fallback', text: 'Graphics initialization failed. Preparing the AI on the CPU…', cause: error instanceof Error ? error.message.slice(0, 1000) : 'Graphics inference failed.' });
     else scope.postMessage({ type: 'error', text: error instanceof Error ? error.message : 'The private AI could not run on this device.' });
   } finally { running = false; }
 };
