@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v6';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v7';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -524,6 +524,20 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   return { items: found, notes };
 }
 
+export function hasMenuEvidence(sourceText: string, sourceUrl: string, items: MenuItem[]): boolean {
+  if (!items.length) return false;
+  if (/^menu-schema-item:\s*\{/im.test(sourceText)) return true;
+  try {
+    const pathname = new URL(sourceUrl).pathname;
+    if (/(?:^|[\/_.-])(?:menus?|lunch|lounas|ruokalista|ruokalistat|meny|dagens)(?:$|[\/_.-])/i.test(pathname)) return true;
+  } catch { /* Without a valid source URL, require page-level evidence below. */ }
+  const hasMenuHeading = sourceText.split(/\r?\n/).some(line =>
+    /^(?:menu|food menu|lunch|lounas|ruokalista|ruokalistat|meny|dagens)$/i.test(line.trim()));
+  const hasItemDetails = items.some(item => Boolean(item.section || item.price || item.imageUrl
+    || item.ingredients?.length || item.diets.length || item.allergenInfo.length));
+  return hasMenuHeading || hasItemDetails;
+}
+
 function validCachedMenu(value: unknown): value is CachedMenu {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Partial<CachedMenu>;
@@ -705,6 +719,8 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
           }
           return { detectedLanguage, classifier, extracted: parseMenu(readable, detectedLanguage, classifier) };
         };
+        const hasMenu = (candidate: CachedMenuSource, result: Awaited<ReturnType<typeof interpret>>) =>
+          hasMenuEvidence(candidate.text, candidate.resolvedSourceUrl, result.extracted.items);
         let source: CachedMenuSource & { refreshError?: string };
         let interpreted: Awaited<ReturnType<typeof interpret>>;
         let didUseOcr = false;
@@ -721,13 +737,13 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
           interpreted = await interpret(source);
           didUseOcr = interpreted.extracted.items.length > 0;
         }
-        if (!interpreted.extracted.items.length) {
+        if (!hasMenu(source, interpreted)) {
           for (const candidateUrl of discoverMenuLinks(source.text, source.resolvedSourceUrl)) {
             if (controller.signal.aborted) break;
             try {
               const candidate = await loadMenuSource(candidateUrl, controller.signal);
               const candidateResult = await interpret(candidate);
-              if (candidateResult.extracted.items.length) {
+              if (hasMenu(candidate, candidateResult)) {
                 source = candidate;
                 interpreted = candidateResult;
                 break;
@@ -736,7 +752,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
           }
         }
         let ocrFailure = '';
-        if (!interpreted.extracted.items.length) {
+        if (!hasMenu(source, interpreted)) {
           const sourceLanguage = interpreted.detectedLanguage;
           for (const imageUrl of discoverMenuImages(source.text, source.resolvedSourceUrl)) {
             if (controller.signal.aborted) break;
@@ -765,7 +781,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
           }
         }
         const { detectedLanguage, classifier, extracted } = interpreted;
-        if (!extracted.items.length) throw new Error(ocrFailure || 'No readable menu items were found on the restaurant page.');
+        if (!didUseOcr && !hasMenu(source, interpreted)) throw new Error(ocrFailure || 'No verifiable menu items were found on the restaurant page.');
         if (!controller.signal.aborted) {
           setItems(extracted.items);
           setNotes(extracted.notes);

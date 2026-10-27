@@ -1,7 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { discoverMenuImages, discoverMenuLinks, parseMenu, schemaMenuLines } from './MenuAssistant';
+import { discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('rejects generic restaurant home-page copy as menu results while accepting menu evidence', () => {
+    const homePage = [
+      'DONUT', 'MOCHI', 'MATCHA', 'COFFEE', 'Love you so Mochi', 'Baking The Difference',
+      'Mochi Donut', 'Mochi Ice Cream', 'Welcome toMOMOCHI',
+      'There is nothing better than a friend unless it is a friend with mochi.',
+      'Experience Us Everywhere', 'Catering', 'Online order', 'Workshops',
+      'Made-to-Order Solutions', 'Forum Store', 'Mannerheimintie 20, 00100 Helsinki',
+      '050 554 3300', 'Mon-Fri. 11-20Sat. 11-19Sun. 12-18',
+    ].join('\n');
+    const homepageItems = parseMenu(homePage, 'unknown', null).items;
+
+    expect(homepageItems.length).toBeGreaterThan(0);
+    expect(hasMenuEvidence(homePage, 'https://momochi.fi/', homepageItems)).toBe(false);
+
+    const menuText = 'Lunch\nRoasted vegetable bowl';
+    const menuItems = parseMenu(menuText, 'en', null).items;
+    expect(hasMenuEvidence(menuText, 'https://restaurant.example/', menuItems)).toBe(true);
+    expect(hasMenuEvidence('Roasted vegetable bowl', 'https://restaurant.example/menu', menuItems)).toBe(true);
+  });
+
   it('reads Schema.org menu items, section, image, price, explicit diet, and allergen metadata', () => {
     const menu = {
       '@type': 'Menu',
