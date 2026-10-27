@@ -194,21 +194,26 @@ it('keeps Finnish lunch dishes and source dietary codes while dropping page meta
 });
 
 it('extracts daily dishes from weekday menu blocks and expands only source-listed dietary codes', () => {
-  type FakeNode = { textContent: string; tagName: string; children: FakeNode[]; nextElementSibling?: FakeNode; closest: () => null; querySelectorAll: (selector: string) => FakeNode[] };
+  type FakeNode = { nodeType: number; textContent: string; tagName: string; children: FakeNode[]; childNodes: FakeNode[]; nextElementSibling?: FakeNode; closest: () => null; matches: (selector: string) => boolean; querySelectorAll: (selector: string) => FakeNode[] };
   const node = (textContent: string, tagName = 'DIV', children: FakeNode[] = []): FakeNode => ({
-    textContent, tagName, children, closest: () => null,
+    nodeType: 1, textContent, tagName, children, childNodes: children, closest: () => null,
+    matches: (selector: string) => selector.split(',').some(tag => tag.trim().toUpperCase() === tagName),
     querySelectorAll: (selector: string) => selector === 'p,li,dt,dd,div,span' ? children : [],
+  });
+  const textNode = (text: string): FakeNode => ({
+    nodeType: 3, textContent: text, tagName: '#text', children: [], childNodes: [], closest: () => null,
+    matches: () => false, querySelectorAll: () => [],
   });
   const leaves = ['L', 'Laktoositon', 'G', 'Gluteeniton', 'VE', 'Vegaaninen', 'M', 'Maidoton', 'VS', 'Sis. valkosipulia']
     .map(text => node(text, 'SPAN'));
-  const dishes = ['Tom Yam -rapukeitto (M+G+VS)', 'Siirappipaahdettuja bataattilohkoja ja tofua (VE+G)']
-    .map(text => node(text));
   const dayHeading = node('Tiistai 27.10.2026', 'H3');
   const ordinal = node('3', 'H3');
-  const menuBlock = node('', 'DIV', dishes);
+  const menuBlock = node('Tom Yam -rapukeitto (M+G+VS)\nSiirappipaahdettuja bataattilohkoja ja tofua (VE+G)', 'P');
+  menuBlock.childNodes = [textNode('Tom Yam -rapukeitto (M+G+VS)'), node('', 'BR'), textNode('Siirappipaahdettuja bataattilohkoja ja tofua (VE+G)')];
   const englishHeading = node('Tuesday 27.10.2026', 'H3');
   const englishOrdinal = node('3', 'H3');
-  const englishBlock = node('', 'DIV', [node('Tom Yum shrimp soup (M+G+VS)')]);
+  const englishBlock = node('Tom Yum shrimp soup (M+G+VS)', 'P');
+  englishBlock.childNodes = [textNode('Tom Yum shrimp soup (M+G+VS)')];
   dayHeading.nextElementSibling = ordinal;
   ordinal.nextElementSibling = menuBlock;
   menuBlock.nextElementSibling = englishHeading;
