@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v17';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v18';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -51,7 +51,7 @@ const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
 };
 
 const allergenNotices: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
-  fi: /^(?:\*?\s*(?:allerg(?:ia|iat|eenit|eeneja)\b|sisältää\b|saattaa sisältää\b)|.*(?:samassa öljyssä|emme takaa.*gluteenittomuutta))/i,
+  fi: /^(?:\*?\s*(?:allerg(?:ia|iat|eenit|eeneja)\b|sisältää\b|saattaa sisältää\b)|.*(?:samassa öljyssä|emme takaa.*gluteenittomuutta)|.*henkilökuntamme auttaa.*allergeen)/i,
   sv: /^(?:allerg(?:i|ener)\b|innehåller\b|kan innehålla\b)/i,
   en: /^(?:allerg(?:en|ens)\b|contains\b|may contain\b)/i,
 };
