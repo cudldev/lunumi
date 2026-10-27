@@ -2,6 +2,7 @@ import allowedHosts from './allowed-hosts.mjs';
 
 const MAX_REQUEST_BYTES = 4096;
 const MAX_RESPONSE_BYTES = 500_000;
+const MAX_MENU_IMAGE_BYTES = 3_000_000;
 const FETCH_TIMEOUT_MS = 10_000;
 const MAX_REDIRECTS = 3;
 const APP_ORIGINS = new Set([
@@ -29,6 +30,22 @@ function jsonResponse(body, status, origin) {
 
 function errorResponse(message, status, origin) {
   return jsonResponse({ error: message }, status, origin);
+}
+
+function binaryResponse(bytes, contentType, origin) {
+  const headers = new Headers({
+    'Content-Type': contentType,
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'Vary': 'Origin',
+  });
+  if (origin && APP_ORIGINS.has(origin)) {
+    headers.set('Access-Control-Allow-Origin', origin);
+    headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    headers.set('Access-Control-Max-Age', '600');
+  }
+  return new Response(bytes, { status: 200, headers });
 }
 
 async function readBounded(stream, maxBytes) {
@@ -109,7 +126,9 @@ export async function handleRequest(request, env = {}, contextOrFetcher) {
     } });
   }
   if (!origin || !APP_ORIGINS.has(origin)) return errorResponse('This app origin is not allowed.', 403, null);
-  if (new URL(request.url).pathname !== '/v1/menu') return errorResponse('Not found.', 404, origin);
+  const pathname = new URL(request.url).pathname;
+  const assetRequest = pathname === '/v1/menu-asset';
+  if (pathname !== '/v1/menu' && !assetRequest) return errorResponse('Not found.', 404, origin);
   if (request.method !== 'POST') return errorResponse('Use POST to read a menu.', 405, origin);
   if (!request.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) {
     return errorResponse('Send the menu source as JSON.', 415, origin);
@@ -142,6 +161,15 @@ export async function handleRequest(request, env = {}, contextOrFetcher) {
     const { response, url } = await fetchMenuPage(target, hosts, fetcher, controller.signal);
     if (!response.ok) return errorResponse(`The restaurant page returned an error (${response.status}).`, 502, origin);
     const contentType = response.headers.get('Content-Type') || '';
+    const imageType = contentType.split(';')[0].trim().toLowerCase();
+    if (assetRequest) {
+      if (!/^image\/(?:jpeg|png|webp|bmp|tiff|gif)$/.test(imageType)) {
+        return errorResponse('The linked menu asset is not a supported image.', 415, origin);
+      }
+      const bytes = await readBounded(response.body, MAX_MENU_IMAGE_BYTES);
+      if (!bytes.length) return errorResponse('The menu image is empty.', 422, origin);
+      return binaryResponse(bytes, imageType, origin);
+    }
     if (/application\/pdf|image\//i.test(contentType) || /\.pdf(?:$|[?#])/i.test(url.toString())) {
       return errorResponse('This menu is a PDF or image. Open the source link to view it; automatic document reading is not available yet.', 415, origin);
     }

@@ -3,11 +3,11 @@ import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { classifyMenuLine, loadMenuClassifier, type MenuClassifier } from './menu-classifier';
 
-type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; allergenInfo: string[]; sourceText: string; imageUrl?: string };
+type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v4';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v5';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -45,15 +45,33 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
 };
 
 const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
-  fi: /^(?:alkuruoat|pääruoat|jälkiruoat?|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai)$/i,
+  fi: /^(?:alkuruoat|pääruoat|jälkiruoat?|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|jälkiruoat ja juomat)$/i,
   sv: /^(?:förrätter|huvudrätter|efterrätter|drycker|burgare|sallader|soppor|tillbehör|dagens|måndag|tisdag|onsdag|torsdag|fredag)$/i,
-  en: /^(?:starters?|appetizers?|mains?|main courses|burgers?|sandwiches|salads?|soups?|sides|desserts?|drinks|lunch|dinner|specials?|monday|tuesday|wednesday|thursday|friday)$/i,
+  en: /^(?:starters?|appetizers?|mains?|main courses|burgers?|sandwiches|salads?|soups?|sides|desserts?|drinks|lunch|dinner|specials?|meals|kids'? meals|chicken|burgers? meals|monday|tuesday|wednesday|thursday|friday)$/i,
 };
 
 const allergenNotices: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
   fi: /^(?:\*?\s*(?:allerg(?:ia|iat|eenit|eeneja)\b|sisältää\b|saattaa sisältää\b)|.*(?:samassa öljyssä|emme takaa.*gluteenittomuutta))/i,
   sv: /^(?:allerg(?:i|ener)\b|innehåller\b|kan innehålla\b)/i,
   en: /^(?:allerg(?:en|ens)\b|contains\b|may contain\b)/i,
+};
+
+const standaloneDietLabels: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+  fi: /^(?:vegaaninen|vegaanista|kasvis|kasvisruoka|gluteeniton|maidoton|laktoositon|halal|keto(?:geeninen)?)$/i,
+  sv: /^(?:vegansk|vegetarisk|glutenfri|mejerifri|laktosfri|halal|keto(?:genisk)?)$/i,
+  en: /^(?:vegan|vegetarian|gluten[- ]free|dairy[- ]free|lactose[- ]free|halal|keto(?:genic)?)$/i,
+};
+
+const itemAllergenLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+  fi: /^(?:sisältää|saattaa sisältää|allergeenit?\s*[:\-])/i,
+  sv: /^(?:innehåller|kan innehålla|allergener?\s*[:\-])/i,
+  en: /^(?:contains|may contain|allergens?\s*[:\-])/i,
+};
+
+const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+  fi: /^(?:ainesosat|ainesosa)\s*[:\-]\s*(.+)$/i,
+  sv: /^(?:ingredienser|ingredienserna)\s*[:\-]\s*(.+)$/i,
+  en: /^(?:ingredients?|made with)\s*[:\-]\s*(.+)$/i,
 };
 
 function detectLanguage(value: string): MenuLanguage {
@@ -91,7 +109,7 @@ function safeMenuImage(value: string, sourceUrl?: string): string | undefined {
   } catch { return undefined; }
 }
 
-type StructuredMenuItem = { section?: string; name?: unknown; description?: unknown; image?: unknown; price?: unknown; suitableForDiet?: unknown; additionalProperty?: unknown };
+type StructuredMenuItem = { section?: string; name?: unknown; description?: unknown; image?: unknown; price?: unknown; suitableForDiet?: unknown; additionalProperty?: unknown; ingredients?: unknown };
 
 export function schemaMenuLines(document: Document, sourceUrl?: string): string[] {
   const result: string[] = [];
@@ -124,6 +142,7 @@ export function schemaMenuLines(document: Document, sourceUrl?: string): string[
       return /allergen|allerg/i.test(key) && value ? [value] : [];
     });
     const diets = dietLabels(entry.suitableForDiet);
+    const ingredients = list(entry.ingredients).map(text).filter(Boolean).slice(0, 20);
     const item = {
       section,
       name,
@@ -131,8 +150,9 @@ export function schemaMenuLines(document: Document, sourceUrl?: string): string[
       price,
       imageUrl: safeMenuImage(text(entry.image) || imageValue, sourceUrl),
       diets,
+      ingredients,
       allergenInfo: additional,
-      sourceText: [name, text(entry.description), rawPrice, list(entry.suitableForDiet).map(value => typeof value === 'string' ? value : value && typeof value === 'object' ? text((value as Record<string, unknown>).name) || text((value as Record<string, unknown>)['@id']) : '').filter(Boolean).join('; '), ...additional].filter(Boolean).join(' · ').slice(0, 500),
+      sourceText: [name, text(entry.description), rawPrice, list(entry.suitableForDiet).map(value => typeof value === 'string' ? value : value && typeof value === 'object' ? text((value as Record<string, unknown>).name) || text((value as Record<string, unknown>)['@id']) : '').filter(Boolean).join('; '), ...ingredients, ...additional].filter(Boolean).join(' · ').slice(0, 500),
     };
     const key = `${section}\n${name}`.toLocaleLowerCase();
     if (seen.has(key)) return;
@@ -215,6 +235,160 @@ function feedText(value: string, contentType: string, sourceUrl?: string): strin
   return cleanMenuText(value, sourceUrl);
 }
 
+const menuLinkClues = [
+  /\bmenu(?:s)?\b|\blunch\b|\bfood\b|\bdining\b/i,
+  /\blounas\w*\b|\bruokalista\w*\b|\bpäivän lounas\b|\btuotteet\b/i,
+  /\bmeny\b|\bdagens\b|\blunchmeny\b|\bmat\b/i,
+];
+
+export function discoverMenuLinks(value: string, sourceUrl: string): string[] {
+  if (!value.includes('<')) return [];
+  let source: URL;
+  try { source = new URL(sourceUrl); } catch { return []; }
+  if (source.protocol !== 'https:') return [];
+  const document = new DOMParser().parseFromString(value, 'text/html');
+  const candidates = new Map<string, number>();
+  for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+    const label = [anchor.textContent, anchor.getAttribute('aria-label'), anchor.getAttribute('title')].filter(Boolean).join(' ');
+    const href = anchor.getAttribute('href') || '';
+    const combined = `${label} ${href}`;
+    const matches = menuLinkClues.filter(clue => clue.test(combined)).length;
+    if (!matches) continue;
+    try {
+      const url = new URL(href, source);
+      url.hash = '';
+      if (url.protocol !== 'https:' || url.origin !== source.origin || url.username || url.password || url.href === source.href
+        || /\.(?:pdf|jpe?g|png|webp)(?:$|\?)/i.test(url.pathname)) continue;
+      const score = matches * 2 + (menuLinkClues.some(clue => clue.test(url.pathname)) ? 1 : 0) + (label.trim().length ? 1 : 0);
+      candidates.set(url.href, Math.max(candidates.get(url.href) ?? 0, score));
+    } catch { /* Ignore malformed and external links. */ }
+  }
+  return [...candidates.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([url]) => url);
+}
+
+export function discoverMenuImages(value: string, sourceUrl: string): string[] {
+  if (!value.includes('<')) return [];
+  let source: URL;
+  try { source = new URL(sourceUrl); } catch { return []; }
+  const document = new DOMParser().parseFromString(value, 'text/html');
+  const candidates = new Map<string, number>();
+  const add = (rawUrl: string, hint: string) => {
+    if (!menuLinkClues.some(clue => clue.test(hint))) return;
+    try {
+      const url = new URL(rawUrl, source);
+      url.hash = '';
+      if (url.protocol !== 'https:' || url.origin !== source.origin || url.username || url.password
+        || !/\.(?:jpe?g|png|webp|bmp|tiff|gif)(?:$|\?)/i.test(url.pathname)) return;
+      candidates.set(url.href, Math.max(candidates.get(url.href) ?? 0, hint.length));
+    } catch { /* Ignore external and malformed links. */ }
+  };
+  for (const image of document.querySelectorAll<HTMLImageElement>('img[src],img[data-src]')) {
+    const parentLabel = image.closest('a')?.textContent || '';
+    const hint = [image.getAttribute('alt'), image.getAttribute('title'), image.getAttribute('class'), image.getAttribute('src'), parentLabel].filter(Boolean).join(' ');
+    add(image.getAttribute('src') || image.getAttribute('data-src') || '', hint);
+  }
+  for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+    const href = anchor.getAttribute('href') || '';
+    const hint = [anchor.textContent, anchor.getAttribute('title'), href].filter(Boolean).join(' ');
+    add(href, hint);
+  }
+  return [...candidates.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([url]) => url);
+}
+
+function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(new Error('Menu search cancelled.'));
+  return new Promise((resolve, reject) => {
+    const onAbort = () => { signal.removeEventListener('abort', onAbort); reject(new Error('Menu search cancelled.')); };
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(value => {
+      signal.removeEventListener('abort', onAbort);
+      resolve(value);
+    }, error => {
+      signal.removeEventListener('abort', onAbort);
+      reject(error);
+    });
+  });
+}
+
+async function requestMenuAsset(assetUrl: string, signal: AbortSignal): Promise<Blob> {
+  let response: Response;
+  if (menuReaderUrl) {
+    const endpoint = new URL(menuReaderUrl, window.location.href);
+    if (!endpoint.pathname.endsWith('/v1/menu')) throw new Error('The menu reader asset endpoint is not configured.');
+    endpoint.pathname = endpoint.pathname.replace(/\/v1\/menu$/, '/v1/menu-asset');
+    response = await fetch(endpoint.href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: assetUrl }),
+      signal,
+      credentials: 'omit',
+    });
+  } else {
+    response = await fetch(assetUrl, { signal, credentials: 'omit' });
+  }
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(result.error || `The menu image could not be fetched (${response.status}).`);
+  }
+  const type = response.headers.get('Content-Type')?.split(';')[0].toLowerCase() || '';
+  if (!/^image\/(?:jpeg|png|webp|bmp|tiff|gif)$/.test(type)) throw new Error('The linked menu image format is not supported.');
+  const blob = await response.blob();
+  if (!blob.size || blob.size > 3_000_000) throw new Error('The menu image is empty or larger than 3 MB.');
+  return blob;
+}
+
+async function recognizeMenuImage(image: Blob, language: MenuLanguage, signal: AbortSignal): Promise<string> {
+  const languageCode = language === 'fi' ? 'fin' : language === 'sv' ? 'swe' : 'eng';
+  const bitmap = await createImageBitmap(image);
+  if (signal.aborted) {
+    bitmap.close();
+    throw new Error('Menu search cancelled.');
+  }
+  const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('This browser cannot prepare the menu image for local OCR.');
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  const { createWorker } = await import('tesseract.js');
+  const workerRequest = createWorker(languageCode, 1, {
+    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/worker.min.js',
+    corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0',
+    langPath: 'https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@87416418657359cb625c412a48b6e1d6d41c29bd',
+    cacheMethod: 'write',
+    gzip: false,
+  }).then(async worker => {
+    if (signal.aborted) {
+      await worker.terminate();
+      throw new Error('Menu search cancelled.');
+    }
+    return worker;
+  });
+  const worker = await abortable(workerRequest, signal);
+  let terminated = false;
+  const terminate = async () => {
+    if (terminated) return;
+    terminated = true;
+    await worker.terminate();
+  };
+  const cancelOcr = () => { void terminate(); };
+  if (signal.aborted) {
+    await terminate();
+    throw new Error('Menu search cancelled.');
+  }
+  signal.addEventListener('abort', cancelOcr, { once: true });
+  try {
+    const result = await worker.recognize(canvas, { rotateAuto: true }, { text: true });
+    return result.data.text.trim().slice(0, 100_000);
+  } finally {
+    signal.removeEventListener('abort', cancelOcr);
+    await terminate();
+  }
+}
+
 async function readMenuResponse(response: Response): Promise<string> {
   const limit = 500_000;
   if (!response.body) return (await response.text()).slice(0, limit);
@@ -244,7 +418,15 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   const activeLanguage = language === 'unknown' ? 'en' : language;
   const pricePattern = /(?:^|\s)(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\b\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)/;
   const isDietLine = (line: string) => modules.some(module => module.dietSignals.some(([pattern]) => pattern.test(line)));
-  const isSection = (line: string) => sectionHeadings[activeLanguage].test(line) || modules.some(module => module.headings.test(line));
+  const standaloneDiets = (line: string) => (language === 'unknown'
+    ? Object.entries(standaloneDietLabels)
+    : [[language, standaloneDietLabels[language]] as const])
+    .filter(([, pattern]) => pattern.test(line))
+    .flatMap(([key]) => languageModules[key as Exclude<MenuLanguage, 'unknown'>].dietSignals
+      .filter(([pattern]) => pattern.test(line)).map(([, label]) => label));
+  const isSection = (line: string) => (language === 'unknown'
+    ? Object.values(sectionHeadings).some(headings => headings.test(line))
+    : sectionHeadings[activeLanguage].test(line)) || modules.some(module => module.headings.test(line));
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
   let section = '';
   let pendingImageUrl: string | undefined;
@@ -262,6 +444,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
             description: typeof item.description === 'string' ? item.description.slice(0, 240) : '',
             price: typeof item.price === 'string' ? item.price : '',
             diets: Array.isArray(item.diets) ? item.diets.filter((diet): diet is string => typeof diet === 'string') : [],
+            ingredients: Array.isArray(item.ingredients) ? item.ingredients.filter((ingredient): ingredient is string => typeof ingredient === 'string').slice(0, 20) : [],
             allergenInfo: Array.isArray(item.allergenInfo) ? item.allergenInfo.filter((info): info is string => typeof info === 'string') : [],
             sourceText: typeof item.sourceText === 'string' ? item.sourceText.slice(0, 500) : [name, item.description, item.price].filter((part): part is string => typeof part === 'string' && Boolean(part)).join(' · '),
             imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
@@ -275,8 +458,35 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
     if (isSection(line)) { section = line; continue; }
+    const lineDiets = standaloneDiets(line);
+    if (lineDiets.length) {
+      const last = found[found.length - 1];
+      if (last && last.section === section) {
+        last.diets = [...new Set([...last.diets, ...lineDiets])];
+        last.sourceText = `${last.sourceText}\n${line}`.slice(0, 500);
+      }
+      continue;
+    }
+    const ingredientPatterns = language === 'unknown' ? Object.values(ingredientLines) : [ingredientLines[language]];
+    const ingredientMatch = ingredientPatterns.map(pattern => line.match(pattern)).find(match => match?.[1]?.trim());
+    if (ingredientMatch) {
+      const last = found[found.length - 1];
+      if (last && last.section === section) {
+        last.ingredients = [...new Set([...(last.ingredients ?? []), ingredientMatch[1].trim().slice(0, 240)])].slice(0, 20);
+        last.sourceText = `${last.sourceText}\n${line}`.slice(0, 500);
+      } else if (notes.length < 30) notes.push(line.slice(0, 220));
+      continue;
+    }
     const hasAllergenInfo = isAllergenNotice(line);
     if (hasAllergenInfo && !pricePattern.test(line)) {
+      const itemPatterns = language === 'unknown' ? Object.values(itemAllergenLines) : [itemAllergenLines[language]];
+      const isItemAllergen = itemPatterns.some(pattern => pattern.test(line));
+      const last = found[found.length - 1];
+      if (isItemAllergen && last && last.section === section && line.length <= 160) {
+        last.allergenInfo = [...new Set([...last.allergenInfo, line])].slice(0, 10);
+        last.sourceText = `${last.sourceText}\n${line}`.slice(0, 500);
+        continue;
+      }
       for (const note of splitMenuNotice(line)) {
         if (notes.length >= 30) break;
         if (!notes.includes(note)) notes.push(note);
@@ -289,7 +499,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const name = (parts[0] || line).replace(/\s+(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?.*$/, '').trim();
     if (name.length < 3 || name.length > 90) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
-    if (language === 'en' && classifier) {
+    if (language !== 'unknown' && classifier) {
       const prediction = classifyMenuLine(name, classifier);
       if (prediction?.label === 'other' && prediction.confidence >= 0.9) {
         const last = found[found.length - 1];
@@ -328,6 +538,7 @@ function validCachedMenu(value: unknown): value is CachedMenu {
       && typeof item.description === 'string' && item.description.length <= 240
       && typeof item.price === 'string' && item.price.length <= 30
       && typeof item.sourceText === 'string' && item.sourceText.length <= 500
+      && (item.ingredients === undefined || (Array.isArray(item.ingredients) && item.ingredients.length <= 20 && item.ingredients.every(ingredient => typeof ingredient === 'string' && ingredient.length <= 240)))
       && (item.imageUrl === undefined || (typeof item.imageUrl === 'string' && item.imageUrl.length <= 2048 && /^https:\/\//i.test(item.imageUrl)))
       && Array.isArray(item.allergenInfo) && item.allergenInfo.length <= 10 && item.allergenInfo.every(note => typeof note === 'string' && note.length <= 220)
       && Array.isArray(item.diets) && item.diets.every(diet => typeof diet === 'string' && diet.length <= 40));
@@ -448,6 +659,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [language, setLanguage] = useState<MenuLanguage>('unknown');
   const [modelUsed, setModelUsed] = useState(false);
+  const [ocrUsed, setOcrUsed] = useState(false);
   const [verifiedSourceUrl, setVerifiedSourceUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -460,6 +672,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     setCachedAt(null);
     setLanguage('unknown');
     setModelUsed(false);
+    setOcrUsed(false);
     setVerifiedSourceUrl(null);
     if (!sourceUrl) {
       setBusy(false);
@@ -483,20 +696,82 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     async function loadMenu() {
       try {
         timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15_000);
-        const source = await loadMenuSource(menuUrl, controller.signal);
-        const readable = feedText(source.text, source.contentType, source.resolvedSourceUrl);
-        const detectedLanguage = detectLanguage(readable);
-        let classifier: MenuClassifier | null = null;
-        if (detectedLanguage === 'en') {
-          try { classifier = await loadMenuClassifier(); } catch { /* keep rule-based extraction if model weights fail to load */ }
+        const interpret = async (candidate: CachedMenuSource) => {
+          const readable = feedText(candidate.text, candidate.contentType, candidate.resolvedSourceUrl);
+          const detectedLanguage = detectLanguage(readable);
+          let classifier: MenuClassifier | null = null;
+          if (detectedLanguage !== 'unknown') {
+            try { classifier = await loadMenuClassifier(detectedLanguage); } catch { /* keep rule-based extraction if language weights are not available */ }
+          }
+          return { detectedLanguage, classifier, extracted: parseMenu(readable, detectedLanguage, classifier) };
+        };
+        let source: CachedMenuSource & { refreshError?: string };
+        let interpreted: Awaited<ReturnType<typeof interpret>>;
+        let didUseOcr = false;
+        try {
+          source = await loadMenuSource(menuUrl, controller.signal);
+          interpreted = await interpret(source);
+        } catch (cause) {
+          if (controller.signal.aborted) throw cause;
+          if (!/\.(?:jpe?g|png|webp|bmp|tiff|gif)(?:$|[?#])/i.test(menuUrl)) throw cause;
+          const image = await requestMenuAsset(menuUrl, controller.signal);
+          const languageHint = detectLanguage(menuUrl);
+          const text = await recognizeMenuImage(image, languageHint, controller.signal);
+          source = { sourceUrl: menuUrl, resolvedSourceUrl: menuUrl, contentType: 'text/plain', text, fetchedAt: Date.now() };
+          interpreted = await interpret(source);
+          didUseOcr = interpreted.extracted.items.length > 0;
         }
-        const extracted = parseMenu(readable, detectedLanguage, classifier);
-        if (!extracted.items.length) throw new Error('No readable menu items were found on the restaurant page.');
+        if (!interpreted.extracted.items.length) {
+          for (const candidateUrl of discoverMenuLinks(source.text, source.resolvedSourceUrl)) {
+            if (controller.signal.aborted) break;
+            try {
+              const candidate = await loadMenuSource(candidateUrl, controller.signal);
+              const candidateResult = await interpret(candidate);
+              if (candidateResult.extracted.items.length) {
+                source = candidate;
+                interpreted = candidateResult;
+                break;
+              }
+            } catch { if (controller.signal.aborted) throw new Error('Menu search cancelled.'); }
+          }
+        }
+        let ocrFailure = '';
+        if (!interpreted.extracted.items.length) {
+          const sourceLanguage = interpreted.detectedLanguage;
+          for (const imageUrl of discoverMenuImages(source.text, source.resolvedSourceUrl)) {
+            if (controller.signal.aborted) break;
+            try {
+              const image = await requestMenuAsset(imageUrl, controller.signal);
+              const text = await recognizeMenuImage(image, sourceLanguage, controller.signal);
+              if (!text) continue;
+              const imageSource: CachedMenuSource = {
+                sourceUrl: imageUrl,
+                resolvedSourceUrl: imageUrl,
+                contentType: 'text/plain',
+                text,
+                fetchedAt: Date.now(),
+              };
+              const imageResult = await interpret(imageSource);
+              if (imageResult.extracted.items.length) {
+                source = imageSource;
+                interpreted = imageResult;
+                didUseOcr = true;
+                break;
+              }
+            } catch (cause) {
+              if (controller.signal.aborted) throw new Error('Menu search cancelled.');
+              ocrFailure = cause instanceof Error ? cause.message : 'Local OCR could not read this menu image.';
+            }
+          }
+        }
+        const { detectedLanguage, classifier, extracted } = interpreted;
+        if (!extracted.items.length) throw new Error(ocrFailure || 'No readable menu items were found on the restaurant page.');
         if (!controller.signal.aborted) {
           setItems(extracted.items);
           setNotes(extracted.notes);
           setLanguage(detectedLanguage);
           setModelUsed(Boolean(classifier));
+          setOcrUsed(didUseOcr);
           setVerifiedSourceUrl(source.resolvedSourceUrl);
           setCachedAt(source.refreshError
             ? new Date(source.fetchedAt).toISOString()
@@ -531,7 +806,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       {notes.length > 0 && <aside className="menu-assistant-menu-notes"><strong>Menu information</strong>{notes.map((note, index) => <p key={`${note}-${index}`}>{note}</p>)}</aside>}
       <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}>
         {item.imageUrl && <img className="menu-assistant-item-image" src={item.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />}
-        <div>{item.section && <span className="menu-assistant-section">{item.section}</span>}<strong>{item.name}</strong>{item.description && <span>{item.description}</span>}{item.price && <span>{item.price}</span>}
+        <div>{item.section && <span className="menu-assistant-section">{item.section}</span>}<strong>{item.name}</strong>{item.description && <span>{item.description}</span>}{item.ingredients?.length ? <span>Ingredients: {item.ingredients.join(', ')}</span> : null}{item.price && <span>{item.price}</span>}
           {item.allergenInfo.map((note, noteIndex) => <span className="menu-assistant-allergen" key={`${note}-${noteIndex}`}>{note}</span>)}
           <details className="menu-assistant-evidence"><summary>Source text</summary><span>{item.sourceText}</span></details>
         </div>
@@ -540,8 +815,10 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       {cachedAt && <p className="menu-assistant-note">Saved on this device · Updated {new Date(cachedAt).toLocaleString()}</p>}
       {error && <p className="menu-assistant-note" role="status">{error}</p>}
       <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
+      {ocrUsed && <p className="menu-assistant-note">Text was recognized from the linked menu image on this device; OCR can make mistakes. Check the source image.</p>}
       {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
-      {modelUsed && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>.</p>}
+      {modelUsed && language === 'en' && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>.</p>}
+      {modelUsed && language !== 'en' && language !== 'unknown' && <p className="menu-assistant-note">{languageModules[language].name} line filter uses a small local model trained from approved menu examples.</p>}
     </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
     {(verifiedSourceUrl || sourceUrl) && <a className="menu-assistant-source" href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
   </section>;
