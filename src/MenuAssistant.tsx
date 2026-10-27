@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v12';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v13';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -45,7 +45,7 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
 };
 
 const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
-  fi: /^(?:alkuruoat|pääruoat?|pääruoaksi|pääruoan kaveriksi|jälkiruoat?|jälkiruoaksi|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|jälkiruoat ja juomat)$/i,
+  fi: /^(?:alkuruoat|pääruoat?|pääruoaksi|pääruoan kaveriksi|jälkiruoat?|jälkiruoaksi|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|lastenruoat|jälkiruoat ja juomat)$/i,
   sv: /^(?:förrätter|huvudrätter|efterrätter|drycker|burgare|sallader|soppor|tillbehör|dagens|måndag|tisdag|onsdag|torsdag|fredag)$/i,
   en: /^(?:starters?|appetizers?|mains?|main courses|burgers?|sandwiches|salads?|soups?|sides|desserts?|drinks|lunch|dinner|specials?|meals|kids'? meals|chicken|burgers? meals|monday|tuesday|wednesday|thursday|friday)$/i,
 };
@@ -514,7 +514,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const image = line.match(/^menu-image:\s*(https:\/\/\S+)$/i);
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
-    if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue;
+    if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue; if (isSection(line)) { section = line; continue; }
     if (nonMenuDetailLine.test(line) || nonMenuStatusLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
       if (/^lounasbuffet\b/i.test(line)) pendingMenuPriceLabel = line;
       continue;
