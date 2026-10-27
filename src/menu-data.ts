@@ -133,6 +133,14 @@ export function discoverMenuLinks(html: string, pageUrl: string): string[] {
     .slice(0, 4);
 }
 
+function explicitDietClaims(text: string, modules: LanguageModule[]): string[] {
+  return modules.flatMap(module => module.dietSignals.filter(([pattern]) => {
+    const match = pattern.exec(text);
+    if (!match) return false;
+    return !/\b(?:not|non|isn.t|aren.t|ei|inte|ej)(?:\s+[a-zåäö]+){0,3}[\s-]*$/i.test(text.slice(0, match.index));
+  }).map(([, label]) => label));
+}
+
 export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
   const lines = cleanMenuText(value).split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const found: MenuItem[] = [];
@@ -144,7 +152,7 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
   const isAllergenLine = (line: string) => (language === 'unknown' ? Object.values(allergenClues) : [allergenClues[language]]).some(pattern => pattern.test(line));
   const pricePattern = /(?:^|\s)(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\b\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)/;
   const priceOnlyPattern = /^(?:(?:[A-Z]{1,4}\.\s*|[A-Z]{1,2}\s+){1,4})?(?:(?:€|\$|£)\s*)?\d+(?:[.,]\d{1,2})?\s*(?:€|\$|£)?$/i;
-  const isSection = (line: string) => /^(?:coffee|matcha|mochi ice cream)$/i.test(line) || sectionHeadings[activeLanguage].test(line)
+  const isSection = (line: string) => /^(?:coffee|matcha(?: drinks)?|mochi ice cream|mochi donut|sando|coffee & others|others)$/i.test(line) || sectionHeadings[activeLanguage].test(line)
     || modules.some(module => module.headings.test(line))
     || sectionLabels[activeLanguage].some(label => label.toLocaleLowerCase() === line.toLocaleLowerCase());
   const codeDefinitionPattern = /\b([A-Z]{1,4})\s*[:=]\s*(gluteeniton|gluten[- ]free|glutenfri|laktoositon|lactose[- ]free|laktosfri|maidoton|dairy[- ]free|mejerifri|vegaan\w*|vegan|vegansk|vegetarian|kasvis(?:ruoka)?)\b/gi;
@@ -159,7 +167,7 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
   }
   for (const sourceLine of lines) {
     let line = sourceLine;
-    if (/^(?:home|about(?: us)?|contact(?: us)?|privacy(?: policy)?|cookies?|accept all|reject all|book(?: a table)?|reservations?|sign in|subscribe|follow us|copyright.*|all rights reserved.*)$/i.test(line)) continue;
+    if (/^(?:skip to content|our menus|gift cards?|home|about(?: us)?|contact(?: us)?|privacy(?: policy)?|cookies?|accept all|reject all|book(?: a table)?|reservations?|sign in|subscribe|follow us|copyright.*|all rights reserved.*)$/i.test(line)) continue;
     if (line.length < 3 || line.length > 220 || /^https?:\/\//i.test(line)) continue;
     if (isSection(line)) { section = line; continue; }
     const prefixedSection = sectionLabels[activeLanguage]
@@ -212,10 +220,18 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
     const name = (parts[0] || itemLine).trim();
     if (name.length < 3 || name.length > 90) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
+    const previous = found[found.length - 1];
+    if (previous && !previous.price && previous.section === section && linePrice && line.length > 50 && /\bwith\b/i.test(line)) {
+      previous.price = linePrice;
+      previous.description = line.replace(linePrice, '').replace(/[-–—]\s*$/, '').trim();
+      previous.sourceText += '\n' + sourceLine;
+      previous.diets = [...new Set([...previous.diets, ...explicitDietClaims(line, modules)])];
+      continue;
+    }
     const key = name.toLocaleLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    const diets = [...new Set([...modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)), ...codeDiets])];
+    const diets = [...new Set([...explicitDietClaims(line, modules), ...codeDiets])];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
     found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: sourceLine });

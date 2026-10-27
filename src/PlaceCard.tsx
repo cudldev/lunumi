@@ -5,7 +5,6 @@ import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
 import RestaurantPhoto from './RestaurantPhoto';
 import MenuAssistant from './MenuAssistant';
-import type { MenuModelPreferences } from './menu-llm';
 
 const visitJumpSrc = new URL('mascot/lunumi-jump.webp', document.baseURI).href;
 const visitJumpPreload = new Image();
@@ -87,7 +86,7 @@ function syncLivePosition(map: import('maplibre-gl').Map, Marker: typeof import(
 }
 
 type VisitOrigin = 'target' | 'explored' | 'nearby' | 'visited';
-type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; assistantPreferences?: MenuModelPreferences; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; onTransitionStart?: () => void; onTransitionCancel?: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
+type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; onTransitionStart?: () => void; onTransitionCancel?: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
 
 export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onStatus, onSentiment, onRecommendation, onReturn, onTransitionStart, onTransitionCancel, initiallyOpen = false, onDismiss }: Props) {
   const [details, setDetails] = useState(initiallyOpen);

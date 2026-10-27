@@ -70,3 +70,16 @@ describe('parseMenu', () => {
     expect(result.items[1].diets).toEqual(expect.arrayContaining(['Marked vegan', 'Marked gluten-free']));
   });
 });
+
+it('omits menu navigation and attaches a long priced description to its dish', () => {
+  const parsed = parseMenu('Skip to content\nOur Menus\nMochi Donut\nMatcha Drinks\nSando\nCoffee & Others\nMatcha\nMatcha Latte\n5.9€\nSpecial\nStrawberry bun\nMochi donut with white chocolate cream and fresh strawberry filling - 6.2€\nGift Card', 'en');
+  expect(parsed.items.map(item => item.name)).toEqual(['Matcha Latte', 'Strawberry bun']);
+  expect(parsed.items[1]).toMatchObject({ price: '6.2€' });
+  expect(parsed.items[1].description).toContain('strawberry filling');
+});
+
+it('does not turn negated source labels into dietary claims', () => {
+  expect(parseMenu('Mains\nNot vegan curry 12€', 'en').items[0].diets).toEqual([]);
+  expect(parseMenu('PÄÄRUOAT\nEi gluteeniton keitto 12€', 'fi').items[0].diets).toEqual([]);
+  expect(parseMenu('Mains\nVegan curry, not gluten-free 12€', 'en').items[0].diets).toEqual(['Marked vegan']);
+});

@@ -1,53 +1,59 @@
 import { env, pipeline, TextStreamer, type TextGenerationPipeline } from '@huggingface/transformers';
 import type { PromptMessage } from './ai-context';
-
+import type { ModelStage } from './model-state';
 import { MODEL_ID, MODEL_REVISION } from './conversation-config';
-export type AIEvent = { type: 'fallback'; text: string } | { type: 'status'; text: string } | { type: 'token'; text: string } | { type: 'done'; text: string } | { type: 'error'; text: string };
-const scope = self as unknown as { postMessage: (event: AIEvent) => void; onmessage: ((event: MessageEvent<{ messages: PromptMessage[]; mode: 'chat' | 'plan'; device?: 'auto' | 'wasm' }>) => void) | null };
-let generator: TextGenerationPipeline | null = null;
-let running = false;
+export type AIEvent = { type: 'fallback'; text: string } | { type: 'status'; text: string; stage?: ModelStage; progress?: number } | { type: 'token'; text: string } | { type: 'done'; text: string } | { type: 'error'; text: string };
+type Request = { messages: PromptMessage[]; mode: 'chat' | 'plan' | 'prepare'; device?: 'auto' | 'wasm' };
+const scope = self as unknown as { postMessage: (event: AIEvent) => void; onmessage: ((event: MessageEvent<Request>) => void) | null };
+let generator: TextGenerationPipeline | null = null, running = false, usingGPU = false;
 
 async function loadModel(cpuOnly = false): Promise<TextGenerationPipeline> {
   if (generator) return generator;
-  env.allowLocalModels = false;
-  env.useBrowserCache = true;
-  // Single-thread WASM also works without cross-origin isolation. Keep runtime files same-origin.
-  const wasm = env.backends.onnx.wasm!;
-  wasm.numThreads = 1;
+  env.allowLocalModels = false; env.useBrowserCache = true;
+  const wasm = env.backends.onnx.wasm!; wasm.numThreads = 1;
   const base = new URL(import.meta.env.BASE_URL + 'onnxruntime/transformers-4.3.2/', self.location.origin).href;
   wasm.wasmPaths = { mjs: base + 'ort-wasm-simd-threaded.asyncify.mjs', wasm: base + 'ort-wasm-simd-threaded.asyncify.wasm' };
+  scope.postMessage({ type: 'status', text: 'Checking cached AI files…', stage: 'files' });
+  let lastFile = '', lastPercent = -1;
   const progress_callback = (event: { status: string; file?: string; progress?: number }) => {
-    const percent = typeof event.progress === 'number' ? ' ' + Math.round(event.progress) + '%' : '';
-    scope.postMessage({ type: 'status', text: 'Loading private AI' + (event.file ? ' · ' + event.file.split('/').pop() : '') + percent });
+    const modelFile = /\.onnx$/.test(event.file || '');
+    if (event.status === 'progress' && modelFile && typeof event.progress === 'number') {
+      const percent = Math.max(0, Math.min(100, Math.floor(event.progress)));
+      if (lastFile === event.file && lastPercent === percent) return;
+      lastFile = event.file || ''; lastPercent = percent;
+      scope.postMessage({ type: 'status', text: 'Downloading the private AI model…', stage: 'download', progress: percent });
+    } else if (event.status === 'done' && modelFile) scope.postMessage({ type: 'status', text: 'AI files available. Loading the model into memory…', stage: 'load' });
   };
-  // Prefer WebGPU when available; retry the same q4 weights on WASM if GPU initialization fails.
   const gpu = (navigator as unknown as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
-  let hasGPU = false;
-  try { hasGPU = !cpuOnly && Boolean(await gpu?.requestAdapter()); } catch { /* use WASM */ }
-  try {
-    generator = await pipeline('text-generation', MODEL_ID, { revision: MODEL_REVISION, dtype: 'q4', device: hasGPU ? 'webgpu' : 'wasm', progress_callback });
-  } catch (error) {
-    if (!hasGPU) throw error;
-    throw Object.assign(new Error('GPU could not load the model. Retrying on the CPU.'), { retryOnCPU: true });
-  }
+  try { usingGPU = !cpuOnly && Boolean(await gpu?.requestAdapter()); } catch { usingGPU = false; }
+  generator = await pipeline('text-generation', MODEL_ID, { revision: MODEL_REVISION, dtype: 'q4', device: usingGPU ? 'webgpu' : 'wasm', progress_callback });
   return generator;
 }
 
 scope.onmessage = async event => {
   if (running) { scope.postMessage({ type: 'error', text: 'AI is already answering.' }); return; }
   running = true;
+  let producedText = false;
   try {
     const model = await loadModel(event.data.device === 'wasm');
+    if (event.data.mode === 'prepare') {
+      scope.postMessage({ type: 'status', text: 'Running the model readiness check…', stage: 'checking' });
+      // A completed download is not sufficient: compile/run actual inference before app entry.
+      await model([{ role: 'user', content: 'Hello' }], { max_new_tokens: 1, do_sample: false });
+      scope.postMessage({ type: 'done', text: 'ready' }); return;
+    }
     scope.postMessage({ type: 'status', text: 'Lunumi is thinking on this device…' });
     let text = '';
-    const streamer = new TextStreamer(model.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: (chunk: string) => { text += chunk; if (event.data.mode === 'chat') scope.postMessage({ type: 'token', text: chunk }); } });
-    // Pass chat messages directly to the pipeline; it owns tokenization and the model chat template.
-    await model(event.data.messages, { max_new_tokens: event.data.mode === 'plan' ? 120 : 160, do_sample: false, temperature: 0.55, top_p: 0.9, repetition_penalty: 1.12, no_repeat_ngram_size: 3, streamer });
+    const streamer = new TextStreamer(model.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: (chunk: string) => {
+      text += chunk; producedText ||= Boolean(chunk);
+      if (event.data.mode === 'chat') scope.postMessage({ type: 'token', text: chunk });
+    } });
+    await model(event.data.messages, { max_new_tokens: event.data.mode === 'plan' ? 120 : 160, do_sample: false, repetition_penalty: 1.12, no_repeat_ngram_size: 3, streamer });
     if (!text.trim()) throw new Error('The model returned an empty reply. Please retry.');
     scope.postMessage({ type: 'done', text: text.trim() });
   } catch (error) {
     generator = null;
-    if (error && typeof error === 'object' && 'retryOnCPU' in error) scope.postMessage({ type: 'fallback', text: 'GPU unavailable. Retrying on the CPU…' });
+    if (usingGPU && event.data.device !== 'wasm' && !producedText) scope.postMessage({ type: 'fallback', text: 'Graphics initialization failed. Preparing the AI on the CPU…' });
     else scope.postMessage({ type: 'error', text: error instanceof Error ? error.message : 'The private AI could not run on this device.' });
   } finally { running = false; }
 };

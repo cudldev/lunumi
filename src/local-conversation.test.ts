@@ -52,3 +52,30 @@ it('retries a failed GPU initializer in a fresh CPU worker using cached weights'
   expect(events).toHaveBeenCalledWith({ type: 'status', text: 'Retrying on CPU' });
   client.stop();
 });
+
+it('keeps the app locked at 100% until inference completes, and retains the ready worker', async () => {
+  const worker = fakeWorker(), client = new LocalConversation(() => worker), release = client.retain();
+  const pending = client.prepare(new AbortController().signal);
+  expect(worker.postMessage).toHaveBeenCalledWith({ messages: [], mode: 'prepare', device: 'auto' });
+  worker.onmessage!(new MessageEvent('message', { data: { type: 'status', text: 'Downloaded', stage: 'download', progress: 100 } }));
+  expect(client.snapshot.phase).toBe('loading');
+  worker.onmessage!(new MessageEvent('message', { data: { type: 'status', text: 'Checking inference', stage: 'checking' } }));
+  expect(client.snapshot.phase).toBe('loading');
+  worker.onmessage!(new MessageEvent('message', { data: { type: 'done', text: 'ready' } }));
+  await pending;
+  expect(client.snapshot.phase).toBe('ready');
+  client.releaseIdle(); expect(worker.terminate).not.toHaveBeenCalled();
+  await client.prepare(new AbortController().signal);
+  expect(worker.postMessage).toHaveBeenCalledTimes(1);
+  release(); expect(worker.terminate).toHaveBeenCalledOnce(); expect(client.snapshot.phase).toBe('idle');
+});
+
+it('exposes worker startup errors and lets preparation retry', async () => {
+  const worker = fakeWorker(), create = vi.fn().mockImplementationOnce(() => { throw new Error('Worker blocked'); }).mockReturnValue(worker);
+  const client = new LocalConversation(create);
+  await expect(client.prepare(new AbortController().signal)).rejects.toThrow('Worker blocked');
+  expect(client.snapshot).toMatchObject({ phase: 'error', error: 'Worker blocked' });
+  const retry = client.prepare(new AbortController().signal);
+  worker.onmessage!(new MessageEvent('message', { data: { type: 'done', text: 'ready' } }));
+  await retry; expect(client.snapshot.phase).toBe('ready'); client.stop();
+});

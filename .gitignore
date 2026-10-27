@@ -12,3 +12,5 @@ restaurant-data-repo/
 menu-reader-worker/allowed-hosts.mjs
 data/menu-training-sources.local.json
 data/private-menu-training/
+
+.ai-smoke-cache/
