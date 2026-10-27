@@ -43,13 +43,14 @@ scope.onmessage = async event => {
       await model([{ role: 'user', content: 'Hello' }], { max_new_tokens: 1, do_sample: false });
       scope.postMessage({ type: 'done', text: 'ready' }); return;
     }
-    scope.postMessage({ type: 'status', text: 'Lunumi is thinking on this device…' });
-    let text = '';
+    scope.postMessage({ type: 'status', text: event.data.mode === 'plan' ? 'Choosing a restaurant action on this device…' : 'Lunumi is thinking on this device…' });
+    let text = '', planningChunks = 0;
     const streamer = new TextStreamer(model.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: (chunk: string) => {
       text += chunk; producedText ||= Boolean(chunk);
       if (event.data.mode === 'chat') scope.postMessage({ type: 'token', text: chunk });
+      else if (++planningChunks % 8 === 1) scope.postMessage({ type: 'status', text: 'Choosing a restaurant action on this device…' });
     } });
-    await model(event.data.messages, { max_new_tokens: event.data.mode === 'plan' ? 120 : 160, do_sample: false, repetition_penalty: 1.12, no_repeat_ngram_size: 3, streamer });
+    await model(event.data.messages, { max_new_tokens: event.data.mode === 'plan' ? event.data.modelSize === 'compact' ? 96 : 120 : 160, do_sample: false, repetition_penalty: 1.12, no_repeat_ngram_size: 3, streamer });
     if (!text.trim()) throw new Error('The model returned an empty reply. Please retry.');
     scope.postMessage({ type: 'done', text: text.trim() });
   } catch (error) {

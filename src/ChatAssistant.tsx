@@ -1,5 +1,5 @@
 import { ModelAccess } from './use-model-readiness';
-import { currentModelConfig } from './conversation-config';
+import { currentModelConfig, currentModelSize } from './conversation-config';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
 import { filterNearby, webDirectionsUrl, type Place } from './core';
@@ -96,7 +96,7 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
       const names = places.filter(place => text.toLowerCase().includes(place.name.toLowerCase()));
       const catalog = [...new Map([...(selected ? [selected] : []), ...names, ...places].map(place => [place.id, place])).values()];
       const records = catalog.map(place => ({ id: place.id, name: place.name, cuisine: place.tags.cuisine, distanceMetres: Math.round(place.distance), visited: hasVisited(history, place.id), feedback: preferences.learn ? history.find(entry => entry.id === place.id)?.sentiment : undefined }));
-      const toolResults = await runAgent({ turns, records, selectedId: selected?.id, previousResults: agentMemory.current, signal: controller.signal,
+      const toolResults = await runAgent({ turns, records, selectedId: selected?.id, previousResults: agentMemory.current, signal: controller.signal, compact: currentModelSize() === 'compact',
         plan: prompt => ai.current!.answer(prompt, controller.signal, event => { if (event.type === 'status') setActivity(event.text); }, 'plan'),
         execute: async action => {
           setActivity('Using ' + action.tool.replace(/_/g, ' ') + '…');
