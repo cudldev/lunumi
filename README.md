@@ -80,4 +80,4 @@ All personalization and history storage run on the device. Viewing the history m
 
 ## Standalone chatbot test
 
-Open `chat-test/` under either the live or staging site to try private AI conversation without onboarding or restaurant tools. The first AI message downloads about 1.4 GB of model weights. Chats stay on-device; model downloads contact Hugging Face/CDN hosts. See the [test guide](docs/chatbot-test.md).
+Open `chat-test/` under either the live or staging site to try private AI conversation without onboarding or restaurant tools. Desktop preparation downloads about 1.4 GB; mobile offers an explicit compact model download of about 390 MB. Interrupted sessions pause automatic loading to avoid reload loops. Chats stay on-device; model downloads contact Hugging Face/CDN hosts. See the [test guide](docs/chatbot-test.md).

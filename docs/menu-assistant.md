@@ -36,3 +36,7 @@ Set the GitHub Actions repository variable `MENU_READER_WORKER_URL_STAGING` to t
 ## Separate conversation test
 
 The optional `chat-test/` page tests on-device AI conversation without menu tools or source fetching. See [chatbot-test.md](chatbot-test.md); it does not change this menu assistant’s source or label handling.
+
+## Standalone chatbot mobile loading
+
+The separate `chat-test/` page uses a compact 360M model (~390 MB) on phones/Samsung Internet, touch iPads, and devices reporting at most 4 GB RAM. Loading requires an explicit action on those devices. Interrupted AI work pauses automatic retries; desktop normally prepares a 1.7B model (~1.4 GB). Readiness requires actual inference. Chats stay local; downloads contact Hugging Face/CDN hosts. Phone memory limits can still prevent inference, and compact-model answers are less reliable. This does not change the main app's menu tools. See [chatbot-test.md](chatbot-test.md).
