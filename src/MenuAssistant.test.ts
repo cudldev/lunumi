@@ -274,6 +274,17 @@ it('drops Finnish restaurant page status and upload-form text instead of showing
   expect(parsed.items[0].section).toBe('Päivän lounas');
 });
 
+it('keeps a general Finnish allergen-help notice as a menu note, not a dish', () => {
+  const parsed = parseMenu([
+    'Päivän lounas',
+    'Kermainen lohikeitto',
+    'Henkilökuntamme auttaa mielellään allergeeneihin ja raaka-aineisiin liittyvissä kysymyksissä.',
+  ].join('\n'), 'fi', null);
+
+  expect(parsed.items.map(item => item.name)).toEqual(['Kermainen lohikeitto']);
+  expect(parsed.notes).toContain('Henkilökuntamme auttaa mielellään allergeeneihin ja raaka-aineisiin liittyvissä kysymyksissä.');
+});
+
 it('treats Finnish children-menu category labels as sections, not dishes', () => {
   const parsed = parseMenu('PÄÄRUOAT Lastenruoat', 'fi', null);
 
