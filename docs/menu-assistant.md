@@ -33,3 +33,5 @@ The Worker workflow uses repository variables `CLOUDFLARE_ACCOUNT_ID` and `MENU_
 - Classifier: `src/menu-classifier.ts`; weights: `public/models/menu-line-classifier.json`.
 - Worker and allowlist: `menu-reader-worker/` and `scripts/build-menu-reader-hosts.mjs`.
 - Deployment workflows: `.github/workflows/deploy.yml` and `.github/workflows/deploy-menu-reader.yml`.
+## Restaurant directory data
+The GitHub Pages workflow builds the live directory from the `main` branch of `cudldev/finland-restaurant-data` and the Staging directory from that repository's `staging` branch. Staging-only source changes stay out of the live directory until they are separately promoted to `main`. The directory stores source URLs and provenance; it does not copy restaurant menu content. Both repository branches are public and use the existing free GitHub Pages workflow.
