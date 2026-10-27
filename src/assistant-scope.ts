@@ -1,6 +1,7 @@
 const topicPattern = /(?<![\p{L}\p{N}])(restaurant|restaurants|menu|menus|lunch|dinner|breakfast|brunch|food|dish|dishes|meal|meals|eat|eating|cuisine|ingredient|ingredients|allergen|allergens|allergy|allergies|dietary|vegan|vegetarian|gluten|lactose|reservation|reservations|book a table|nearby|near me|recommend|where can i|where to eat|find a place|around here|ravintola|ravintolat|ruoka|ruokalista|ruokalistat|lounas|päivällinen|illallinen|aamiainen|annos|annokset|ainesosa|ainesosat|allergeeni|allergeenit|ruokavalio|vegaani|kasvis|gluteen|varaus|varata pöytä|lähellä|suosittele|missä|restaurang|restauranger|meny|lunch|middag|frukost|mat|rätt|rätter|ingredienser|allergen|allergi|vegansk|vegetarisk|gluten|boka bord|i närheten|hitta restaurang|rekommendera|réservation|restaurant|menu|déjeuner|dîner|petit-déjeuner|plat|plats|ingrédient|allergène|allergie|végétalien|végétarien|sans gluten|proche|où manger|recommander)(?![\p{L}\p{N}])/iu;
 const overridePattern = /\b(ignore|disregard|forget|override|reveal|show|print|repeat|bypass|disable|replace)\b.{0,70}\b(instructions?|system prompt|rules?|persona|previous messages?|hidden prompt|safety)\b|\b(ohita|unohda|paljasta|näytä|toista|korvaa|ignorera|glöm|avslöja|visa|upprepa|ersätt|oublie|révèle|montre|répète|remplace)\b.{0,70}\b(ohjeet|ohjeita|järjestelmäkehote|säännöt|persoona|instruktioner|systemprompt|regler|instructions?|consignes?|prompt système|règles?|persona)\b|\b(act as|pretend to be|you are now|switch to|become|jailbreak|do anything now|general assistant|chatgpt|openai|ole nyt|toimi kuin|esitä että|du är nu|låt som|agis comme|fais semblant|sois maintenant)\b/i;
 const unrelatedTaskPattern = /\b(write code|programming|debug (?:my |this )?code|homework|essay|poem|fiction|story|stock price|politics|solve (?:this )?equation|medical diagnosis|generate an image|kirjoita koodia|ohjelmoi|skriv kod|programmera|écris du code|programmer)\b/i;
+const greetingPattern = /^(?:(?:hi+|hey+|hello+|hiya+|howdy|hei+|moi+|moikka+|terve|hej+|tjena|bonjour|salut|bonsoir)(?:\s+(?:there|lunumi))?|good (?:morning|afternoon|evening)|hyvää huomenta|hyvää iltaa|god morgon|god kväll|how are you(?: doing)?|mitä kuuluu|hur mår du|ça va)[!.?,\s]*$/iu;
 
 const refusals = {
   en: "I'm Lunumi, your restaurant and menu assistant. I can help compare nearby restaurants, read their menus, and find source-backed food details.",
@@ -16,8 +17,13 @@ function refusalLanguage(text: string): keyof typeof refusals {
   return 'en';
 }
 
+export function isLunumiGreeting(text: string): boolean {
+  return greetingPattern.test(text.trim());
+}
+
 export function isLunumiRequest(text: string, restaurantNames: string[], recentUserText = ''): boolean {
   if (overridePattern.test(text) || unrelatedTaskPattern.test(text)) return false;
+  if (isLunumiGreeting(text)) return true;
   if (topicPattern.test(text)) return true;
   const folded = text.toLocaleLowerCase();
   if (restaurantNames.some(name => name.trim().length > 2 && folded.includes(name.toLocaleLowerCase()))) return true;
