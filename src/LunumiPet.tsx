@@ -3,6 +3,7 @@ import { LoaderCircle, Send, X } from 'lucide-react';
 import type { Place } from './core';
 import { chatWithLocalAssistant, prepareLocalMenuModel, type MenuAssistantTurn, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
 import { isLunumiRequest, lunumiScopeReply } from './assistant-scope';
+import { sourcesForAnswer } from './assistant-sources';
 
 type Props = { places: Place[]; preferences: MenuModelPreferences };
 type ChatMessage = MenuAssistantTurn & { id: number; sources?: Array<{ name: string; url: string }> };
@@ -112,7 +113,7 @@ export default function LunumiPet({ places, preferences }: Props) {
     const context = chatContext(places);
     try {
       const answer = await chatWithLocalAssistant({ turns: nextMessages, context: context.text, preferences });
-      const answerSources = context.sources.filter(source => answer.toLocaleLowerCase().includes(source.name.toLocaleLowerCase())).slice(0, 5);
+      const answerSources = sourcesForAnswer(answer, context.sources);
       setMessages([...nextMessages, { id: ++nextMessageId.current, role: 'assistant', content: answer.trim(), sources: answerSources }]);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Lunumi could not answer right now.');
