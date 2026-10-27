@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasVisited, recommendPlaces } from './recommendations';
+import { hasVisited, normalizeFoodQuery, recommendPlaces } from './recommendations';
 import type { Place } from './core';
 const place = (id: string, cuisine: string, distance: number): Place => ({ id, name: id, tags: { cuisine }, lat: 60, lon: 24, distance });
 const places = [place('visited', 'italian', 50), place('new-italian', 'italian', 300), place('new-thai', 'thai', 100)];
@@ -20,4 +20,9 @@ describe('history-based recommendations', () => {
     expect(recommendPlaces(places, history, { likes: [], dislikes: [], learn: true }, 'sushi')).toEqual([]);
     expect(recommendPlaces([places[0]], history, { likes: [], dislikes: [], learn: true })).toEqual([]);
   });
+});
+
+it('normalizes model search phrases without losing the food constraint', () => {
+  expect(normalizeFoodQuery('Italian restaurants near me')).toBe('italian');
+  expect(recommendPlaces(places, history, { likes: [], dislikes: [], learn: true }, 'Italian restaurants near me').map(item => item.place.id)).toEqual(['new-italian']);
 });

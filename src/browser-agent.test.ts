@@ -41,3 +41,27 @@ it('retrieves actual menu evidence even when the planner would answer from memor
   expect(execute).toHaveBeenCalledWith({ tool: 'read_menu', id: 'one' });
   expect(result).toHaveLength(1);
 });
+
+it('resolves ordinal references against displayed recommendations rather than catalog order', async () => {
+  const second = { id: 'two', name: 'Second Cafe', distanceMetres: 200 };
+  const execute = vi.fn().mockResolvedValue({ opened: 'one' });
+  await runAgent({ turns: [{ role: 'user', text: 'Open the second restaurant card.' }], records: [...records, second], previousResults: [{ tool: 'recommend_restaurants', result: [second, records[0]] }], signal: new AbortController().signal, plan: async () => '{"tool":"open_restaurant","id":"two"}', execute });
+  expect(execute).toHaveBeenCalledWith({ tool: 'open_restaurant', id: 'one' });
+});
+
+it('resolves a named restaurant to its real ID for directions', async () => {
+  const execute = vi.fn().mockResolvedValue({ directions: 'verified URL' });
+  await runAgent({ turns: [{ role: 'user', text: 'Give me directions to Test Kitchen.' }], records, signal: new AbortController().signal, plan: async () => '{"tool":"get_directions","id":"Test Kitchen"}', execute });
+  expect(execute).toHaveBeenCalledWith({ tool: 'get_directions', id: 'one' });
+});
+
+it('parses the model-supported function-call format and empty no-op calls', () => {
+  expect(parseAction('<tool_call>[{"name":"recommend_restaurants","arguments":{"query":"italian","unvisited":true}}]</tool_call>')).toEqual({ tool: 'recommend_restaurants', query: 'italian', unvisited: true });
+  expect(parseAction('<tool_call>[]</tool_call>')).toEqual({ tool: 'finish' });
+});
+
+it('keeps discovery grounded when the model declines a natural nearby request', async () => {
+  const execute = vi.fn().mockResolvedValue(records);
+  await runAgent({ turns: [{ role: 'user', text: 'Recommend somewhere Italian nearby that I have not visited yet.' }], records, signal: new AbortController().signal, plan: async () => '<tool_call>[]</tool_call>', execute });
+  expect(execute).toHaveBeenCalledWith(expect.objectContaining({ tool: 'recommend_restaurants', unvisited: true }));
+});

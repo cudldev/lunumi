@@ -5,7 +5,7 @@ import { matchingItems, menuSources, readRestaurantMenu, understand } from './ch
 import type { MenuItem, MenuSource } from './menu-data';
 import './chat-assistant.css';
 import { AssistantState } from './AssistantState';
-import { hasVisited, recommendPlaces } from './recommendations';
+import { hasVisited, normalizeFoodQuery, recommendPlaces } from './recommendations';
 import { buildConversation } from './ai-context';
 import { runAgent } from './browser-agent';
 import { browserConversation, type LocalConversation } from './local-conversation';
@@ -19,11 +19,14 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
   const appState = useContext(AssistantState);
   const places = appState ? [...new Map([...(initialPlace ? [initialPlace] : []), ...appState.nearby].map(place => [place.id, place])).values()] : providedPlaces;
   const history = appState?.history || [], preferences = appState?.preferences || { likes: [], dislikes: [], learn: false };
+  const discoverablePlaces = appState?.hideUnknownDietary ? [] : places;
+  const noMatches = appState?.hideUnknownDietary ? 'Your Profile setting hides places with unknown dietary compatibility. Confirm details with the restaurant or change that filter in Profile.' : 'No matching nearby records. Set a location or widen the search radius in Discover.';
   const onOpenPlace = openPlaceProp || appState?.openPlace;
   const [open, setOpen] = useState(!floating), [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', text: initialPlace ? `Let’s explore ${initialPlace.name}. Ask me to show the menu, list items, or find explicitly marked vegan dishes.` : greeting }]);
   const [selected, setSelected] = useState(initialPlace), [busy, setBusy] = useState(false), [activity, setActivity] = useState('');
   const ai = useRef<LocalConversation | null>(null);
+  const agentMemory = useRef<unknown[]>([]);
   const cache = useRef(new Map<string, Menu>()), request = useRef<AbortController | null>(null), end = useRef<HTMLDivElement>(null);
   useEffect(() => () => { request.current?.abort(); ai.current?.releaseIdle(); }, []);
   useEffect(() => { if (open) end.current?.scrollIntoView({ block: 'nearest' }); }, [messages, busy, open]);
@@ -36,8 +39,9 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
     setMessages(old => [...old, { role: 'user' as const, text }].slice(-40));
     if (!tool) { await answerAI(text); return; }
     if (text === 'Recommend somewhere new') {
-      const choices = recommendPlaces(places, history, preferences);
-      reply({ text: choices.length ? 'Places not marked visited, ranked using your preferences and history.' : 'No unvisited places found in the current results. Try a wider radius.', places: choices.map(choice => choice.place), reasons: Object.fromEntries(choices.map(choice => [choice.place.id, choice.reason])) }); return;
+      const choices = recommendPlaces(discoverablePlaces, history, preferences);
+      agentMemory.current = [...agentMemory.current, { tool: 'recommend_restaurants', result: choices.map(choice => ({ id: choice.place.id, name: choice.place.name, reason: choice.reason })) }].slice(-4);
+      reply({ text: choices.length ? 'Places not marked visited, ranked using your preferences and history.' : noMatches, places: choices.map(choice => choice.place), reasons: Object.fromEntries(choices.map(choice => [choice.place.id, choice.reason])) }); return;
     }
     const named = places.filter(place => text.toLowerCase().includes(place.name.toLowerCase()));
     const routingText = named.length === 1 ? text.toLowerCase().replace(named[0].name.toLowerCase(), '') : text;
@@ -53,7 +57,8 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
     // A named restaurant in a menu request overrides the previous selection.
     const target = named.length === 1 ? named[0] : selected && places.find(place => place.id === selected.id);
     if (intent.kind === 'places') {
-      const matches = filterNearby(places, intent.term).slice(0, 8);
+      const matches = filterNearby(discoverablePlaces, intent.term).slice(0, 8);
+      agentMemory.current = [...agentMemory.current, { tool: 'search_restaurants', result: matches.map(place => ({ id: place.id, name: place.name })) }].slice(-4);
       reply({ text: matches.length ? 'Here are matching places from your current nearby results. Choose one to explore its menu.' : places.length ? 'No restaurant matched that request. Try a restaurant name or cuisine, or ask “help” for supported tasks.' : 'Set a location in Discover and wait for nearby results, then ask me again.', places: matches });
       return;
     }
@@ -89,19 +94,20 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
       const names = places.filter(place => text.toLowerCase().includes(place.name.toLowerCase()));
       const catalog = [...new Map([...(selected ? [selected] : []), ...names, ...places].map(place => [place.id, place])).values()];
       const records = catalog.map(place => ({ id: place.id, name: place.name, cuisine: place.tags.cuisine, distanceMetres: Math.round(place.distance), visited: hasVisited(history, place.id), feedback: preferences.learn ? history.find(entry => entry.id === place.id)?.sentiment : undefined }));
-      const toolResults = await runAgent({ turns, records, selectedId: selected?.id, signal: controller.signal,
+      const toolResults = await runAgent({ turns, records, selectedId: selected?.id, previousResults: agentMemory.current, signal: controller.signal,
         plan: prompt => ai.current!.answer(prompt, controller.signal, event => { if (event.type === 'status') setActivity(event.text); }, 'plan'),
         execute: async action => {
           setActivity('Using ' + action.tool.replace(/_/g, ' ') + '…');
           if (action.tool === 'recommend_restaurants') {
-            const choices = recommendPlaces(places, history, preferences, action.query, action.unvisited);
-            reply({ text: choices.length ? 'Recommendations from current nearby results.' : 'No matching unvisited places in your current results. Try a wider radius.', places: choices.map(choice => choice.place), reasons: Object.fromEntries(choices.map(choice => [choice.place.id, choice.reason])) });
+            const requireNew = /\b(new|unvisited|not visited|haven.t visited|never been)\b/i.test(text);
+            const choices = recommendPlaces(discoverablePlaces, history, preferences, action.query, action.unvisited || requireNew);
+            reply({ text: choices.length ? 'Recommendations from current nearby results.' : noMatches, places: choices.map(choice => choice.place), reasons: Object.fromEntries(choices.map(choice => [choice.place.id, choice.reason])) });
             return choices.map(choice => ({ id: choice.place.id, name: choice.place.name, cuisine: choice.place.tags.cuisine, reason: choice.reason, markedVisited: hasVisited(history, choice.place.id), distanceMetres: Math.round(choice.place.distance) }));
           }
           if (action.tool === 'search_restaurants') {
-            const terms = action.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-            const matches = places.filter(place => terms.every(term => filterNearby([place], term).length)).slice(0, 8);
-            reply({ text: matches.length ? 'Matching nearby places. Select one for menu context, or open its restaurant card.' : 'No matching nearby records. Set a location or widen the search radius in Discover.', places: matches });
+            const terms = normalizeFoodQuery(action.query).split(/\s+/).filter(Boolean);
+            const matches = discoverablePlaces.filter(place => terms.every(term => filterNearby([place], term).length)).slice(0, 8);
+            reply({ text: matches.length ? 'Matching nearby places. Select one for menu context, or open its restaurant card.' : noMatches, places: matches });
             return matches.map(place => ({ id: place.id, name: place.name, cuisine: place.tags.cuisine, distanceMetres: Math.round(place.distance) }));
           }
           const target = places.find(place => place.id === action.id);
@@ -112,8 +118,9 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
             return { restaurant: target.name, directionsLink: url };
           }
           if (action.tool === 'open_restaurant') {
-            if (initialPlace?.id === target.id) return { restaurantCardAlreadyOpen: target.name };
+            if (initialPlace?.id === target.id) { reply({ text: 'You are already viewing the restaurant card for ' + target.name + '.' }); return { restaurantCardAlreadyOpen: target.name }; }
             if (!onOpenPlace) throw new Error('You are already in the restaurant card.');
+            reply({ text: 'Opened the restaurant card for ' + target.name + '.' });
             onOpenPlace(target); if (floating) setOpen(false);
             return { openedRestaurantCard: target.name, id: target.id };
           }
@@ -126,15 +133,19 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
             catch (error) { reply({ text: 'Menu source could not be read. Open a published source to check it.', links: menuSources(target) }); throw error; }
             finally { window.clearTimeout(timeout); controller.signal.removeEventListener('abort', abort); }
           }
-          const items = action.tool === 'list_items' ? matchingItems(loaded, action.query) : loaded.items;
-          reply({ text: target.name + ': ' + items.length + ' extracted entries. Check dates and details at the source.', items, source: loaded.source });
+          const items = action.tool === 'list_items' ? matchingItems(loaded, normalizeFoodQuery(action.query.toLowerCase().split(target.name.toLowerCase()).join(' '))) : loaded.items;
+          const sections = [...new Set(items.map(item => item.section).filter(Boolean))].slice(0, 6);
+          reply({ text: target.name + ': ' + items.length + ' extracted entries' + (sections.length ? ' across ' + sections.join(', ') : '') + '. Prices and details below come from the published source; check its dates and availability.', items, source: loaded.source });
           return { restaurant: target.name, source: loaded.source.url, notes: loaded.notes, entries: items.slice(0, 30).map(item => ({ name: item.name, section: item.section, price: item.price, description: item.description, dietaryClaims: item.diets, allergenNotes: item.allergenInfo })) };
         },
       });
+      agentMemory.current = [...agentMemory.current, ...toolResults].slice(-4);
       const successful = toolResults.some(result => result && typeof result === 'object' && 'result' in result);
       if (toolResults.length && !successful) { reply({ text: 'I could not verify the requested restaurant information. Use the source links or select a restaurant and retry.' }); return; }
+      // Tool replies already render verified records and menu facts. Avoid re-inventing them in generated prose.
+      if (successful) return;
       // Ordinary conversation gets a short prompt; restaurant facts enter through verified tool outputs.
-      const answer = await ai.current.answer(buildConversation(turns, JSON.stringify(toolResults)), controller.signal, event => {
+      const answer = await ai.current.answer(buildConversation(turns, /\b(it|that|this|menu|dish|price|there|restaurant|they|their|choice)\b/i.test(text) ? JSON.stringify(agentMemory.current) : '[]'), controller.signal, event => {
         if (event.type === 'status') setActivity(event.text);
         if (event.type === 'token') { partial += event.text; display(partial); }
       });
@@ -155,7 +166,7 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
       {selected && <p className="chat-context">Menu context: {selected.name}{!initialPlace && <button className="text-button" disabled={busy} onClick={() => setSelected(undefined)}>Change restaurant</button>}</p>}
       <div className="chat-messages" role="log" aria-label="Conversation" aria-live="polite" aria-busy={busy}>
         {messages.map((message, index) => <article className={`chat-message chat-${message.role}`} key={index}><small>{message.role === 'user' ? 'You' : message.ai ? 'Lunumi · AI' : 'Lunumi'}</small><p>{message.text}</p>
-          {message.places?.map(place => <div className="chat-place-result" key={place.id}><button className="chat-place" disabled={busy} onClick={() => { setSelected(place); reply({ text: 'Selected ' + place.name + '. Ask about its lunch or menu, or use the menu buttons.' }); }}>{place.name}<small>{place.tags.cuisine || 'Cuisine not listed'} · {Math.round(place.distance)} m</small>{message.reasons?.[place.id] && <small>{message.reasons[place.id]}</small>}</button>{onOpenPlace && <button className="text-button chat-open-card" disabled={busy} onClick={() => { setSelected(place); onOpenPlace(place); if (floating) setOpen(false); }}>Open restaurant card ↗</button>}</div>)}
+          {message.places?.map((place, placeIndex) => <div className="chat-place-result" key={place.id}><button className="chat-place" disabled={busy} onClick={() => { setSelected(place); reply({ text: 'Selected ' + place.name + '. Ask about its lunch or menu, or use the menu buttons.' }); }}>{placeIndex + 1}. {place.name}<small>{place.tags.cuisine || 'Cuisine not listed'} · {Math.round(place.distance)} m</small>{message.reasons?.[place.id] && <small>{message.reasons[place.id]}</small>}</button>{onOpenPlace && <button className="text-button chat-open-card" disabled={busy} onClick={() => { setSelected(place); onOpenPlace(place); if (floating) setOpen(false); }}>Open restaurant card ↗</button>}</div>)}
           {!!message.items?.length && <ul className="chat-items">{message.items.map((item, itemIndex) => <li key={itemIndex}>{item.section && <small>{item.section}</small>}<strong>{item.name} {item.price}</strong>{item.description && <p>{item.description}</p>}<span>{item.diets.join(' · ') || 'Dietary details not stated'}</span>{item.allergenInfo.map((note, i) => <p key={i}>{note}</p>)}<details><summary>Source text</summary><p>{item.sourceText}</p></details></li>)}</ul>}
           {message.directions && <a href={message.directions.url} target="_blank" rel="noopener noreferrer">Directions to {message.directions.name} ↗</a>}
           {message.source && <a href={message.source.url} target="_blank" rel="noopener noreferrer">Verify menu source ↗</a>}
@@ -165,7 +176,7 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
       </div>
       <div className="chat-suggestions">{(selected ? ['Show menu', 'List items', 'Find vegan items'] : ['Recommend somewhere new', 'List nearby restaurants', 'Help']).map(text => <button key={text} disabled={busy} onClick={() => void send(text, true)}>{text}</button>)}</div>
       <form className="chat-composer" onSubmit={event => { event.preventDefault(); void send(input); }}><input aria-label="Message Lunumi" placeholder="Chat or ask about places and menus…" maxLength={500} value={input} onChange={event => setInput(event.target.value)}/><button className="button" type="submit" disabled={busy || !input.trim()} aria-label="Send message"><Send size={17}/></button></form>
-      <footer className="chat-footer"><button className="text-button" disabled={busy} onClick={() => { cache.current.clear(); ai.current?.releaseIdle(); ai.current = null; setSelected(initialPlace); setMessages([{ role: 'assistant', text: greeting }]); }}>Clear chat</button><small>AI runs here · first use downloads ~1.4 GB. Chat stays on this device.</small></footer>
+      <footer className="chat-footer"><button className="text-button" disabled={busy} onClick={() => { cache.current.clear(); agentMemory.current = []; ai.current?.releaseIdle(); ai.current = null; setSelected(initialPlace); setMessages([{ role: 'assistant', text: greeting }]); }}>Clear chat</button><small>AI runs here · first use downloads ~1.4 GB. Chat stays on this device.</small></footer>
     </section>}
   </div>;
 }

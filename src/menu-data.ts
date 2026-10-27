@@ -133,6 +133,14 @@ export function discoverMenuLinks(html: string, pageUrl: string): string[] {
     .slice(0, 4);
 }
 
+function explicitDietClaims(text: string, modules: LanguageModule[]): string[] {
+  return modules.flatMap(module => module.dietSignals.filter(([pattern]) => {
+    const match = pattern.exec(text);
+    if (!match) return false;
+    return !/\b(?:not|non|isn.t|aren.t|ei|inte|ej)(?:\s+[a-zåäö]+){0,3}[\s-]*$/i.test(text.slice(0, match.index));
+  }).map(([, label]) => label));
+}
+
 export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
   const lines = cleanMenuText(value).split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const found: MenuItem[] = [];
@@ -217,13 +225,13 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
       previous.price = linePrice;
       previous.description = line.replace(linePrice, '').replace(/[-–—]\s*$/, '').trim();
       previous.sourceText += '\n' + sourceLine;
-      previous.diets = [...new Set([...previous.diets, ...modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label))])];
+      previous.diets = [...new Set([...previous.diets, ...explicitDietClaims(line, modules)])];
       continue;
     }
     const key = name.toLocaleLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    const diets = [...new Set([...modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)), ...codeDiets])];
+    const diets = [...new Set([...explicitDietClaims(line, modules), ...codeDiets])];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
     found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: sourceLine });

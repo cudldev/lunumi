@@ -12,10 +12,10 @@ for (const question of ['Hi, my name is Alex.', 'What is my name?']) {
   console.log(JSON.stringify({ question, reply })); turns.push({ role: 'assistant', text: reply });
   if (question === 'What is my name?' && !/Alex/i.test(reply)) throw new Error('Conversation memory smoke check failed.');
 }
-const records = [{ id: 'one', name: 'Test Kitchen', cuisine: 'italian', distanceMetres: 100 }];
+const records = [{ id: 'one', name: 'Test Kitchen', cuisine: 'italian', distanceMetres: 100 }, ...Array.from({ length: 19 }, (_, index) => ({ id: 'osm:node/' + (100 + index), name: 'Cafe ' + index, cuisine: 'cafe', distanceMetres: 150 + index * 20 }))];
 for (const [question, expected] of [['Find Italian restaurants nearby.', ['search_restaurants','recommend_restaurants']], ['Recommend a new place I have not visited.', 'recommend_restaurants'], ['Give me directions to Test Kitchen.', 'get_directions'], ['What can I eat for lunch at Test Kitchen?', 'read_menu'], ['Take me to the Test Kitchen restaurant card.', 'open_restaurant']]) {
   const actions=[];
-  const results=await runAgent({ turns:[{role:'user',text:question}], records, selectedId:'one', signal:new AbortController().signal, plan:generate, execute:async action=> { actions.push(action); return ['search_restaurants','recommend_restaurants'].includes(action.tool)?records:action.tool==='read_menu'?{restaurant:'Test Kitchen',entries:[{name:'Vegan curry',price:'12€'}]}:{opened:'Test Kitchen'}; } });
+  const results=await runAgent({ turns:[{role:'user',text:question}], records, selectedId:question.includes('Test Kitchen')?'one':undefined, signal:new AbortController().signal, plan:generate, execute:async action=> { actions.push(action); return ['search_restaurants','recommend_restaurants'].includes(action.tool)?records:action.tool==='read_menu'?{restaurant:'Test Kitchen',entries:[{name:'Vegan curry',price:'12€'}]}:{opened:'Test Kitchen'}; } });
   console.log(JSON.stringify({question,actions,results}));
   if (!actions.some(action=>(Array.isArray(expected)?expected:[expected]).includes(action.tool))) throw new Error('Agent did not use '+expected);
 }

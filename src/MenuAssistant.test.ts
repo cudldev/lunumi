@@ -77,3 +77,9 @@ it('omits menu navigation and attaches a long priced description to its dish', (
   expect(parsed.items[1]).toMatchObject({ price: '6.2€' });
   expect(parsed.items[1].description).toContain('strawberry filling');
 });
+
+it('does not turn negated source labels into dietary claims', () => {
+  expect(parseMenu('Mains\nNot vegan curry 12€', 'en').items[0].diets).toEqual([]);
+  expect(parseMenu('PÄÄRUOAT\nEi gluteeniton keitto 12€', 'fi').items[0].diets).toEqual([]);
+  expect(parseMenu('Mains\nVegan curry, not gluten-free 12€', 'en').items[0].diets).toEqual(['Marked vegan']);
+});
