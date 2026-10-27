@@ -3,7 +3,6 @@ import { CircleHelp, Heart, LoaderCircle, MessageCircle, Send, Sparkles, X } fro
 import type { Place } from './core';
 import { relevantPlaces } from './assistant-context';
 import { chatWithLocalAssistant, prepareLocalMenuModel, subscribeLocalMenuModelProgress, type MenuAssistantTurn, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
-import { isLunumiGreeting, isLunumiRequest, lunumiScopeReply } from './assistant-scope';
 import { sourcesForAnswer } from './assistant-sources';
 
 type Props = { places: Place[]; preferences: MenuModelPreferences };
@@ -160,15 +159,7 @@ export default function LunumiPet({ places, preferences }: Props) {
     setMessages(nextMessages);
     setDraft('');
     setError('');
-    if (isLunumiGreeting(text)) {
-      setReaction(value => value + 1);
-      return;
-    }
     const recentUserText = messages.filter(message => message.role === 'user').slice(-3).map(message => message.content).join(' ');
-    if (!isLunumiRequest(text, places.map(place => place.name), recentUserText)) {
-      setMessages([...nextMessages, { id: ++nextMessageId.current, role: 'assistant', content: lunumiScopeReply(text) }]);
-      return;
-    }
     setSending(true);
     setError('');
     setStreamingReply('');

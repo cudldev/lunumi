@@ -36,6 +36,9 @@ function isWebGpuFailure(error: Error): boolean {
 }
 
 function displayWorkerError(error: Error): Error {
+  if (/SafeIntOnOverflow|integer overflow/i.test(error.message)) {
+    return new Error(`The local model hit an internal ONNX Runtime overflow during inference. WebGPU was available; this is a model/runtime error, not a missing adapter. Reload the app and try again. ${error.message.slice(0, 220)}`);
+  }
   if (!isWebGpuFailure(error)) return error;
   return new Error(`Lunumi needs working WebGPU on this device. The local model could not run; no CPU model will be downloaded. Try reloading or using a supported browser. ${error.message.slice(0, 260)}`);
 }
