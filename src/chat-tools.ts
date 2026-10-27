@@ -35,18 +35,37 @@ export function matchingItems(menu: ParsedMenu, term = '') {
     : `${item.name} ${item.description} ${item.section} ${item.diets.join(' ')}`.toLowerCase().includes(word)));
 }
 
-async function boundedText(response: Response): Promise<string> {
+async function boundedText(response: Response, limit = 500_000): Promise<string> {
   if (!response.body) return '';
   const reader = response.body.getReader(), decoder = new TextDecoder();
   let text = '';
   try {
-    while (text.length < 500_000) {
+    while (text.length < limit) {
       const chunk = await reader.read();
       if (chunk.done) break;
       text += decoder.decode(chunk.value, { stream: true });
     }
-    return text.slice(0, 500_000);
+    return text.slice(0, limit);
   } finally { await reader.cancel(); }
+}
+
+export async function fetchMenuSource(url: string, signal: AbortSignal, readerUrl = import.meta.env.VITE_MENU_READER_URL): Promise<{ text: string; type: string; url: string }> {
+  if (readerUrl?.trim()) {
+    const endpoint = new URL(readerUrl.trim());
+    if (endpoint.protocol !== 'https:' || !endpoint.pathname.endsWith('/v1/menu')) throw new Error('Menu reader configuration is invalid.');
+    const response = await fetch(endpoint.href, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }), signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!response.ok) throw new Error('Menu reader could not fetch this source.');
+    const payload: unknown = JSON.parse(await boundedText(response, 1_100_000));
+    if (!payload || typeof payload !== 'object') throw new Error('Invalid menu-reader response.');
+    const data = payload as Record<string, unknown>;
+    if (typeof data.text !== 'string' || typeof data.contentType !== 'string' || typeof data.sourceUrl !== 'string' || !/^https:\/\//.test(data.sourceUrl)) throw new Error('Invalid menu-reader response.');
+    return { text: data.text.slice(0, 500_000), type: data.contentType, url: data.sourceUrl };
+  }
+  const response = await fetch(url, { signal, mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
+  if (!response.ok) { await response.body?.cancel(); throw new Error('Menu source is unavailable.'); }
+  const type = response.headers.get('content-type') || '';
+  if (/application\/pdf|image\//i.test(type)) { await response.body?.cancel(); throw new Error('Open this PDF or image menu directly.'); }
+  return { text: await boundedText(response), type, url: response.url || url };
 }
 
 export async function readRestaurantMenu(place: Place, signal: AbortSignal): Promise<ParsedMenu & { source: MenuSource }> {
@@ -57,12 +76,9 @@ export async function readRestaurantMenu(place: Place, signal: AbortSignal): Pro
     if (tried.has(source.url)) continue;
     tried.add(source.url);
     try {
-      const response = await fetch(source.url, { signal, mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
-      const type = response.headers.get('content-type') || '';
-      if (!response.ok || /application\/pdf|image\//i.test(type) || /\.pdf(?:$|[?#])/i.test(source.url)) { await response.body?.cancel(); continue; }
-      const body = await boundedText(response);
-      // Resolve relative links against the final response URL, including redirects.
-      const finalUrl = response.url || source.url;
+      const fetched = await fetchMenuSource(source.url, signal);
+      const type = fetched.type, body = fetched.text, finalUrl = fetched.url;
+      if (/application\/pdf|image\//i.test(type) || /\.pdf(?:$|[?#])/i.test(finalUrl)) continue;
       const discovered = source.discover ? discoverMenuLinks(body, finalUrl).filter(url => !tried.has(url)) : [];
       if (discovered.length) {
         queue.unshift(...discovered.map(url => ({ url, label: 'Discovered menu page' })));

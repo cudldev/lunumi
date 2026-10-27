@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { readFileSync } from 'node:fs';
@@ -13,6 +13,19 @@ const onnxRuntimeDist = dirname(require.resolve('onnxruntime-web/webgpu'));
 function bundleOnnxRuntimeAssets() {
   return {
     name: 'bundle-onnxruntime-webgpu-assets',
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use((request, response, next) => {
+        const pathname = (request.url || '').split('?')[0];
+        for (const file of ['ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']) {
+          const asset = 'onnxruntime/transformers-4.3.2/' + file;
+          if (pathname !== base + asset && pathname !== '/' + asset) continue;
+          response.setHeader('Content-Type', file.endsWith('.wasm') ? 'application/wasm' : 'text/javascript');
+          response.setHeader('Cache-Control', 'no-cache');
+          response.end(readFileSync(join(onnxRuntimeDist, file))); return;
+        }
+        next();
+      });
+    },
     generateBundle: {
       order: 'post' as const,
       handler(_options, bundle) {
@@ -25,7 +38,7 @@ function bundleOnnxRuntimeAssets() {
           }
         }
         for (const file of ['ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']) {
-          this.emitFile({ type: 'asset', fileName: `onnxruntime/${file}`, source: readFileSync(join(onnxRuntimeDist, file)) });
+          this.emitFile({ type: 'asset', fileName: `onnxruntime/transformers-4.3.2/${file}`, source: readFileSync(join(onnxRuntimeDist, file)) });
         }
       },
     },
@@ -34,6 +47,8 @@ function bundleOnnxRuntimeAssets() {
 
 export default defineConfig({
   base,
+  worker: { format: 'es' },
+  build: { rollupOptions: { input: { app: 'index.html', chatTest: 'chat-test/index.html' } } },
   plugins: [
     react(),
     bundleOnnxRuntimeAssets(),
@@ -67,7 +82,7 @@ export default defineConfig({
           urlPattern: /\/onnxruntime\/.*\.(?:mjs|wasm)$/i,
           handler: 'CacheFirst',
           options: {
-            cacheName: 'lunumi-onnxruntime-v1',
+            cacheName: 'lunumi-onnxruntime-v2',
             expiration: { maxEntries: 2, maxAgeSeconds: 30 * 24 * 60 * 60 },
             cacheableResponse: { statuses: [0, 200] },
           },

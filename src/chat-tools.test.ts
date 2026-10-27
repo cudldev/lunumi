@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { matchingItems, menuSources, readRestaurantMenu, understand } from './chat-tools';
+import { fetchMenuSource, matchingItems, menuSources, readRestaurantMenu, understand } from './chat-tools';
 import { parseMenu } from './menu-data';
 import type { Place } from './core';
 
@@ -51,5 +51,22 @@ describe('menu tool', () => {
     const controller = new AbortController(); controller.abort();
     await expect(readRestaurantMenu(place, controller.signal)).rejects.toThrow();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('internet menu reader', () => {
+  it('sends only the source URL to the configured service and preserves the final source', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ text: 'Lunch\nSoup 12€', contentType: 'text/plain', sourceUrl: 'https://example.test/lunch/today' })));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await fetchMenuSource('https://example.test/lunch', new AbortController().signal, 'https://reader.example/v1/menu');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ url: 'https://example.test/lunch' });
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: 'omit', referrerPolicy: 'no-referrer' });
+    expect(result.url).toBe('https://example.test/lunch/today');
+  });
+  it('rejects invalid configuration and malformed proxy responses', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"text":"menu","contentType":"text/html","sourceUrl":"javascript:alert(1)"}')));
+    await expect(fetchMenuSource('https://example.test', new AbortController().signal, 'http://untrusted.example/v1/menu')).rejects.toThrow('configuration');
+    await expect(fetchMenuSource('https://example.test', new AbortController().signal, 'https://reader.example/v1/menu')).rejects.toThrow('Invalid menu-reader response');
   });
 });
