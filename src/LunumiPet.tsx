@@ -22,10 +22,30 @@ function placeSource(place: Place): string {
   return match ? `https://www.openstreetmap.org/${match[1]}/${match[2]}` : `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}`;
 }
 
-function chatContext(places: Place[], query: string): { text: string; sources: Array<{ name: string; url: string }> } {
-  const recentPlaces = relevantPlaces(places, query);
+function chatContext(places: Place[], query: string, preferences: MenuModelPreferences): { text: string; sources: Array<{ name: string; url: string }> } {
+  const cachedMenus: LocalMenuCache[] = [];
+  try {
+    const stored: unknown = JSON.parse(localStorage.getItem('lunumi:menu-cache:v35') || '[]');
+    if (Array.isArray(stored)) {
+      for (const candidate of stored as LocalMenuCache[]) {
+        if (!candidate || typeof candidate.sourceUrl !== 'string' || !Array.isArray(candidate.items)) continue;
+        const age = Date.now() - Date.parse(candidate.cachedAt);
+        if (Number.isFinite(age) && age >= 0 && age <= 24 * 60 * 60 * 1000) cachedMenus.push(candidate);
+      }
+    }
+  } catch { /* Continue with restaurant listings if local menu cache is unavailable. */ }
+  const menuCacheByPlace = new Map<string, LocalMenuCache>();
+  const menuTextByPlace = new Map<string, string>();
+  for (const place of places) {
+    const sourceUrls = [place.tags.menu, place.tags['menu:url'], place.tags.website, place.tags['contact:website']].map(value => httpsUrl(value)).filter((value): value is string => Boolean(value));
+    const cached = cachedMenus.find(candidate => sourceUrls.includes(candidate.sourceUrl) || (candidate.resolvedSourceUrl && sourceUrls.includes(candidate.resolvedSourceUrl)));
+    if (cached) {
+      menuCacheByPlace.set(place.id, cached);
+      menuTextByPlace.set(place.id, cached.items.map(item => [item.section, item.name, item.sourceText].filter(Boolean).join(' ')).join(' '));
+    }
+  }
+  const recentPlaces = relevantPlaces(places, query, menuTextByPlace, preferences);
   const sources: Array<{ name: string; url: string }> = [];
-  const menuBySource = new Map<string, { text: string; url: string }>();
   const addSource = (name: string, value?: string | null) => {
     const url = httpsUrl(value || undefined);
     if (url && !sources.some(source => source.url === url)) sources.push({ name, url });
@@ -40,30 +60,16 @@ function chatContext(places: Place[], query: string): { text: string; sources: A
     const address = [place.tags['addr:street'], place.tags['addr:housenumber'], place.tags['addr:city']].filter(Boolean).join(' ');
     const menu = httpsUrl(place.tags.menu) || httpsUrl(place.tags['menu:url']);
     const website = httpsUrl(place.tags.website) || httpsUrl(place.tags['contact:website']);
-    return `Restaurant: ${place.name}${cuisine}${address ? `; address: ${address}` : ''}; listing source: ${placeSource(place)}${menu ? `; menu link: ${menu}` : ''}${website ? `; website: ${website}` : ''}`;
+    return `Restaurant: ${place.name}${cuisine}${address ? `; address: ${address}` : ''}; distance: ${(place.distance / 1000).toFixed(place.distance < 1000 ? 2 : 1)} km; listing source: ${placeSource(place)}${menu ? `; menu link: ${menu}` : ''}${website ? `; website: ${website}` : ''}`;
   });
-  try {
-    const stored: unknown = JSON.parse(localStorage.getItem('lunumi:menu-cache:v35') || '[]');
-    if (Array.isArray(stored)) {
-      for (const candidate of stored as LocalMenuCache[]) {
-        if (!candidate || typeof candidate.sourceUrl !== 'string' || !Array.isArray(candidate.items)) continue;
-        const age = Date.now() - Date.parse(candidate.cachedAt);
-        if (!Number.isFinite(age) || age < 0 || age > 24 * 60 * 60 * 1000) continue;
-        const lines = candidate.items.slice(0, 8).map(item => `  ${item.section ? `${item.section}: ` : ''}${item.name}${item.sourceText ? ` — source excerpt: ${item.sourceText.slice(0, 180)}` : ''}`).join('\n');
-        menuBySource.set(candidate.sourceUrl, { text: `Cached menu source: ${candidate.resolvedSourceUrl || candidate.sourceUrl}\n${lines}`, url: candidate.resolvedSourceUrl || candidate.sourceUrl });
-      }
-      for (const place of recentPlaces) {
-        const sourceUrl = httpsUrl(place.tags.menu) || httpsUrl(place.tags['menu:url']) || httpsUrl(place.tags.website) || httpsUrl(place.tags['contact:website']);
-        if (sourceUrl) {
-          const cached = menuBySource.get(sourceUrl);
-          if (cached) {
-            listings.push(`Loaded menu data for ${place.name}:\n${cached.text}`);
-            addSource(`${place.name} · read menu`, cached.url);
-          }
-        }
-      }
-    }
-  } catch { /* Local conversation can continue with restaurant listings alone. */ }
+  for (const place of recentPlaces) {
+    const candidate = menuCacheByPlace.get(place.id);
+    if (!candidate) continue;
+    const url = httpsUrl(candidate.resolvedSourceUrl) || httpsUrl(candidate.sourceUrl);
+    const lines = candidate.items.slice(0, 8).map(item => `  ${item.section ? `${item.section}: ` : ''}${item.name}${item.sourceText ? ` — source excerpt: ${item.sourceText.slice(0, 180)}` : ''}`).join('\n');
+    listings.push(`Loaded menu data for ${place.name}:\nCached menu source: ${url || candidate.sourceUrl}\n${lines}`);
+    if (url) addSource(`${place.name} · read menu`, url);
+  }
   return { text: `Nearby restaurant records relevant to the user's latest question. Use only the listed facts; a missing detail is unknown.\n\n${listings.join('\n\n')}`.slice(0, 8000) || 'No nearby restaurant records or locally cached menus are loaded yet.', sources };
 }
 
@@ -166,7 +172,7 @@ export default function LunumiPet({ places, preferences }: Props) {
     setSending(true);
     setError('');
     setStreamingReply('');
-    const context = chatContext(places, `${recentUserText} ${text}`);
+    const context = chatContext(places, `${recentUserText} ${text}`, preferences);
     try {
       const answer = await chatWithLocalAssistant({ turns: nextMessages, context: context.text, preferences }, chunk => {
         if (chunk) setStreamingReply(current => current + chunk);
