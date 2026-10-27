@@ -834,7 +834,6 @@ async function requestMenuSource(sourceUrl: string, signal: AbortSignal): Promis
 
 async function loadMenuSource(sourceUrl: string, signal: AbortSignal): Promise<CachedMenuSource & { refreshError?: string }> {
   const cached = await readCachedMenuSource(sourceUrl);
-  if (cached && Date.now() - cached.fetchedAt < MENU_CACHE_TTL_MS) return cached;
   try {
     return await requestMenuSource(sourceUrl, signal);
   } catch (cause) {
