@@ -9,6 +9,7 @@ describe('structured menu extraction', () => {
         { '@type': 'MenuItem', name: 'Mochi donut with strawberry filling - 6.2€', price: '6.2€' },
         { '@type': 'MenuItem', name: 'Strawbry Mochi', price: '4.8€' },
         { '@type': 'MenuItem', name: 'L. G. 4.8€', price: '4.8€' },
+        { '@type': 'MenuItem', name: 'Raspberry pastry -', price: '5.9€' },
       ],
     };
     const lines = schemaMenuLines({ querySelectorAll: () => [{ textContent: JSON.stringify(menu) }] } as unknown as Document);
@@ -17,6 +18,7 @@ describe('structured menu extraction', () => {
     expect(parsed.items.map(item => [item.name, item.price])).toEqual([
       ['Mochi donut with strawberry filling', '6.2€'],
       ['Strawbry Mochi', '4.8€'],
+      ['Raspberry pastry', '5.9€'],
     ]);
     expect(parsed.items[0].sourceText).toContain('Mochi donut with strawberry filling - 6.2€');
     expect(parsed.items[1].dietaryInfo).toEqual(['L. G.']);
