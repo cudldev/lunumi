@@ -1,6 +1,8 @@
 import type { PromptMessage } from './ai-context';
 import type { AIEvent } from './conversation.worker';
 import type { ModelSnapshot } from './model-state';
+import { currentModelSize } from './conversation-config';
+import { markAIWork } from './model-recovery';
 
 type WorkerLike = Pick<Worker, 'postMessage' | 'terminate' | 'onmessage' | 'onerror' | 'onmessageerror'>;
 type Mode = 'chat' | 'plan' | 'prepare';
@@ -21,6 +23,7 @@ export class LocalConversation {
   stop() {
     if (this.cancel) { this.cancel(); return; }
     this.worker?.terminate(); this.worker = null;
+    markAIWork(false);
     this.publish({ phase: 'idle', status: 'Private AI preparation is paused.' });
   }
   async prepare(signal: AbortSignal, onEvent: (event: AIEvent) => void = () => undefined) {
@@ -40,9 +43,11 @@ export class LocalConversation {
       this.publish({ phase: 'error', status: 'Private AI could not start.', error: message });
       throw new Error(message);
     }
+    markAIWork(true);
+    const modelSize = currentModelSize();
     return new Promise((resolve, reject) => {
       let timer: ReturnType<typeof setTimeout>;
-      const cleanup = () => { clearTimeout(timer); signal.removeEventListener('abort', abort); this.cancel = null; worker.onmessage = null; worker.onerror = null; worker.onmessageerror = null; };
+      const cleanup = () => { markAIWork(false); clearTimeout(timer); signal.removeEventListener('abort', abort); this.cancel = null; worker.onmessage = null; worker.onerror = null; worker.onmessageerror = null; };
       const fail = (error: Error, paused = false) => {
         cleanup(); worker.terminate(); if (this.worker === worker) this.worker = null;
         this.publish(paused ? { phase: 'idle', status: 'Private AI preparation is paused.' } : { phase: 'error', status: 'Private AI is not ready.', error: error.message });
@@ -56,24 +61,25 @@ export class LocalConversation {
         worker.onmessage = (message: MessageEvent<AIEvent>) => {
           const event = message.data;
           if (event.type === 'fallback') {
+            if (modelSize === 'compact') { fail(new Error('Graphics loading failed. AI was stopped to avoid another memory allocation on this device. You can continue without AI.')); return; }
             if (this.cpuOnly) { fail(new Error('The model could not run on the CPU.')); return; }
             worker.onmessage = null; worker.onerror = null; worker.onmessageerror = null; worker.terminate(); this.cpuOnly = true;
             this.publish({ phase: 'loading', status: event.text, stage: 'load' });
-            try { worker = this.worker = this.createWorker(); bind(); onEvent({ type: 'status', text: event.text }); worker.postMessage({ messages, mode, device: 'wasm' }); }
+            try { worker = this.worker = this.createWorker(); bind(); onEvent({ type: 'status', text: event.text }); worker.postMessage({ messages, mode, device: 'wasm', modelSize }); }
             catch (error) { fail(error instanceof Error ? error : new Error('CPU fallback could not start.')); }
             return;
           }
           if (event.type === 'done') { cleanup(); this.publish({ phase: 'ready', status: 'Private AI is ready. Readiness check passed.' }); resolve(event.text); return; }
           if (event.type === 'error') { fail(new Error(event.text)); return; }
           if (event.type === 'status' && (this.state.phase !== 'ready' || mode === 'prepare')) this.publish({ phase: 'loading', status: event.text, stage: event.stage, progress: event.progress });
-          if (event.type === 'token') { arm(90_000); if (this.state.phase !== 'ready') this.publish({ phase: 'ready', status: 'Private AI is ready.' }); }
+          if (event.type === 'token') { arm(90_000); if (mode !== 'prepare' && this.state.phase !== 'ready') this.publish({ phase: 'ready', status: 'Private AI is ready.' }); }
           onEvent(event);
         };
         worker.onerror = () => fail(new Error('The AI worker could not start. Reload or retry in a supported browser.'));
         worker.onmessageerror = () => fail(new Error('The AI worker returned an unreadable message. Please retry.'));
       };
       bind(); arm(6 * 60_000);
-      try { worker.postMessage({ messages, mode, device: this.cpuOnly ? 'wasm' : 'auto' }); }
+      try { worker.postMessage({ messages, mode, device: this.cpuOnly ? 'wasm' : 'auto', modelSize }); }
       catch (error) { fail(error instanceof Error ? error : new Error('Could not start private AI.')); }
     });
   }

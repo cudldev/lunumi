@@ -1,3 +1,5 @@
+import { ModelAccess } from './use-model-readiness';
+import { currentModelConfig } from './conversation-config';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
 import { filterNearby, webDirectionsUrl, type Place } from './core';
@@ -16,7 +18,7 @@ type Props = { places: Place[]; initialPlace?: Place; floating?: boolean; onOpen
 const greeting = 'Hi, I’m Lunumi. We can chat, talk about food, or explore nearby places and menus. Menu tools work right away; normal conversation loads a private AI on your device the first time.';
 
 export default function ChatAssistant({ places: providedPlaces, initialPlace, floating, onNavigate, onOpenPlace: openPlaceProp }: Props) {
-  const appState = useContext(AssistantState);
+  const appState = useContext(AssistantState), model = useContext(ModelAccess);
   const places = appState ? [...new Map([...(initialPlace ? [initialPlace] : []), ...appState.nearby].map(place => [place.id, place])).values()] : providedPlaces;
   const history = appState?.history || [], preferences = appState?.preferences || { likes: [], dislikes: [], learn: false };
   const discoverablePlaces = appState?.hideUnknownDietary ? [] : places;
@@ -34,7 +36,7 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
 
   async function send(value: string, tool = false) {
     const text = value.trim().slice(0, 500);
-    if (!text || request.current) return;
+    if (!text || request.current || (!tool && model && !model.ready)) return;
     setInput('');
     setMessages(old => [...old, { role: 'user' as const, text }].slice(-40));
     if (!tool) { await answerAI(text); return; }
@@ -80,7 +82,7 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
 
   async function answerAI(text: string) {
     const controller = new AbortController(); request.current = controller; setBusy(true);
-    setActivity('Loading private AI. First download is about 1.4 GB…');
+    setActivity('Preparing private AI on this device…');
     let partial = '', added = false;
     const display = (value: string) => {
       if (controller.signal.aborted) return;
@@ -175,8 +177,9 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
         {busy && <p role="status">{activity} <button className="text-button" onClick={() => request.current?.abort()}>Cancel</button></p>}<div ref={end}/>
       </div>
       <div className="chat-suggestions">{(selected ? ['Show menu', 'List items', 'Find vegan items'] : ['Recommend somewhere new', 'List nearby restaurants', 'Help']).map(text => <button key={text} disabled={busy} onClick={() => void send(text, true)}>{text}</button>)}</div>
-      <form className="chat-composer" onSubmit={event => { event.preventDefault(); void send(input); }}><input aria-label="Message Lunumi" placeholder="Chat or ask about places and menus…" maxLength={500} value={input} onChange={event => setInput(event.target.value)}/><button className="button" type="submit" disabled={busy || !input.trim()} aria-label="Send message"><Send size={17}/></button></form>
-      <footer className="chat-footer"><button className="text-button" disabled={busy} onClick={() => { cache.current.clear(); agentMemory.current = []; ai.current?.releaseIdle(); ai.current = null; setSelected(initialPlace); setMessages([{ role: 'assistant', text: greeting }]); }}>Clear chat</button><small>AI runs here · first use downloads ~1.4 GB. Chat stays on this device.</small></footer>
+      {model && !model.ready && <p className="chat-context">Private AI is paused. Menu tools still work. <button className="button small" onClick={model.retry}>Enable private AI ({model.download})</button></p>}
+      <form className="chat-composer" onSubmit={event => { event.preventDefault(); void send(input); }}><input aria-label="Message Lunumi" disabled={!!model && !model.ready} placeholder="Chat or ask about places and menus…" maxLength={500} value={input} onChange={event => setInput(event.target.value)}/><button className="button" type="submit" disabled={busy || !input.trim() || (!!model && !model.ready)} aria-label="Send message"><Send size={17}/></button></form>
+      <footer className="chat-footer"><button className="text-button" disabled={busy} onClick={() => { cache.current.clear(); agentMemory.current = []; ai.current?.releaseIdle(); ai.current = null; setSelected(initialPlace); setMessages([{ role: 'assistant', text: greeting }]); }}>Clear chat</button><small>AI runs here · first use downloads ~{currentModelConfig().download}. Chat stays on this device.</small></footer>
     </section>}
   </div>;
 }

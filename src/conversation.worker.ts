@@ -1,13 +1,13 @@
 import { env, pipeline, TextStreamer, type TextGenerationPipeline } from '@huggingface/transformers';
 import type { PromptMessage } from './ai-context';
 import type { ModelStage } from './model-state';
-import { MODEL_ID, MODEL_REVISION } from './conversation-config';
+import { MODEL_CONFIGS, type ModelSize } from './conversation-config';
 export type AIEvent = { type: 'fallback'; text: string } | { type: 'status'; text: string; stage?: ModelStage; progress?: number } | { type: 'token'; text: string } | { type: 'done'; text: string } | { type: 'error'; text: string };
-type Request = { messages: PromptMessage[]; mode: 'chat' | 'plan' | 'prepare'; device?: 'auto' | 'wasm' };
+type Request = { messages: PromptMessage[]; mode: 'chat' | 'plan' | 'prepare'; device?: 'auto' | 'wasm'; modelSize?: ModelSize };
 const scope = self as unknown as { postMessage: (event: AIEvent) => void; onmessage: ((event: MessageEvent<Request>) => void) | null };
 let generator: TextGenerationPipeline | null = null, running = false, usingGPU = false;
 
-async function loadModel(cpuOnly = false): Promise<TextGenerationPipeline> {
+async function loadModel(cpuOnly = false, size: ModelSize = 'standard'): Promise<TextGenerationPipeline> {
   if (generator) return generator;
   env.allowLocalModels = false; env.useBrowserCache = true;
   const wasm = env.backends.onnx.wasm!; wasm.numThreads = 1;
@@ -26,7 +26,8 @@ async function loadModel(cpuOnly = false): Promise<TextGenerationPipeline> {
   };
   const gpu = (navigator as unknown as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
   try { usingGPU = !cpuOnly && Boolean(await gpu?.requestAdapter()); } catch { usingGPU = false; }
-  generator = await pipeline('text-generation', MODEL_ID, { revision: MODEL_REVISION, dtype: 'q4', device: usingGPU ? 'webgpu' : 'wasm', progress_callback });
+  const config = MODEL_CONFIGS[size];
+  generator = await pipeline('text-generation', config.id, { revision: config.revision, dtype: 'q4', device: usingGPU ? 'webgpu' : 'wasm', progress_callback });
   return generator;
 }
 
@@ -35,7 +36,7 @@ scope.onmessage = async event => {
   running = true;
   let producedText = false;
   try {
-    const model = await loadModel(event.data.device === 'wasm');
+    const model = await loadModel(event.data.device === 'wasm', event.data.modelSize);
     if (event.data.mode === 'prepare') {
       scope.postMessage({ type: 'status', text: 'Running the model readiness check…', stage: 'checking' });
       // A completed download is not sufficient: compile/run actual inference before app entry.
