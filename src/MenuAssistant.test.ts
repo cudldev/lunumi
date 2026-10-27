@@ -210,6 +210,12 @@ it('drops Finnish restaurant page status and upload-form text instead of showing
   expect(parsed.items[0].section).toBe('Päivän lounas');
 });
 
+it('treats Finnish children-menu category labels as sections, not dishes', () => {
+  const parsed = parseMenu('PÄÄRUOAT Lastenruoat', 'fi', null);
+
+  expect(parsed.items).toEqual([]);
+});
+
 it('extracts only the selected menu tab and its dish details', () => {
   const element = (tagName: string, textContent: string, querySelector: (selector: string) => unknown = () => null, querySelectorAll: (selector: string) => unknown[] = () => []) => ({
     tagName, textContent, querySelector, querySelectorAll, id: '', getAttribute: (_name: string) => null as string | null,
