@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v3';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v4';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -91,9 +91,80 @@ function safeMenuImage(value: string, sourceUrl?: string): string | undefined {
   } catch { return undefined; }
 }
 
+type StructuredMenuItem = { section?: string; name?: unknown; description?: unknown; image?: unknown; price?: unknown; suitableForDiet?: unknown; additionalProperty?: unknown };
+
+export function schemaMenuLines(document: Document, sourceUrl?: string): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+  const text = (value: unknown) => typeof value === 'string' || typeof value === 'number' ? String(value).trim() : '';
+  const list = (value: unknown): unknown[] => Array.isArray(value) ? value : value == null ? [] : [value];
+  const dietLabels = (value: unknown): string[] => list(value).flatMap(entry => {
+    const candidate = typeof entry === 'string' ? entry : entry && typeof entry === 'object' ? text((entry as Record<string, unknown>).name) || text((entry as Record<string, unknown>)['@id']) : '';
+    const normalized = candidate.toLowerCase().replace(/[^a-z]/g, '');
+    if (normalized.includes('vegandiet') || normalized === 'vegan') return ['Marked vegan'];
+    if (normalized.includes('vegetariandiet') || normalized === 'vegetarian') return ['Marked vegetarian'];
+    if (normalized.includes('glutenfreediet') || normalized === 'glutenfree') return ['Marked gluten-free'];
+    if (normalized.includes('lowlactosediet') || normalized.includes('lactosefree')) return ['Marked lactose-free'];
+    return [];
+  });
+  const emit = (entry: StructuredMenuItem, section: string) => {
+    const name = text(entry.name);
+    if (!name || name.length > 120) return;
+    const imageValue = list(entry.image).map(image => typeof image === 'string' ? image : image && typeof image === 'object' ? text((image as Record<string, unknown>).url) || text((image as Record<string, unknown>)['@id']) : '').find(Boolean) || '';
+    const offers = list((entry as Record<string, unknown>).offers)[0];
+    const offer = offers && typeof offers === 'object' ? offers as Record<string, unknown> : {};
+    const rawPrice = text(entry.price) || text(offer.price) || text(offer.lowPrice);
+    const currency = text(offer.priceCurrency);
+    const price = rawPrice && /^\d+(?:[.,]\d{1,2})?$/.test(rawPrice) && currency ? `${rawPrice} ${currency}` : rawPrice;
+    const additional = list(entry.additionalProperty).flatMap(property => {
+      if (!property || typeof property !== 'object') return [];
+      const fields = property as Record<string, unknown>;
+      const key = text(fields.name) || text(fields.propertyID);
+      const value = text(fields.value);
+      return /allergen|allerg/i.test(key) && value ? [value] : [];
+    });
+    const diets = dietLabels(entry.suitableForDiet);
+    const item = {
+      section,
+      name,
+      description: text(entry.description),
+      price,
+      imageUrl: safeMenuImage(text(entry.image) || imageValue, sourceUrl),
+      diets,
+      allergenInfo: additional,
+      sourceText: [name, text(entry.description), rawPrice, list(entry.suitableForDiet).map(value => typeof value === 'string' ? value : value && typeof value === 'object' ? text((value as Record<string, unknown>).name) || text((value as Record<string, unknown>)['@id']) : '').filter(Boolean).join('; '), ...additional].filter(Boolean).join(' · ').slice(0, 500),
+    };
+    const key = `${section}\n${name}`.toLocaleLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(`menu-schema-item: ${JSON.stringify(item)}`);
+  };
+  const walk = (value: unknown, section = '', inMenu = false, depth = 0): void => {
+    if (depth > 12) return;
+    if (Array.isArray(value)) { value.forEach(child => walk(child, section, inMenu, depth + 1)); return; }
+    if (!value || typeof value !== 'object') return;
+    const object = value as Record<string, unknown>;
+    const types = list(object['@type']).map(text).map(type => type.split('/').pop()?.toLowerCase() || '');
+    const menu = inMenu || types.includes('menu');
+    const nextSection = types.includes('menusection') ? text(object.name) || section : section;
+    if (types.includes('menuitem') || (menu && types.includes('product'))) emit(object as StructuredMenuItem, nextSection);
+    for (const [key, child] of Object.entries(object)) {
+      if (key === 'hasMenuSection') list(child).forEach(item => walk(item, nextSection, true, depth + 1));
+      else if (key === 'hasMenuItem') list(child).forEach(item => walk(item, nextSection, true, depth + 1));
+      else if (key === '@graph' || key === 'mainEntity' || key === 'mainEntityOfPage') walk(child, nextSection, menu, depth + 1);
+      else if (key !== 'hasMenuSection' && key !== 'hasMenuItem' && child && typeof child === 'object') walk(child, nextSection, menu, depth + 1);
+    }
+  };
+  for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
+    try { walk(JSON.parse(script.textContent || '')); } catch { /* Ignore malformed or unrelated JSON-LD blocks. */ }
+  }
+  return result;
+}
+
 function cleanMenuText(value: string, sourceUrl?: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
+  const structuredItems = schemaMenuLines(document, sourceUrl);
   document.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(node => node.remove());
   const productSections = [...document.querySelectorAll('.category')].map(category => {
     const heading = category.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '';
@@ -111,14 +182,14 @@ function cleanMenuText(value: string, sourceUrl?: string): string {
     const notices = [...category.querySelectorAll('p')].map(note => note.textContent?.replace(/\s+/g, ' ').trim() || '').filter(Boolean);
     return [heading, ...products, ...notices].filter(Boolean).join('\n');
   }).filter(Boolean);
-  if (productSections.length) return productSections.join('\n');
+  if (productSections.length) return [...structuredItems, ...productSections].join('\n');
 
   // DOMParser creates a detached document where innerText can collapse the whole page.
   // Keep semantic content blocks on separate lines for the local item parser.
   const blocks = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')]
     .map(node => node.textContent?.replace(/\s+/g, ' ').trim() || '')
     .filter(text => text.length > 1);
-  return blocks.length ? blocks.join('\n') : document.body.textContent?.replace(/\s+/g, ' ').trim() || '';
+  return [...structuredItems, ...(blocks.length ? blocks : [document.body.textContent?.replace(/\s+/g, ' ').trim() || ''])].filter(Boolean).join('\n');
 }
 
 function feedText(value: string, contentType: string, sourceUrl?: string): string {
@@ -164,7 +235,7 @@ async function readMenuResponse(response: Response): Promise<string> {
   return text + decoder.decode();
 }
 
-function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassifier | null): ParsedMenu {
+export function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassifier | null): ParsedMenu {
   const lines = cleanMenuText(value).split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const found: MenuItem[] = [];
   const notes: string[] = [];
@@ -178,6 +249,28 @@ function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassi
   let section = '';
   let pendingImageUrl: string | undefined;
   for (const line of lines) {
+    const structured = line.match(/^menu-schema-item:\s*(\{.*\})$/i);
+    if (structured) {
+      try {
+        const item = JSON.parse(structured[1]) as Partial<MenuItem>;
+        const name = typeof item.name === 'string' ? item.name.trim() : '';
+        if (name.length >= 3 && name.length <= 120 && !seen.has(name.toLocaleLowerCase())) {
+          seen.add(name.toLocaleLowerCase());
+          found.push({
+            section: typeof item.section === 'string' ? item.section : '',
+            name,
+            description: typeof item.description === 'string' ? item.description.slice(0, 240) : '',
+            price: typeof item.price === 'string' ? item.price : '',
+            diets: Array.isArray(item.diets) ? item.diets.filter((diet): diet is string => typeof diet === 'string') : [],
+            allergenInfo: Array.isArray(item.allergenInfo) ? item.allergenInfo.filter((info): info is string => typeof info === 'string') : [],
+            sourceText: typeof item.sourceText === 'string' ? item.sourceText.slice(0, 500) : [name, item.description, item.price].filter((part): part is string => typeof part === 'string' && Boolean(part)).join(' · '),
+            imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
+          });
+        }
+      } catch { /* Ignore malformed structured menu entries and continue with visible text. */ }
+      if (found.length >= 100) break;
+      continue;
+    }
     const image = line.match(/^menu-image:\s*(https:\/\/\S+)$/i);
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
