@@ -25,7 +25,7 @@ Items may include a section, name, nearby description, price, ingredients, expli
 
 The static app reads `VITE_MENU_READER_URL` at build time. Set GitHub Actions repository variable `MENU_READER_WORKER_URL_STAGING` to the deployed Worker URL ending in `/v1/menu`; leave the live URL unset until Staging is verified.
 
-The Worker workflow uses repository variables `CLOUDFLARE_ACCOUNT_ID` and `MENU_READER_DEPLOY_ENABLED=true`, plus the GitHub Actions secret `CLOUDFLARE_API_TOKEN`. Keep the token only in GitHub Actions Secrets. Deploys run from `staging`. The host allowlist is generated from the restaurant data source.
+The Staging Worker deploy runs from `staging` when `MENU_READER_DEPLOY_ENABLED=true`. It builds the host allowlist from the `staging` branch of `cudldev/finland-restaurant-data`, matching the Staging Pages directory. It uses the repository variable `CLOUDFLARE_ACCOUNT_ID` and the GitHub Actions secret `CLOUDFLARE_API_TOKEN`; keep the token only in GitHub Actions Secrets. The existing Worker uses Cloudflare's free request tier and has a 100,000-request daily cap.
 
 ## Implementation map
 
@@ -35,3 +35,6 @@ The Worker workflow uses repository variables `CLOUDFLARE_ACCOUNT_ID` and `MENU_
 - Deployment workflows: `.github/workflows/deploy.yml` and `.github/workflows/deploy-menu-reader.yml`.
 ## Restaurant directory data
 The GitHub Pages workflow builds the live directory from the `main` branch of `cudldev/finland-restaurant-data` and the Staging directory from that repository's `staging` branch. Staging-only source changes stay out of the live directory until they are separately promoted to `main`. The directory stores source URLs and provenance; it does not copy restaurant menu content. Both repository branches are public and use the existing free GitHub Pages workflow.
+
+
+The focused UI element is 1 AXWebArea raw.githubusercontent.com/cudldev/lunumi/staging/docs/menu-assistant.md
