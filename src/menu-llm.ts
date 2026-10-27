@@ -112,7 +112,7 @@ async function requireWebGpuAdapter(): Promise<void> {
   if (!gpu) throw new Error('Lunumi AI needs WebGPU, which is not available in this browser. The assistant is disabled on this device.');
   try {
     const adapter = await gpu.requestAdapter();
-    if (!adapter) throw new Error('No compatible WebGPU adapter was found.');
+    if (!adapter) throw new Error('This browser exposes WebGPU but returned no usable GPU adapter. Update the browser and device, restart the browser, or try another WebGPU-capable browser. Lunumi will not download a CPU model.');
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     throw new Error(`Lunumi AI needs a compatible WebGPU adapter. The assistant is disabled on this device. ${detail.slice(0, 180)}`);
