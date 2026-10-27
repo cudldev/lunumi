@@ -4,7 +4,10 @@ type Progress = { status: string; file?: string; progress?: number; device?: 'we
 type WorkerRequest = { type: 'initialize' } | { type: 'analyze'; id: number; restaurantName: string; language: string; sourceText: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } } | { type: 'chat'; id: number; turns: ChatTurn[]; context: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } };
 type WorkerResponse = { type: 'progress'; progress: Progress } | { type: 'ready' } | { type: 'activity'; id: number; text: string } | { type: 'result'; id: number; text: string } | { type: 'error'; id?: number; message: string };
 type PipelineModule = {
-  env: { useBrowserCache: boolean };
+  env: {
+    useBrowserCache: boolean;
+    backends: { onnx: { wasm: { wasmPaths?: { mjs: string; wasm: string } } } };
+  };
   pipeline: (task: string, model: string, options: Record<string, unknown>) => Promise<unknown>;
   TextStreamer: new (tokenizer: unknown, options: Record<string, unknown>) => unknown;
 };
@@ -15,10 +18,8 @@ type TextGenerator = {
 
 const MODEL_ID = 'onnx-community/Qwen3-0.6B-ONNX';
 const MODEL_REVISION = '558750086ed49d78cb701ed6fa85af33fd16453f';
-// Roll back from Transformers.js 4.3.1's ONNX Runtime WebGPU upgrade while
-// investigating the reported MatMulNBitsWideTile deferred-pipeline failure.
-// Keep 4.2.0 pinned until menu and chat inference pass on a newer runtime.
-const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0';
+import * as bundledTransformers from '@huggingface/transformers';
+
 const workerScope = self as unknown as { postMessage: (message: WorkerResponse) => void; onmessage: ((event: MessageEvent<WorkerRequest>) => void) | null };
 let generatorPromise: Promise<TextGenerator> | null = null;
 let transformersRuntime: PipelineModule | null = null;
@@ -54,9 +55,14 @@ function getGenerator(): Promise<TextGenerator> {
   if (!generatorPromise) {
     const load = async () => {
       reportProgress('Loading the WebGPU model', generatorDevice);
-      const runtime = await import(/* @vite-ignore */ TRANSFORMERS_URL) as PipelineModule;
+      const runtime = bundledTransformers as unknown as PipelineModule;
       transformersRuntime = runtime;
       runtime.env.useBrowserCache = true;
+      const runtimeAssetBase = new URL(`${import.meta.env.BASE_URL}onnxruntime/`, self.location.origin).href;
+      runtime.env.backends.onnx.wasm.wasmPaths = {
+        mjs: `${runtimeAssetBase}ort-wasm-simd-threaded.asyncify.mjs`,
+        wasm: `${runtimeAssetBase}ort-wasm-simd-threaded.asyncify.wasm`,
+      };
       const instance = await runtime.pipeline('text-generation', MODEL_ID, {
         device: generatorDevice,
         dtype: 'q4f16',
