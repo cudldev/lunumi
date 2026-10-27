@@ -84,7 +84,7 @@ it('sends compact weights to mobile workers and avoids an automatic second memor
   vi.stubGlobal('navigator', {userAgent:'iPhone Safari'});
   const worker = fakeWorker(), create = vi.fn(() => worker), client = new LocalConversation(create);
   const pending = client.prepare(new AbortController().signal);
-  expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'auto',modelSize:'compact'});
+  expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'wasm',modelSize:'compact'});
   worker.onmessage!(new MessageEvent('message', {data:{type:'fallback',text:'GPU failed'}}));
   await expect(pending).rejects.toThrow('another memory allocation');
   expect(create).toHaveBeenCalledTimes(1); expect(client.snapshot.phase).toBe('error');
