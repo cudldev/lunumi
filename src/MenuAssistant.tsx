@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v10';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v11';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -185,13 +185,14 @@ export function schemaMenuLines(document: Document, sourceUrl?: string): string[
 }
 
 export function tabbedMenuLines(document: Document): string[] {
-  const panels = [...document.querySelectorAll<HTMLElement>('[role="tabpanel"][id^="panel-"]')];
-  const tabs = [...document.querySelectorAll<HTMLElement>('[role="tab"]')];
-  const controlledId = tabs.find(tab => tab.getAttribute('aria-selected') === 'true'
-    && panels.some(candidate => candidate.id === tab.getAttribute('aria-controls')?.split(/\s+/)[0]))
+  const panels = [...document.querySelectorAll<HTMLElement>('[id^="panel-"]')];
+  const controls = [...document.querySelectorAll<HTMLElement>('[aria-controls]')];
+  const controlledId = controls.find(control => control.getAttribute('aria-selected') === 'true'
+    && panels.some(candidate => candidate.id === control.getAttribute('aria-controls')?.split(/\s+/)[0]))
     ?.getAttribute('aria-controls')?.split(/\s+/)[0];
   const panel = panels.find(candidate => candidate.id === controlledId)
-    || panels.find(candidate => candidate.getAttribute('aria-hidden') === 'false');
+    || panels.find(candidate => candidate.getAttribute('aria-hidden') === 'false')
+    || panels.find(candidate => candidate.id === `panel-${new Intl.DateTimeFormat('en', { weekday: 'long' }).format(new Date())}`);
   if (!panel) return [];
 
   const sections = [...panel.querySelectorAll<HTMLElement>('li')]

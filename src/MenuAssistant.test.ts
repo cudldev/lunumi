@@ -215,7 +215,7 @@ it('extracts only the selected menu tab and its dish details', () => {
   const unrelatedSelectedTab = { getAttribute: (name: string) => name === 'aria-controls' ? 'cookie-consent' : name === 'aria-selected' ? 'true' : null };
   const selectedTab = { getAttribute: (name: string) => name === 'aria-controls' ? 'panel-Friday' : name === 'aria-selected' ? 'true' : null };
   const document = {
-    querySelectorAll: (selector: string) => selector.includes('[role="tabpanel"]') ? [hiddenPanel, visiblePanel] : selector.includes('[role="tab"]') ? [unrelatedSelectedTab, selectedTab] : [],
+    querySelectorAll: (selector: string) => selector.includes('[id^="panel-"]') ? [hiddenPanel, visiblePanel] : selector.includes('[aria-controls]') ? [unrelatedSelectedTab, selectedTab] : [],
   } as unknown as Document;
 
   const parsed = parseMenu(tabbedMenuLines(document).join('\n'), 'en', null);
