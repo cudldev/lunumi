@@ -135,3 +135,13 @@ describe('structured menu extraction', () => {
     }
   });
 });
+
+
+it('separates a Finnish category prefix from the dish and preserves source evidence', () => {
+  const parsed = parseMenu('HAMPURILAISET Kerroshampurilainen\nSALAATIT Kanasalaatti', 'unknown', null);
+  expect(parsed.items.map(item => [item.section, item.name])).toEqual([
+    ['HAMPURILAISET', 'Kerroshampurilainen'],
+    ['SALAATIT', 'Kanasalaatti'],
+  ]);
+  expect(parsed.items[0].sourceText).toBe('HAMPURILAISET Kerroshampurilainen');
+});
