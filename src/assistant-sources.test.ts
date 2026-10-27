@@ -11,7 +11,7 @@ describe('sourcesForAnswer', () => {
   });
 
   it('does not attach a source for an unmentioned restaurant and respects the limit', () => {
-    const sources = Array.from({ length: 7 }, (_, index) => ({ name: `Place ${index} · directory`, url: `https://example.com/${index}` }));
+    const sources = Array.from({ length: 7 }, (_, index) => ({ name: 'Place ' + index + ' · directory', url: 'https://example.com/' + index }));
     expect(sourcesForAnswer('Place 0, Place 1 and a made up place.', sources)).toEqual(sources.slice(0, 2));
     expect(sourcesForAnswer('A made up place.', sources)).toEqual([]);
   });
@@ -19,8 +19,14 @@ describe('sourcesForAnswer', () => {
   it('does not mistake a location suffix for a restaurant-name mention', () => {
     const sources = [
       { name: 'Momochi · directory', url: 'https://www.openstreetmap.org/node/1' },
-      { name: 'Robert\'s Coffee — Helsinki Central Railway Station · directory', url: 'https://example.com/roberts' },
+      { name: 'Robert’s Coffee — Helsinki Central Railway Station · directory', url: 'https://example.com/roberts' },
     ];
     expect(sourcesForAnswer('Momochi is in Helsinki, Finland.', sources)).toEqual([sources[0]]);
+  });
+
+  it('does not cite a restaurant when the answer only uses its words descriptively', () => {
+    const sources = [{ name: 'Classic Pizza · website', url: 'https://classicpizza.fi' }];
+    expect(sourcesForAnswer('A classic margherita pizza has tomato, mozzarella, and basil.', sources)).toEqual([]);
+    expect(sourcesForAnswer('Classic Pizza serves a margherita with tomato and mozzarella.', sources)).toEqual(sources);
   });
 });
