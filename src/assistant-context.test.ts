@@ -21,4 +21,26 @@ describe('assistant restaurant context selection', () => {
   it('uses the nearest places for a broad question', () => {
     expect(relevantPlaces(places, 'What is nearby?').map(place => place.id)).toEqual(['near', 'momochi', 'far']);
   });
+
+  it('finds restaurants whose locally saved menus mention the requested dish, nearest first', () => {
+    const menus = new Map([
+      ['far', 'Classic beef burger'],
+      ['momochi', 'Spicy miso ramen'],
+      ['near', 'Tonkotsu ramen'],
+    ]);
+
+    expect(relevantPlaces(places, 'Find the closest restaurant with ramen', menus).map(place => place.id))
+      .toEqual(['near', 'momochi']);
+  });
+
+  it('uses profile food preferences to prioritize matching nearby menus', () => {
+    const menus = new Map([
+      ['far', 'Classic beef burger'],
+      ['momochi', 'Spicy miso ramen'],
+      ['near', 'Tonkotsu ramen'],
+    ]);
+
+    expect(relevantPlaces(places, 'What is nearby?', menus, { likes: ['ramen'] }).map(place => place.id))
+      .toEqual(['near', 'momochi']);
+  });
 });
