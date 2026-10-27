@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines } from './MenuAssistant';
+import { discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
   it('rejects generic restaurant home-page copy as menu results while accepting menu evidence', () => {
@@ -191,4 +191,39 @@ it('keeps Finnish lunch dishes and source dietary codes while dropping page meta
   expect(parsed.items[0].diets).toEqual([]);
   expect(parsed.items[0].sourceText).toContain('A, G, L, M');
   expect(parsed.notes).toContain('Lounasbuffet: 13,70 €');
+});
+
+it('extracts only the selected menu tab and its dish details', () => {
+  const element = (tagName: string, textContent: string, querySelector: (selector: string) => unknown = () => null, querySelectorAll: (selector: string) => unknown[] = () => []) => ({
+    tagName, textContent, querySelector, querySelectorAll, id: '', getAttribute: (_name: string) => null as string | null,
+  });
+  const button = element('BUTTON', 'Roasted root bowl');
+  const fields = ['A, G, VL, VEG', 'Allergeenit: Selleri', 'Ainesosat: Juureksia, selleriä']
+    .map(text => element('P', text));
+  const row = element('LI', 'Roasted root bowl A, G, VL, VEG', selector => selector.includes('button') ? button : null,
+    selector => selector === 'p' || selector === 'p, span, div' ? fields : []);
+  const itemList = element('UL', '', () => null, () => []);
+  Object.defineProperty(itemList, 'children', { value: [row] });
+  const title = element('DIV', 'Main dishes');
+  const category = element('LI', '', selector => selector === ':scope > .option-title' ? title : selector === ':scope > ul' ? itemList : null);
+  const visiblePanel = element('SECTION', '', () => null, selector => selector === 'li' ? [category] : []);
+  Object.defineProperty(visiblePanel, 'id', { value: 'panel-Friday' });
+  visiblePanel.getAttribute = name => name === 'aria-hidden' ? 'false' : null;
+  const hiddenPanel = element('SECTION', '', () => null, () => []);
+  Object.defineProperty(hiddenPanel, 'id', { value: 'panel-Monday' });
+  hiddenPanel.getAttribute = name => name === 'aria-hidden' ? 'true' : null;
+  const selectedTab = { getAttribute: (name: string) => name === 'aria-controls' ? 'panel-Friday' : name === 'aria-selected' ? 'true' : null };
+  const document = {
+    querySelectorAll: (selector: string) => selector.includes('[role="tabpanel"]') ? [hiddenPanel, visiblePanel] : selector.includes('[role="tab"]') ? [selectedTab] : [],
+  } as unknown as Document;
+
+  const parsed = parseMenu(tabbedMenuLines(document).join('\n'), 'en', null);
+  expect(parsed.items).toHaveLength(1);
+  expect(parsed.items[0]).toMatchObject({
+    section: 'Main dishes',
+    name: 'Roasted root bowl',
+    dietaryInfo: ['A, G, VL, VEG'],
+    ingredients: ['Juureksia, selleriä'],
+    allergenInfo: ['Allergeenit: Selleri'],
+  });
 });
