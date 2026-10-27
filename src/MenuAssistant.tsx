@@ -3,11 +3,11 @@ import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { classifyMenuLine, loadMenuClassifier, type MenuClassifier } from './menu-classifier';
 
-type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
+type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; dietaryInfo?: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v7';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v8';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -27,7 +27,7 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
   fi: {
     name: 'Finnish',
     clues: [/\blounas\b/i, /\bmaanantai|tiistai|keskiviikko|torstai|perjantai\b/i, /\bkeitto|salaatti|kasvis\w*|gluteenittom\w*\b/i],
-    dietSignals: [[/\bvegaan\w*\b/i, 'Marked vegan'], [/\bkasvis\w*\b/i, 'Marked vegetarian'], [/\bgluteeniton\b/i, 'Marked gluten-free'], [/\bmaidoton\b/i, 'Marked dairy-free'], [/\blaktoositon\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:geeninen)?\b/i, 'Marked keto']],
+    dietSignals: [[/\bvegaan\w*\b/i, 'Marked vegan'], [/\bkasvisruok\w*\b/i, 'Marked vegetarian'], [/\bgluteeniton\b/i, 'Marked gluten-free'], [/\bmaidoton\b/i, 'Marked dairy-free'], [/\blaktoositon\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:geeninen)?\b/i, 'Marked keto']],
     headings: /^(?:lounas|ruokalista|ruokalistat|jälkiruoat?|juomat|allergeenit|maanantai|tiistai|keskiviikko|torstai|perjantai)$/i,
   },
   sv: {
@@ -45,7 +45,7 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
 };
 
 const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
-  fi: /^(?:alkuruoat|pääruoat|jälkiruoat?|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|jälkiruoat ja juomat)$/i,
+  fi: /^(?:alkuruoat|pääruoat?|pääruoaksi|pääruoan kaveriksi|jälkiruoat?|jälkiruoaksi|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|jälkiruoat ja juomat)$/i,
   sv: /^(?:förrätter|huvudrätter|efterrätter|drycker|burgare|sallader|soppor|tillbehör|dagens|måndag|tisdag|onsdag|torsdag|fredag)$/i,
   en: /^(?:starters?|appetizers?|mains?|main courses|burgers?|sandwiches|salads?|soups?|sides|desserts?|drinks|lunch|dinner|specials?|meals|kids'? meals|chicken|burgers? meals|monday|tuesday|wednesday|thursday|friday)$/i,
 };
@@ -73,6 +73,9 @@ const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
   sv: /^(?:ingredienser|ingredienserna)\s*[:\-]\s*(.+)$/i,
   en: /^(?:ingredients?|made with)\s*[:\-]\s*(.+)$/i,
 };
+
+const dietaryCodeLine = /^(?:[A-ZÅÄÖ](?:\s*,\s*[A-ZÅÄÖ]){1,8})(?:\s*,\s*(?:VEG|VEGAANINEN|VEGETAARINEN))?$/i;
+const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b)/i;
 
 function detectLanguage(value: string): MenuLanguage {
   const sample = value.slice(0, 20_000);
@@ -206,7 +209,7 @@ function cleanMenuText(value: string, sourceUrl?: string): string {
 
   // DOMParser creates a detached document where innerText can collapse the whole page.
   // Keep semantic content blocks on separate lines for the local item parser.
-  const blocks = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')]
+  const blocks = [...document.body.querySelectorAll('h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')]
     .map(node => node.textContent?.replace(/\s+/g, ' ').trim() || '')
     .filter(text => text.length > 1);
   return [...structuredItems, ...(blocks.length ? blocks : [document.body.textContent?.replace(/\s+/g, ' ').trim() || ''])].filter(Boolean).join('\n');
@@ -430,6 +433,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
   let section = '';
   let pendingImageUrl: string | undefined;
+  let pendingMenuPriceLabel = '';
   for (const originalLine of lines) { let line = originalLine;
     const structured = line.match(/^menu-schema-item:\s*(\{.*\})$/i);
     if (structured) {
@@ -444,6 +448,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
             description: typeof item.description === 'string' ? item.description.slice(0, 240) : '',
             price: typeof item.price === 'string' ? item.price : '',
             diets: Array.isArray(item.diets) ? item.diets.filter((diet): diet is string => typeof diet === 'string') : [],
+            dietaryInfo: Array.isArray(item.dietaryInfo) ? item.dietaryInfo.filter((info): info is string => typeof info === 'string') : [],
             ingredients: Array.isArray(item.ingredients) ? item.ingredients.filter((ingredient): ingredient is string => typeof ingredient === 'string').slice(0, 20) : [],
             allergenInfo: Array.isArray(item.allergenInfo) ? item.allergenInfo.filter((info): info is string => typeof info === 'string') : [],
             sourceText: typeof item.sourceText === 'string' ? item.sourceText.slice(0, 500) : [name, item.description, item.price].filter((part): part is string => typeof part === 'string' && Boolean(part)).join(' · '),
@@ -458,6 +463,25 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
     if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue;
+    if (nonMenuDetailLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
+      if (/^lounasbuffet\b/i.test(line)) pendingMenuPriceLabel = line;
+      continue;
+    }
+    if (pricePattern.test(line) && line.replace(pricePattern, '').replace(/[\s€$£]/g, '') === '') {
+      const last = found[found.length - 1];
+      if (last && last.section === section && !last.price) last.price = line.trim();
+      else if (pendingMenuPriceLabel && notes.length < 30) notes.push(`${pendingMenuPriceLabel}: ${line.trim()}`);
+      pendingMenuPriceLabel = '';
+      continue;
+    }
+    if (dietaryCodeLine.test(line)) {
+      const last = found[found.length - 1];
+      if (last && last.section === section) {
+        last.dietaryInfo = [...new Set([...(last.dietaryInfo ?? []), line])];
+        last.sourceText = `${last.sourceText}\n${line}`.slice(0, 500);
+      }
+      continue;
+    }
     const lineDiets = standaloneDiets(line);
     if (lineDiets.length) {
       const last = found[found.length - 1];
@@ -517,7 +541,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const diets = [...new Set(modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)))];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
-    found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: originalLine, imageUrl: pendingImageUrl });
+    found.push({ section, name, description, price: priceText, diets, dietaryInfo: [], allergenInfo: hasAllergenInfo ? [line] : [], sourceText: originalLine, imageUrl: pendingImageUrl });
     pendingImageUrl = undefined;
     if (found.length >= 100) break;
   }
@@ -552,6 +576,7 @@ function validCachedMenu(value: unknown): value is CachedMenu {
       && typeof item.description === 'string' && item.description.length <= 240
       && typeof item.price === 'string' && item.price.length <= 30
       && typeof item.sourceText === 'string' && item.sourceText.length <= 500
+      && (item.dietaryInfo === undefined || (Array.isArray(item.dietaryInfo) && item.dietaryInfo.length <= 10 && item.dietaryInfo.every(info => typeof info === 'string' && info.length <= 80)))
       && (item.ingredients === undefined || (Array.isArray(item.ingredients) && item.ingredients.length <= 20 && item.ingredients.every(ingredient => typeof ingredient === 'string' && ingredient.length <= 240)))
       && (item.imageUrl === undefined || (typeof item.imageUrl === 'string' && item.imageUrl.length <= 2048 && /^https:\/\//i.test(item.imageUrl)))
       && Array.isArray(item.allergenInfo) && item.allergenInfo.length <= 10 && item.allergenInfo.every(note => typeof note === 'string' && note.length <= 220)
@@ -823,7 +848,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}>
         {item.imageUrl && <img className="menu-assistant-item-image" src={item.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />}
         <div>{item.section && <span className="menu-assistant-section">{item.section}</span>}<strong>{item.name}</strong>{item.description && <span>{item.description}</span>}{item.ingredients?.length ? <span>Ingredients: {item.ingredients.join(', ')}</span> : null}{item.price && <span>{item.price}</span>}
-          {item.allergenInfo.map((note, noteIndex) => <span className="menu-assistant-allergen" key={`${note}-${noteIndex}`}>{note}</span>)}
+          {item.allergenInfo.map((note, noteIndex) => <span className="menu-assistant-allergen" key={`${note}-${noteIndex}`}>{note}</span>)}{item.dietaryInfo?.map((info, infoIndex) => <span className="menu-assistant-allergen" key={`dietary-info-${infoIndex}`}>Dietary codes as listed: {info}</span>)}
           <details className="menu-assistant-evidence"><summary>Source text</summary><span>{item.sourceText}</span></details>
         </div>
         <div className="menu-assistant-diets">{item.diets.length ? item.diets.map(diet => <span key={diet}>{diet}</span>) : <span>Dietary details not stated</span>}</div>
