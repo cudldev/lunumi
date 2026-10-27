@@ -5,6 +5,7 @@ import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
 import RestaurantPhoto from './RestaurantPhoto';
 import MenuAssistant from './MenuAssistant';
+import type { MenuModelPreferences } from './menu-llm';
 
 const visitJumpSrc = new URL('mascot/lunumi-jump.webp', document.baseURI).href;
 const visitJumpPreload = new Image();
@@ -98,9 +99,9 @@ function syncLivePosition(map: import('maplibre-gl').Map, Marker: typeof import(
 }
 
 type VisitOrigin = 'target' | 'explored' | 'nearby' | 'visited';
-type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; onTransitionStart?: () => void; onTransitionCancel?: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
+type Props = { place: Place; favorite: boolean; status?: string; sentiment?: string; recommendationVote?: 'yes' | 'maybe' | 'no'; dietary: boolean; assistantPreferences?: MenuModelPreferences; recommendation: string; onFavorite: () => void; onDirections: () => void; onStatus: (value: 'target' | 'visited') => void | Promise<void>; onSentiment: (value: 'loved' | 'okay' | 'disliked') => void; onRecommendation: (value: 'yes' | 'maybe' | 'no') => void; onReturn: (placeId: string, from: VisitOrigin) => void; onTransitionStart?: () => void; onTransitionCancel?: () => void; initiallyOpen?: boolean; onDismiss?: () => void };
 
-export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, recommendation, onFavorite, onStatus, onSentiment, onRecommendation, onReturn, onTransitionStart, onTransitionCancel, initiallyOpen = false, onDismiss }: Props) {
+export default function PlaceCard({ place, favorite, status, sentiment, recommendationVote, dietary, assistantPreferences, recommendation, onFavorite, onStatus, onSentiment, onRecommendation, onReturn, onTransitionStart, onTransitionCancel, initiallyOpen = false, onDismiss }: Props) {
   const [details, setDetails] = useState(initiallyOpen);
   const [visitMode, setVisitMode] = useState(false);
   const [visitStage, setVisitStage] = useState<'journey' | 'outro'>('journey');
@@ -394,7 +395,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         <p className="reason detail-reason">{sentiment === 'loved' ? 'A place you loved before' : recommendation}</p>
         <h3 className="detail-section-title">Good to know</h3><p className="detail-description">{place.tags.opening_hours ? `Hours: ${place.tags.opening_hours}` : 'Opening hours are not listed.'}</p>
         <h3 className="detail-section-title">Menu & links</h3>{menu || website ? <div className="detail-actions">{menu && <a className="button outline" href={menu} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>{menuLabel}</a>}{website && <a className="button outline" href={website} target="_blank" rel="noopener noreferrer"><Globe2 size={15}/>Website</a>}</div> : <p className="detail-description">No menu link is listed yet. Check the restaurant website or open directions.</p>}
-        <MenuAssistant restaurantName={place.name} sourceUrl={menu || website} listingLocation={listingLocation}/>
+        <MenuAssistant restaurantName={place.name} sourceUrl={menu || website} listingLocation={listingLocation} preferences={assistantPreferences}/>
         <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'visited' ? 'Finish your visit' : status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
         </>}
       </div>

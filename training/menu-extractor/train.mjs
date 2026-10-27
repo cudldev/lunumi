@@ -48,7 +48,7 @@ catch (error) {
 }
 const all = lines.map((line, index) => {
   const example = JSON.parse(line);
-  if (!['en', 'fi', 'sv'].includes(example.language) || !allowedLabels.has(example.label) || typeof example.text !== 'string' || !example.text.trim()) {
+  if (!['en', 'fi', 'sv', 'fr'].includes(example.language) || !allowedLabels.has(example.label) || typeof example.text !== 'string' || !example.text.trim()) {
     throw new Error(`Invalid annotation on line ${index + 1}.`);
   }
   const source = trainingSourceMetadata(example);

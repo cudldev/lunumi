@@ -25,7 +25,7 @@ function validateSource(source, index) {
   }
   const type = source.type ?? 'feed';
   if (!['feed', 'page'].includes(type)) throw new Error(`Source ${index + 1} type must be feed or page.`);
-  if (!['fi', 'sv', 'en'].includes(source.language)) throw new Error(`Source ${index + 1} language must be fi, sv, or en.`);
+  if (!['fi', 'sv', 'en', 'fr'].includes(source.language)) throw new Error(`Source ${index + 1} language must be fi, sv, en, or fr.`);
   if (source.approvedForModelRelease !== true) throw new Error(`Source ${index + 1} is not approved for training and releasing model weights.`);
   if (source.commercialUseApproved !== true) throw new Error(`Source ${index + 1} is not approved for future commercial use.`);
   if (!source.license || !source.licenseUrl || !source.rightsReviewedAt || !source.rightsEvidenceUrl) {
