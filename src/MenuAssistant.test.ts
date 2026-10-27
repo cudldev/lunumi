@@ -56,6 +56,16 @@ describe('structured menu extraction', () => {
     expect(parsed.items[0].sourceText).toContain('L. G. 4.8€');
   });
 
+  it('removes a trailing separator left before a compact menu price', () => {
+    const parsed = parseMenu('Mochi donut with strawberry filling - 4.8€', 'en', null);
+
+    expect(parsed.items).toHaveLength(1);
+    expect(parsed.items[0]).toMatchObject({
+      name: 'Mochi donut with strawberry filling',
+      price: '4.8€',
+    });
+  });
+
   it('rejects generic restaurant home-page copy as menu results while accepting menu evidence', () => {
     const homePage = [
       'DONUT', 'MOCHI', 'MATCHA', 'COFFEE', 'Love you so Mochi', 'Baking The Difference',

@@ -742,6 +742,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const name = (parts[0] || menuLine)
       .replace(/\s*(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?\s*$/, '')
       .replace(/\s+\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)\s*$/, '')
+      .replace(/\s*[-–—|·:]\s*$/, '')
       .trim();
     if (name.length < 3 || name.length > 220) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
