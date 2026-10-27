@@ -10,7 +10,7 @@ type RestaurantProfile = { name?: string; description?: string; cuisine?: string
 type ParsedMenu = { items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile; aiSummary?: string };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'fr' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile; aiSummary?: string; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v34';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v35';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -1173,33 +1173,17 @@ function validatedModelMenu(raw: string, sourceText: string): { summary: string;
       const text = field.trim().slice(0, maxLength);
       return text && normalize(sourceQuote).includes(normalize(text)) ? text : '';
     };
+    const exactList = (field: unknown, maxItems: number, maxLength: number) => Array.isArray(field)
+      ? [...new Set(field.slice(0, maxItems).map(value => exactField(value, maxLength)).filter(Boolean))]
+      : [];
     return [{
       section: exactField(candidate.section, 80), name, description: exactField(candidate.description, 240),
-      price: exactField(candidate.price, 30), diets: [], allergenInfo: [], sourceText: sourceQuote,
+      price: exactField(candidate.price, 30), diets: [], ingredients: exactList(candidate.ingredients, 12, 120),
+      allergenInfo: exactList(candidate.allergenInfo, 8, 160), dietaryInfo: exactList(candidate.dietaryInfo, 8, 120), sourceText: sourceQuote,
     }];
   }) : [];
   const summary = typeof payload.summary === 'string' ? payload.summary.trim().replace(/\s+/g, ' ').slice(0, 500) : '';
   return { summary, items };
-}
-
-function mergeModelMenuItems(parsedItems: MenuItem[], modelItems: MenuItem[]): MenuItem[] {
-  const merged = parsedItems.map(item => ({ ...item }));
-  const byName = new Map(merged.map(item => [item.name.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase(), item]));
-  for (const item of modelItems) {
-    const key = item.name.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
-    const current = byName.get(key);
-    if (current) {
-      if (!current.section) current.section = item.section;
-      if (!current.description) current.description = item.description;
-      if (!current.price) current.price = item.price;
-      if (!current.sourceText) current.sourceText = item.sourceText;
-    } else {
-      byName.set(key, item);
-      merged.push(item);
-    }
-    if (merged.length >= 100) break;
-  }
-  return merged;
 }
 
 export function hasMenuEvidence(sourceText: string, sourceUrl: string, items: MenuItem[]): boolean {
@@ -1565,13 +1549,14 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
             preferences: preferences ?? { likes: [], dislikes: [], diet: [], notes: '' },
           });
           const validated = validatedModelMenu(rawModelOutput, readableSource);
-          const mergedItems = mergeModelMenuItems(extracted.items, validated.items);
-          if (mergedItems.length) extracted = { ...extracted, items: mergedItems };
+          if (!validated.items.length) throw new Error('The AI did not return menu items that could be verified against the source.');
+          extracted = { ...extracted, items: validated.items };
           nextAiSummary = validated.summary;
         } catch (cause) {
-          if (!('gpu' in navigator)) throw cause;
-          if (!extracted.items.length) throw cause;
-          setModelError(cause instanceof Error ? `The AI summary could not be prepared; showing the source-extracted items. ${cause.message}` : 'The AI summary could not be prepared; showing source-extracted items.');
+          const message = cause instanceof Error ? cause.message : 'The local AI could not read this menu.';
+          setModelStatus('error');
+          setModelError(message);
+          throw new Error(`The AI could not prepare a verifiable menu list. ${message}`);
         }
         if (!didUseOcr && !hasMenuEvidence(source.text, source.resolvedSourceUrl, extracted.items)) throw new Error(ocrFailure || 'No verifiable menu items were found on the restaurant page.');
         extracted = { ...extracted, aiSummary: nextAiSummary };
@@ -1614,7 +1599,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
   }, [sourceUrl]);
 
   return <section className="menu-assistant" aria-label={`Local menu assistant for ${restaurantName}`}>
-    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? menuLoadingLabel[loadingStage] : items.length ? `${items.length} items${cachedAt ? ' · saved on this device' : ''}` : 'Items from the restaurant’s own page'}</span></div></div>
+    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? menuLoadingLabel[loadingStage] : items.length ? `${items.length} AI-read items${cachedAt ? ' · saved on this device' : ''}` : 'Items appear after the local AI reads the source'}</span></div></div>
     {busy && <div className="menu-assistant-loading" role="status" aria-live="polite"><LoaderCircle size={16} className="menu-assistant-spinner"/><div><strong>{menuLoadingLabel[loadingStage]}</strong><span>Checking the restaurant’s own pages. Menu text stays on this device.</span><div className="menu-assistant-loading-track" aria-hidden="true"><i/></div></div></div>}
     {modelStatus !== 'idle' && <div className={`menu-assistant-model-state${modelStatus === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
       {modelStatus !== 'ready' && modelStatus !== 'error' && <LoaderCircle size={15} className="menu-assistant-spinner"/>}
@@ -1635,7 +1620,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
           {item.allergenInfo.map((note, noteIndex) => <span className="menu-assistant-allergen" key={`${note}-${noteIndex}`}>{note}</span>)}{item.dietaryInfo?.map((info, infoIndex) => <span className="menu-assistant-allergen" key={`dietary-info-${infoIndex}`}>Dietary codes as listed: {info}</span>)}
           <details className="menu-assistant-evidence"><summary>Source text</summary><span>{item.sourceText}</span></details>
         </div>
-        <div className="menu-assistant-diets">{item.diets.length ? item.diets.map(diet => <span key={diet}>{diet}</span>) : <span>Dietary details not stated</span>}</div>
+        <div className="menu-assistant-diets">{item.diets.length ? item.diets.map(diet => <span key={diet}>{diet}</span>) : item.dietaryInfo?.length ? <span>Dietary details as listed</span> : <span>Dietary details not stated</span>}</div>
       </li>)}</ul>
       {cachedAt && <p className="menu-assistant-note">Saved on this device · Updated {new Date(cachedAt).toLocaleString()}</p>}
       {error && <p className="menu-assistant-note" role="status">{error}</p>}
