@@ -11,6 +11,7 @@ export function ModelSetupStatus({ model }: { model: ModelReadiness }) {
     {model.phase === 'loading' && model.stage !== 'download' && <span className="model-setup-spinner" aria-label="Checking model readiness"/>}
     {model.phase === 'error' && <><p>AI could not start on this device. You can keep using discovery and menu tools without it.</p><details><summary>Technical details</summary><p>{model.error}</p></details></>}
     {(model.phase === 'error' || model.phase === 'idle') && <button className="button" onClick={model.retry}>{model.phase === 'idle' && model.manual ? `Enable private AI (${model.download})` : model.phase === 'idle' ? 'Resume preparation' : 'Retry AI setup'}</button>}
+    {model.phase === 'error' && <button className="text-button" onClick={model.retryCPU}>Try CPU (slower)</button>}
     {model.phase === 'loading' && <button className="text-button" onClick={model.pause}>Pause preparation</button>}
   </div>;
 }

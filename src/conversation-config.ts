@@ -11,3 +11,4 @@ export function modelSizeForDevice(device: DeviceHints): ModelSize {
 }
 export function currentModelSize(): ModelSize { return modelSizeForDevice(typeof navigator === 'undefined' ? {} : navigator as DeviceHints); }
 export function currentModelConfig() { return MODEL_CONFIGS[currentModelSize()]; }
+export function currentDevicePrefersCPU() { return typeof navigator !== 'undefined' && /SamsungBrowser/i.test(navigator.userAgent); }
