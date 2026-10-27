@@ -29,8 +29,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check out the current official restaurant directory
-        run: git clone --depth 1 https://github.com/cudldev/finland-restaurant-data.git restaurant-data
+      - name: Check out the Staging restaurant directory
+        run: git clone --depth 1 --branch staging https://github.com/cudldev/finland-restaurant-data.git restaurant-data
       - name: Deploy menu reader Worker
         run: |
           node scripts/build-menu-reader-hosts.mjs public/data/helsinki-metro.json restaurant-data/data/restaurants.json
