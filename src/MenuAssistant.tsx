@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { classifyMenuLine, loadMenuClassifier, MENU_OTHER_FILTER_THRESHOLD, type MenuClassifier } from './menu-classifier';
-import { analyzeMenuLocally, prepareLocalMenuModel, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
+import { analyzeMenuLocally, prepareLocalMenuModel, subscribeLocalMenuModelProgress, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
 
 type MenuPriceOption = { label: string; value: string };
 type MenuItem = { section: string; name: string; description: string; price: string; priceOptions?: MenuPriceOption[]; diets: string[]; dietaryInfo?: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
@@ -1444,6 +1444,13 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
       return () => controller.abort();
     }
     const menuUrl = sourceUrl;
+    const updateModelProgress = (progress: MenuModelProgress) => {
+      if (!active) return;
+      setModelProgress(progress);
+      const status = progress.status.toLocaleLowerCase();
+      setModelStatus(status.includes('ready') ? 'ready' : ['download', 'progress'].includes(status) ? 'loading' : 'checking');
+    };
+    const unsubscribeModelProgress = subscribeLocalMenuModelProgress(updateModelProgress);
 
     const cached = readCachedMenu(menuUrl);
     if (cached) {
@@ -1456,16 +1463,13 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
       setModelsUsed(cached.modelsUsed ?? []);
       setVerifiedSourceUrl(cached.resolvedSourceUrl ?? menuUrl);
       setBusy(false);
+      unsubscribeModelProgress();
       return () => controller.abort();
     }
     setBusy(true);
     setModelStatus('checking');
     let active = true;
-    const modelReady = prepareLocalMenuModel(progress => {
-      if (!active) return;
-      setModelProgress(progress);
-      setModelStatus(['download', 'progress'].includes(progress.status.toLocaleLowerCase()) ? 'loading' : 'checking');
-    }).then(() => {
+    const modelReady = prepareLocalMenuModel(updateModelProgress).then(() => {
       if (active) setModelStatus('ready');
       return null;
     }, cause => {
@@ -1635,6 +1639,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
     void loadMenu();
     return () => {
       active = false;
+      unsubscribeModelProgress();
       controller.abort();
       if (timeout !== undefined) window.clearTimeout(timeout);
     };
@@ -1645,9 +1650,9 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
     {busy && <div className="menu-assistant-loading" role="status" aria-live="polite"><LoaderCircle size={16} className="menu-assistant-spinner"/><div><strong>{menuLoadingLabel[loadingStage]}</strong><span>Checking the restaurant’s own pages. Menu text stays on this device.</span><div className="menu-assistant-loading-track" aria-hidden="true"><i/></div></div></div>}
     {modelStatus !== 'idle' && <div className={`menu-assistant-model-state${modelStatus === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
       {modelStatus !== 'ready' && modelStatus !== 'error' && <LoaderCircle size={15} className="menu-assistant-spinner"/>}
-      <div><strong>{modelStatus === 'ready' ? 'Local AI ready' : modelStatus === 'error' ? 'Local AI unavailable' : modelStatus === 'loading' ? `Downloading ${modelProgress.file || 'model files'}${typeof modelProgress.progress === 'number' ? ` · ${Math.round(modelProgress.progress)}%` : ''}` : `Preparing local AI · ${modelProgress.status}`}</strong>
-        {modelStatus === 'loading' && <span>First use downloads about 570 MB. The browser caches the model on this device for later visits.</span>}
-        {modelStatus === 'checking' && <span>Starting the on-device WebGPU model…</span>}
+      <div><strong>{modelStatus === 'ready' ? modelProgress.device === 'wasm' ? 'Local AI ready on CPU' : 'Local AI ready' : modelStatus === 'error' ? 'Local AI unavailable' : modelStatus === 'loading' ? `Downloading ${modelProgress.file || 'model files'}${typeof modelProgress.progress === 'number' ? ` · ${Math.round(modelProgress.progress)}%` : ''}` : `Preparing local AI · ${modelProgress.status}`}</strong>
+        {modelStatus === 'loading' && <span>{modelProgress.device === 'wasm' ? 'The CPU fallback downloads about 920 MB on first use and runs more slowly. The browser caches it on this device.' : 'First use downloads about 570 MB. The browser caches the model on this device for later visits.'}</span>}
+        {modelStatus === 'checking' && <span>{modelProgress.device === 'wasm' ? 'Preparing the local CPU model…' : 'Starting the on-device WebGPU model…'}</span>}
         {modelStatus === 'error' && <span>{modelError}</span>}
         {modelStatus === 'loading' && typeof modelProgress.progress === 'number' && <div className="menu-assistant-loading-track" role="progressbar" aria-label="Local AI model download" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(modelProgress.progress)}><i style={{ width: `${Math.max(0, Math.min(100, modelProgress.progress))}%` }}/></div>}
       </div>
