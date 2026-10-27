@@ -2,6 +2,8 @@
 
 Lunumi is a mobile-first, local-first food discovery PWA. It uses React, TypeScript, Vite, Dexie/IndexedDB and public restaurant data. Helsinki metro searches combine a prebuilt OpenStreetMap snapshot with a separately maintained directory of restaurants checked against their official pages; other areas use the public Overpass API. The Map tab shows local food history and nearby places not marked visited as pins on OpenStreetMap tiles. Selecting a pin opens Lunumi's restaurant info card; the map supports zoom, drag panning and fit-to-places. Viewing the map requests the displayed tiles from OpenStreetMap, while history stays on-device. There are no user accounts or tracking analytics. Menu fetching uses a Cloudflare Worker on its free request tier; parsing and caches stay on-device.
 
+The optional local line-filter training workflow uses USDA CC0 food names for English and Fineli CC BY food names for Finnish and Swedish; it runs without paid model services. See the [training guide](docs/menu-training.md) for source attribution and limitations.
+
 ## Run locally
 
 Install Node.js 22 or newer, then run:

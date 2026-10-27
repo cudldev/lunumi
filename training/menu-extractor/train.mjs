@@ -89,19 +89,26 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
   const languageExamples = all.filter(example => example.language === language);
   const classes = [...new Set(languageExamples.map(example => example.label))].sort();
   if (classes.length < 2) throw new Error(`${language}: training needs at least two different labels.`);
-  const sourceKey = example => example.sourceName || example.sourceUrl || example.source?.name || 'unknown-source';
+  const sourceKey = example => example.sourceUrl || example.sourceName || example.source?.sourceUrl || example.source?.name || 'unknown-source';
+  const groupKey = example => example.group == null || String(example.group).trim() === ''
+    ? null
+    : `${sourceKey(example)}\n${String(example.group).trim()}`;
   const sources = [...new Set(languageExamples.map(sourceKey))];
+  const groups = [...new Set(languageExamples.map(groupKey).filter(Boolean))];
   const sourceHoldout = sources.length >= 5;
-  let usedSourceHoldout = sourceHoldout;
+  const groupHoldout = !sourceHoldout && groups.length >= 5;
+  let splitKind = sourceHoldout ? 'source-held-out' : groupHoldout ? 'item-group-held-out' : 'exact-text-held-out';
   let train = [];
   let validation = [];
   for (const example of languageExamples) {
-    const identity = sourceHoldout ? sourceKey(example) : `${example.label}\n${example.text.toLowerCase()}`;
+    const identity = sourceHoldout ? sourceKey(example)
+      : groupHoldout ? groupKey(example)
+        : `${example.label}\n${example.text.toLowerCase()}`;
     (stableBucket(identity, 5) === 0 ? validation : train).push(example);
   }
   if (classes.some(label => !train.some(example => example.label === label) || !validation.some(example => example.label === label))) {
-    if (sourceHoldout) {
-      usedSourceHoldout = false;
+    if (sourceHoldout || groupHoldout) {
+      splitKind = 'exact-text-held-out';
       train = [];
       validation = [];
       for (const example of languageExamples) {
@@ -118,19 +125,36 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
 
   const fitted = fit(train, classes);
   const classMetrics = Object.fromEntries(classes.map(label => [label, { truePositive: 0, falsePositive: 0, falseNegative: 0, support: 0 }]));
+  const runtimeFilterThreshold = 0.9;
+  const runtimeFilter = { selected: 0, correct: 0, dishSupport: 0, dishFiltered: 0, sectionSupport: 0, sectionFiltered: 0 };
   let correct = 0;
   for (const example of validation) {
     const probabilities = scoreText(example.text, fitted);
     const predicted = Object.entries(probabilities).sort((a, b) => b[1] - a[1])[0][0];
+    if (example.label === 'dish') runtimeFilter.dishSupport += 1;
+    if (example.label === 'section') runtimeFilter.sectionSupport += 1;
+    if ((probabilities.other ?? 0) >= runtimeFilterThreshold) {
+      runtimeFilter.selected += 1;
+      if (example.label === 'other') runtimeFilter.correct += 1;
+      if (example.label === 'dish') runtimeFilter.dishFiltered += 1;
+      if (example.label === 'section') runtimeFilter.sectionFiltered += 1;
+    }
     classMetrics[example.label].support += 1;
     if (predicted === example.label) { correct += 1; classMetrics[example.label].truePositive += 1; }
     else { classMetrics[predicted].falsePositive += 1; classMetrics[example.label].falseNegative += 1; }
   }
   const evaluation = {
-    split: usedSourceHoldout ? 'deterministic 80/20 source-held-out' : 'deterministic 80/20 exact-text holdout; source-held-out split unavailable',
+    split: `deterministic 80/20 ${splitKind}${splitKind === 'exact-text-held-out' ? ' only' : ''}`,
     trainingExamples: train.length,
     validationExamples: validation.length,
     accuracy: correct / validation.length,
+    runtimeOtherFilter: {
+      threshold: runtimeFilterThreshold,
+      selectedLines: runtimeFilter.selected,
+      precision: runtimeFilter.correct / Math.max(1, runtimeFilter.selected),
+      dishRetention: (runtimeFilter.dishSupport - runtimeFilter.dishFiltered) / Math.max(1, runtimeFilter.dishSupport),
+      sectionRetention: (runtimeFilter.sectionSupport - runtimeFilter.sectionFiltered) / Math.max(1, runtimeFilter.sectionSupport),
+    },
     byLabel: Object.fromEntries(classes.map(label => {
       const { truePositive, falsePositive, falseNegative, support } = classMetrics[label];
       const precision = truePositive / Math.max(1, truePositive + falsePositive);
@@ -156,6 +180,7 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
   for (const [label, metrics] of Object.entries(evaluation.byLabel)) {
     console.log(`  ${label}: precision ${(metrics.precision * 100).toFixed(1)}%, recall ${(metrics.recall * 100).toFixed(1)}%, n=${metrics.support}`);
   }
+  console.log(`  runtime other filter (>=${(runtimeFilterThreshold * 100).toFixed(0)}%): precision ${(evaluation.runtimeOtherFilter.precision * 100).toFixed(1)}%, dish retention ${(evaluation.runtimeOtherFilter.dishRetention * 100).toFixed(1)}%, n=${evaluation.runtimeOtherFilter.selectedLines}`);
   console.log(`  model: ${outputPath}`);
 }
 console.log(`Training text remains in the Git-ignored local corpus.`);
