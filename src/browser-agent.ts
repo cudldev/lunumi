@@ -73,6 +73,7 @@ export async function runAgent(input: {
   const target = named.length === 1 ? named[0] : input.records.find(record => record.id === (referencedId || input.selectedId));
   const requiresMenu = Boolean(target) && /\b(menu|menus|lunch|lounas|meny|items?|dishes|prices?|cost|allerg\w*)\b/i.test(request);
   const wantsDiscovery = /\b(recommend|suggest|find|looking for|where (?:can|should)|nearby)\b/i.test(request) && (named.length > 0 || /\b(restaurants?|places?|somewhere|nearby|food|eat|lunch|dinner)\b/i.test(request));
+  const requestedDiet = request.match(/\b(vegan|vegetarian|gluten[- ]free|dairy[- ]free|halal)\b/i)?.[1]?.toLowerCase().replace(/ /g, '-');
   const wantsDirections = /\b(directions|route|navigate)\b/i.test(request);
   const wantsCard = /\b(open|show|view)\b.{0,50}\b(card|details)\b|\btake me to\b/i.test(request);
   for (let step = 0; step < 3; step++) {
@@ -82,7 +83,9 @@ export async function runAgent(input: {
     let action: AgentAction;
     try { action = parseAction(proposal); }
     catch { input.signal.throwIfAborted(); action = { tool: 'finish' }; }
-    if (step === 0 && requiresMenu && target && action.tool !== 'read_menu' && action.tool !== 'list_items') action = { tool: 'read_menu', id: target.id };
+    if (step === 0 && requiresMenu && target && requestedDiet) action = { tool: 'list_items', id: target.id, query: requestedDiet };
+    else if (step === 0 && requiresMenu && target && action.tool !== 'read_menu' && action.tool !== 'list_items') action = { tool: 'read_menu', id: target.id };
+    if (named.length === 1 && /\b(find|search|show)\b/i.test(request) && !requiresMenu && !wantsDirections && !wantsCard && !/recommend|suggest|new/i.test(request)) action = { tool: 'search_restaurants', query: named[0].name };
     if (wantsDiscovery && !requiresMenu && !wantsDirections && !wantsCard && !['search_restaurants', 'recommend_restaurants'].includes(action.tool)) action = /recommend|suggest|new|not visited|where (?:can|should)/i.test(request) ? { tool: 'recommend_restaurants', query: named.length === 1 ? named[0].name : request, unvisited: true } : { tool: 'search_restaurants', query: named.length === 1 ? named[0].name : request };
     if (action.tool === 'finish' && target && wantsDirections) action = { tool: 'get_directions', id: target.id };
     else if (action.tool === 'finish' && target && wantsCard) action = { tool: 'open_restaurant', id: target.id };

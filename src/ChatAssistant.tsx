@@ -5,7 +5,7 @@ import { matchingItems, menuSources, readRestaurantMenu, understand } from './ch
 import type { MenuItem, MenuSource } from './menu-data';
 import './chat-assistant.css';
 import { AssistantState } from './AssistantState';
-import { hasVisited, normalizeFoodQuery, recommendPlaces } from './recommendations';
+import { constrainedRestaurantQuery, hasVisited, normalizeFoodQuery, recommendPlaces } from './recommendations';
 import { buildConversation } from './ai-context';
 import { runAgent } from './browser-agent';
 import { browserConversation, type LocalConversation } from './local-conversation';
@@ -100,12 +100,12 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
           setActivity('Using ' + action.tool.replace(/_/g, ' ') + '…');
           if (action.tool === 'recommend_restaurants') {
             const requireNew = /\b(new|unvisited|not visited|haven.t visited|never been)\b/i.test(text);
-            const choices = recommendPlaces(discoverablePlaces, history, preferences, action.query, action.unvisited || requireNew);
+            const choices = recommendPlaces(discoverablePlaces, history, preferences, constrainedRestaurantQuery(action.query, text, discoverablePlaces), action.unvisited || requireNew);
             reply({ text: choices.length ? 'Recommendations from current nearby results.' : noMatches, places: choices.map(choice => choice.place), reasons: Object.fromEntries(choices.map(choice => [choice.place.id, choice.reason])) });
             return choices.map(choice => ({ id: choice.place.id, name: choice.place.name, cuisine: choice.place.tags.cuisine, reason: choice.reason, markedVisited: hasVisited(history, choice.place.id), distanceMetres: Math.round(choice.place.distance) }));
           }
           if (action.tool === 'search_restaurants') {
-            const terms = normalizeFoodQuery(action.query).split(/\s+/).filter(Boolean);
+            const terms = constrainedRestaurantQuery(action.query, text, discoverablePlaces).split(/\s+/).filter(Boolean);
             const matches = discoverablePlaces.filter(place => terms.every(term => filterNearby([place], term).length)).slice(0, 8);
             reply({ text: matches.length ? 'Matching nearby places. Select one for menu context, or open its restaurant card.' : noMatches, places: matches });
             return matches.map(place => ({ id: place.id, name: place.name, cuisine: place.tags.cuisine, distanceMetres: Math.round(place.distance) }));

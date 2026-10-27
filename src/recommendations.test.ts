@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasVisited, normalizeFoodQuery, recommendPlaces } from './recommendations';
+import { constrainedRestaurantQuery, hasVisited, normalizeFoodQuery, recommendPlaces } from './recommendations';
 import type { Place } from './core';
 const place = (id: string, cuisine: string, distance: number): Place => ({ id, name: id, tags: { cuisine }, lat: 60, lon: 24, distance });
 const places = [place('visited', 'italian', 50), place('new-italian', 'italian', 300), place('new-thai', 'thai', 100)];
@@ -25,4 +25,9 @@ describe('history-based recommendations', () => {
 it('normalizes model search phrases without losing the food constraint', () => {
   expect(normalizeFoodQuery('Italian restaurants near me')).toBe('italian');
   expect(recommendPlaces(places, history, { likes: [], dislikes: [], learn: true }, 'Italian restaurants near me').map(item => item.place.id)).toEqual(['new-italian']);
+});
+
+it('preserves an explicit cuisine when the model omits the query', () => {
+  expect(constrainedRestaurantQuery('', 'Find Italian restaurants nearby.', places)).toBe('italian');
+  expect(constrainedRestaurantQuery('Italian restaurants near me', 'Find Italian restaurants nearby.', places)).toBe('italian');
 });

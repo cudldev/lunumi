@@ -1,14 +1,18 @@
 # Browser AI and menu agent
 
-**Ask Lunumi** combines a conversational LLM with browser tools. It appears on the main screens and inside restaurant details. Ordinary messages go to the model; quick menu buttons also work without loading AI.
+**Ask Lunumi** combines a conversational LLM with browser tools. It appears on the main screens and inside restaurant details. Ordinary messages go to the model; quick menu buttons retrieve sources directly.
 
 ## Model and agent
 
-- SmolLM2-1.7B-Instruct (Apache 2.0), pinned to revision 31b70e2e869a7173562077fd711b654946d38674, runs through Transformers.js 4.3.2 in a dedicated worker. The first AI request downloads about 1.4 GB of q4 weights plus tokenizer/runtime files from Hugging Face and its file CDN. Browser caching avoids repeat downloads when available. See the [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) and [function-call format](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct/blob/main/instructions_function_calling.md).
-- WebGPU is preferred, with single-thread WASM as a fallback when GPU loading fails or no adapter exists. CPU inference is slower; low-memory devices may fail. One lazy worker is shared across restaurant and global chat panels.
+- SmolLM2-1.7B-Instruct (Apache 2.0), pinned to revision 31b70e2e869a7173562077fd711b654946d38674, runs through Transformers.js 4.3.2 in a dedicated worker. The main app begins preparation on the first onboarding Continue or Skip action and downloads about 1.4 GB of q4 weights plus tokenizer/runtime files from Hugging Face and its file CDN. Browser caching avoids repeat downloads when available. See the [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) and [function-call format](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct/blob/main/instructions_function_calling.md).
+- WebGPU is preferred, with single-thread WASM as a fallback when GPU loading fails or no adapter exists. CPU inference is slower; low-memory devices may fail. One worker is shared and kept ready across restaurant and global chat panels.
 - The agent uses the model’s supported function-call envelope, then proposes validated actions: search nearby restaurants, recommend places from local history/preferences, open a restaurant card, provide directions, read its menu/lunch source, or list/filter menu items. The app validates tool names and restaurant IDs before executing them. Restaurant-specific menu questions require a real menu-tool result even when the model proposes answering from memory; failed retrieval is not replaced with a guessed menu. Generated URLs are never fetch targets. Each turn allows at most three actions and prevents identical repeated actions.
 - Restaurant results are linked to real site records. **Open restaurant card** opens the matching in-app card without marking it visited. Recommendations rank explicit cuisine preferences and, when learning is enabled, cuisines from Loved/favorite and disliked history. New-place results exclude IDs marked visited or carrying a past visit timestamp; this means not recorded as visited, not proof of never having been there. Disabling learning removes feedback from ranking. The existing Profile setting to hide unknown dietary compatibility also applies to agent searches and recommendations. Directions links use the exact public restaurant coordinates and open Maps on request. Recommendations use available cuisine, distance, and source facts; the agent does not have Google reviews or verified live opening status.
 - Recent conversation and bounded tool receipts provide context, including the order of previously shown recommendations. Normal AI conversation streams; restaurant-tool answers render verified records, categories, prices, source excerpts, and links directly instead of letting the LLM rewrite or invent those facts. General replies do not acquire unrelated menu-source citations. The small local model can still misunderstand requests or make mistakes; source-linked entries remain available to verify restaurant facts.
+
+## Startup readiness
+
+Onboarding forms remain usable during preparation and save independently. Finishing or skipping onboarding opens a blocking loading screen until model loading and a real one-token inference check succeed. Downloading 100% alone never unlocks the app. Returning visits check cached files and run the same inference check before showing navigation. Progress, pause/resume, errors, and retry are visible; a runtime failure locks the app again until preparation succeeds. First use needs about 1.4 GB plus runtime files and enough device memory; cache eviction can require another download. The standalone chatbot test keeps its separate on-demand loading behavior.
 
 ## Internet menus and extraction
 
@@ -24,12 +28,13 @@ PDF/image menus, JavaScript-only pages, unsupported layouts, blocked sources, an
 
 Conversation and extracted menus stay in memory, outside IndexedDB, profile exports, and restaurant datasets. No chat, profile notes, or menu text is sent to a hosted AI service. Model downloads expose normal request metadata to Hugging Face/CDN hosts. Menu retrieval sends the public source URL to the configured Worker and normal request metadata to restaurant hosts; direct requests omit credentials and referrers. Google review content is not fetched or summarized.
 
-Cancel terminates active AI work or menu retrieval. Model startup is limited to six minutes; generation with no further tokens stops after 90 seconds. Clear chat removes conversation/menu state and releases the model when idle. Model download caches can remain in browser storage and may be evicted by the browser. Closing the panel preserves the current session; reloading clears the conversation. Menu lists are limited to 100 extracted entries, result replies to eight restaurants, and AI context to bounded recent turns/tool output.
+Cancel terminates active AI work or menu retrieval. Model startup is limited to six minutes; generation with no further tokens stops after 90 seconds. Clear chat removes conversation/menu state. The main app keeps the ready model in memory; the standalone chatbot test releases its idle model. Model download caches can remain in browser storage and may be evicted by the browser. Closing the panel preserves the current session; reloading clears the conversation. Menu lists are limited to 100 extracted entries, result replies to eight restaurants, and AI context to bounded recent turns/tool output.
 
 ## Files and checks
 
 - Chat and card handoff: src/ChatAssistant.tsx, src/App.tsx, src/MenuAssistant.tsx.
 - Agent planning and action validation: src/browser-agent.ts; history ranking: src/recommendations.ts; shared local context: src/AssistantState.tsx; prompt context: src/ai-context.ts.
+- Startup gate: src/ModelSetupScreen.tsx, src/use-model-readiness.ts, src/model-state.ts.
 - Local runtime: src/local-conversation.ts, src/conversation.worker.ts, src/conversation-config.ts.
 - Menu retrieval and parsing: src/chat-tools.ts, src/menu-data.ts; service: menu-reader-worker/.
 - Run npm run typecheck, npm test, npm run build. The optional scripts/verify-private-ai.mjs smoke test (Node 24) downloads model weights into the ignored .ai-smoke-cache directory and checks actual conversation memory and agent decisions.
