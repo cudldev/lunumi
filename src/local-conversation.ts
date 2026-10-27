@@ -1,14 +1,14 @@
 import type { PromptMessage } from './ai-context';
 import type { AIEvent } from './conversation.worker';
 import type { ModelSnapshot } from './model-state';
-import { currentModelSize } from './conversation-config';
+import { currentDevicePrefersCPU, currentModelSize } from './conversation-config';
 import { markAIWork } from './model-recovery';
 
 type WorkerLike = Pick<Worker, 'postMessage' | 'terminate' | 'onmessage' | 'onerror' | 'onmessageerror'>;
 type Mode = 'chat' | 'plan' | 'prepare';
 export class LocalConversation {
   private worker: WorkerLike | null = null;
-  private cpuOnly = false;
+  private cpuOnly = currentDevicePrefersCPU();
   private cancel: (() => void) | null = null;
   private pins = 0;
   private state: ModelSnapshot = { phase: 'idle', status: 'Private AI is not prepared yet.' };
@@ -20,6 +20,7 @@ export class LocalConversation {
   private publish(state: ModelSnapshot) { this.state = state; for (const listener of this.listeners) listener(state); }
   retain() { this.pins++; return () => { this.pins = Math.max(0, this.pins - 1); this.releaseIdle(); }; }
   releaseIdle() { if (!this.cancel && !this.pins) this.stop(); }
+  preferCPU() { this.stop(); this.cpuOnly = true; }
   stop() {
     if (this.cancel) { this.cancel(); return; }
     this.worker?.terminate(); this.worker = null;
@@ -61,7 +62,7 @@ export class LocalConversation {
         worker.onmessage = (message: MessageEvent<AIEvent>) => {
           const event = message.data;
           if (event.type === 'fallback') {
-            if (modelSize === 'compact') { fail(new Error('Graphics loading failed. AI was stopped to avoid another memory allocation on this device. You can continue without AI.')); return; }
+            if (modelSize === 'compact') { fail(new Error('Graphics loading failed. AI was stopped to avoid another memory allocation on this device. Try CPU (slower), or continue without AI.' + (event.cause ? '\nGraphics details: ' + event.cause : ''))); return; }
             if (this.cpuOnly) { fail(new Error('The model could not run on the CPU.')); return; }
             worker.onmessage = null; worker.onerror = null; worker.onmessageerror = null; worker.terminate(); this.cpuOnly = true;
             this.publish({ phase: 'loading', status: event.text, stage: 'load' });
