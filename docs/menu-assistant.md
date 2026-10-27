@@ -33,3 +33,7 @@ Cancel terminates active AI work or menu retrieval. Model startup is limited to 
 - Local runtime: src/local-conversation.ts, src/conversation.worker.ts, src/conversation-config.ts.
 - Menu retrieval and parsing: src/chat-tools.ts, src/menu-data.ts; service: menu-reader-worker/.
 - Run npm run typecheck, npm test, npm run build. The optional scripts/verify-private-ai.mjs smoke test (Node 24) downloads model weights into the ignored .ai-smoke-cache directory and checks actual conversation memory and agent decisions.
+
+## Separate conversation test
+
+The optional `chat-test/` page runs AI conversation without restaurant tools. See [chatbot-test.md](chatbot-test.md).

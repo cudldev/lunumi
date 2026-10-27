@@ -81,3 +81,7 @@ All personalization and history storage run on the device. Viewing the history m
 `src/core.ts` contains the normalized place shape, distance helper and current Overpass adapter. Keep the UI on that normalized model when adding another provider. A future Google Places adapter would need explicit user opt-in, API key handling outside this static frontend and cost review; it is intentionally not active in V1.
 
 `scripts/build-osm-food-data.mjs` filters a locally supplied regional extract to the four Helsinki metro municipality boundaries and the amenity tags Lunumi displays. Restaurant data generation is a local step; only publishing the app and committed JSON runs in GitHub Actions. If no JSON file is committed, metro searches fall back to the online search provider.
+
+## Standalone chatbot test
+
+Open `chat-test/` under either the live or staging site to try private AI conversation without onboarding or restaurant tools. The first AI message downloads about 1.4 GB of model weights. Chats stay on-device; model downloads contact Hugging Face/CDN hosts. See the [test guide](docs/chatbot-test.md).
