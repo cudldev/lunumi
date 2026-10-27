@@ -65,3 +65,21 @@ it('keeps discovery grounded when the model declines a natural nearby request', 
   await runAgent({ turns: [{ role: 'user', text: 'Recommend somewhere Italian nearby that I have not visited yet.' }], records, signal: new AbortController().signal, plan: async () => '<tool_call>[]</tool_call>', execute });
   expect(execute).toHaveBeenCalledWith(expect.objectContaining({ tool: 'recommend_restaurants', unvisited: true }));
 });
+
+it('sends ordinary chat directly to conversation without any hidden planning call', async () => {
+  const plan=vi.fn(), execute=vi.fn();
+  for(const text of ['Hello!', 'My name is Alex.', 'What is my name?', 'Recommend a good science fiction book.', 'How are you today?']) {
+    expect(await runAgent({turns:[{role:'user',text}],records,selectedId:'one',previousResults:[{tool:'recommend_restaurants',result:records}],signal:new AbortController().signal,plan,execute,compact:true})).toEqual([]);
+  }
+  expect(plan).not.toHaveBeenCalled(); expect(execute).not.toHaveBeenCalled();
+});
+
+it('uses verified tools directly for clear mobile requests, including ordinal card handoff', async () => {
+  const plan=vi.fn(), execute=vi.fn().mockResolvedValue(records);
+  for(const [text,expected] of [['Find Italian restaurants nearby.','search_restaurants'],['Recommend a new restaurant.','recommend_restaurants'],['Show the menu at Test Kitchen.','read_menu'],['Give me directions to Test Kitchen.','get_directions'],['Open the first restaurant card.','open_restaurant']]) {
+    execute.mockClear();
+    await runAgent({turns:[{role:'user',text}],records,previousResults:[{tool:'search_restaurants',result:records}],signal:new AbortController().signal,plan,execute,compact:true});
+    expect(execute).toHaveBeenCalledTimes(1); expect(execute).toHaveBeenCalledWith(expect.objectContaining({tool:expected}));
+  }
+  expect(plan).not.toHaveBeenCalled();
+});
