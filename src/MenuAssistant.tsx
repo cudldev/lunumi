@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v18';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v19';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -357,9 +357,21 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
 
   // DOMParser creates a detached document where innerText can collapse the whole page.
   // Keep semantic content blocks on separate lines for the local item parser.
-  const blocks = [...document.body.querySelectorAll('h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')]
-    .map(node => node.textContent?.replace(/\s+/g, ' ').trim() || '')
-    .filter(text => text.length > 1);
+  const blockNodes = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')];
+  const blockText = (node: Element) => node.textContent?.replace(/\s+/g, ' ').trim() || '';
+  const menuTitleIndex = blockNodes.findIndex(node => /^H[1-3]$/.test(node.tagName)
+    && /(?:^|\b)(?:menus?|lunch|meny|ruokalista|tuotteet)(?:\b|$)/i.test(blockText(node)));
+  const firstSectionIndex = menuTitleIndex < 0 ? -1 : blockNodes.findIndex((node, index) => index > menuTitleIndex
+    && /^H[2-3]$/.test(node.tagName));
+  const blocks = blockNodes.flatMap((node, index) => {
+    const text = blockText(node);
+    if (text.length <= 1) return [];
+    // Menu pages often put a table-of-contents list below the page title. Skip
+    // those links/labels and keep the actual semantic section headings instead.
+    if (index === menuTitleIndex || (firstSectionIndex > menuTitleIndex && index > menuTitleIndex && index < firstSectionIndex)) return [];
+    if (menuTitleIndex >= 0 && index > menuTitleIndex && /^H[2-3]$/.test(node.tagName)) return [`menu-section: ${text}`];
+    return [text];
+  });
   return [...structuredItems, ...(blocks.length ? blocks : [document.body.textContent?.replace(/\s+/g, ' ').trim() || ''])].filter(Boolean).join('\n');
 }
 

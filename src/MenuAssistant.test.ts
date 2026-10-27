@@ -2,6 +2,43 @@ import { describe, expect, it } from 'vitest';
 import { cleanMenuText, discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('preserves semantic menu sections and skips the category index below a menu title', () => {
+    const block = (tagName: string, textContent: string) => ({ tagName, textContent });
+    const blocks = [
+      block('H1', 'Our Menus'),
+      block('P', 'Mochi Donut'),
+      block('P', 'Mochi Ice Cream'),
+      block('H2', 'Matcha'),
+      block('H4', 'Matcha Latte'),
+      block('P', '5.9€'),
+      block('H2', 'Mochi Ice Cream'),
+      block('H4', 'Strawberry Mochi'),
+      block('P', '4.8€'),
+    ];
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      body: { textContent: '', querySelectorAll: () => blocks },
+      querySelectorAll: () => [],
+      querySelector: () => null,
+    } as unknown as Document; } } as typeof DOMParser;
+    let extracted: string;
+    try {
+      extracted = cleanMenuText('<html></html>', 'https://restaurant.example/menu/');
+    } finally {
+      globalThis.DOMParser = original;
+    }
+    const parsed = parseMenu(extracted, 'en', null);
+
+    expect(extracted).toContain('menu-section: Matcha');
+    expect(extracted).toContain('menu-section: Mochi Ice Cream');
+    expect(extracted).not.toContain('menu-section: Our Menus');
+    expect(parsed.items.map(item => [item.section, item.name])).toEqual([
+      ['Matcha', 'Matcha Latte'],
+      ['Mochi Ice Cream', 'Strawberry Mochi'],
+    ]);
+    expect(parsed.items.map(item => item.price)).toEqual(['5.9€', '4.8€']);
+  });
+
   it('rejects generic restaurant home-page copy as menu results while accepting menu evidence', () => {
     const homePage = [
       'DONUT', 'MOCHI', 'MATCHA', 'COFFEE', 'Love you so Mochi', 'Baking The Difference',
