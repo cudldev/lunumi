@@ -38,8 +38,8 @@ export default defineConfig({
           urlPattern: /\/data\/restaurant-directory\.json$/,
           handler: 'NetworkFirst',
           options: {
-            cacheName: 'lunumi-restaurant-directory',
-            networkTimeoutSeconds: 3,
+            cacheName: 'lunumi-restaurant-directory-v2',
+            
             expiration: { maxEntries: 1, maxAgeSeconds: 14 * 24 * 60 * 60 },
             cacheableResponse: { statuses: [0, 200] },
           },
