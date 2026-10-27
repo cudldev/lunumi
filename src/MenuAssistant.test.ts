@@ -165,3 +165,30 @@ it('separates a Finnish category prefix from the dish and preserves source evide
   ]);
   expect(parsed.items[0].sourceText).toBe('HAMPURILAISET Kerroshampurilainen');
 });
+
+it('keeps Finnish lunch dishes and source dietary codes while dropping page metadata', () => {
+  const pageText = [
+    '020 123 4567', 'Ma – Pe 11.00 – 13.30', '19. – 23.10.2026',
+    'Lounas – viikko 43', 'Maanantai Ma', 'Lounasbuffet', '13,70 €',
+    'Pääruoaksi', 'Kasvispihvi kirjolohilisäkkeellä',
+    'Allergeenit: Kala ja maito',
+    'Ravintoarvot (100 g): 100 kcal energiaa', 'Hiilijalanjälki: 0.1 kg',
+    'Ainesosat: Kasviksia, kirjolohta, kermaa', 'A, G, L, M',
+    'Pääruoan kaveriksi', 'Paahdetut juurekset', 'G, L, VEG',
+  ].join('\n');
+  const parsed = parseMenu(pageText, 'fi', null);
+
+  expect(parsed.items.map(item => [item.section, item.name])).toEqual([
+    ['Pääruoaksi', 'Kasvispihvi kirjolohilisäkkeellä'],
+    ['Pääruoan kaveriksi', 'Paahdetut juurekset'],
+  ]);
+  expect(parsed.items[0]).toMatchObject({
+    allergenInfo: ['Allergeenit: Kala ja maito'],
+    ingredients: ['Kasviksia, kirjolohta, kermaa'],
+    dietaryInfo: ['A, G, L, M'],
+  });
+  expect(parsed.items[1].dietaryInfo).toEqual(['G, L, VEG']);
+  expect(parsed.items[0].diets).toEqual([]);
+  expect(parsed.items[0].sourceText).toContain('A, G, L, M');
+  expect(parsed.notes).toContain('Lounasbuffet: 13,70 €');
+});
