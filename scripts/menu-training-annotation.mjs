@@ -1,5 +1,16 @@
 export const trainingLabels = new Set(['dish', 'section', 'other']);
 
+export function validateCommercialLicense(source) {
+  if (source?.permissionBasis === 'written-permission') return;
+  const licenseText = `${source?.license ?? ''} ${source?.licenseUrl ?? ''}`.toLowerCase();
+  if (/\bnon[-\s]?commercial\b|\bby[-_\s]?nc\b|creativecommons\.org\/licenses\/by-nc\//i.test(licenseText)) {
+    throw new Error('Noncommercial licenses cannot be used for commercial model training without separate written permission.');
+  }
+  if (/\bno[-\s]?derivatives\b|\bby[-_\s]?nd\b|creativecommons\.org\/licenses\/by-nd\//i.test(licenseText)) {
+    throw new Error('NoDerivatives licenses cannot be used to release commercial model weights without separate written permission.');
+  }
+}
+
 export function trainingSourceMetadata(example) {
   return example.source ?? {
     name: example.sourceName,
@@ -25,15 +36,20 @@ export function validateCandidateForAnnotation(candidate) {
     throw new Error('Candidate is not approved for released weights and future commercial use.');
   }
   if (!candidate.sourceUrl || !candidate.license || !candidate.licenseUrl
-    || !['explicit-license', 'written-permission'].includes(candidate.permissionBasis)) {
+    || !['explicit-license', 'written-permission', 'open-data-terms'].includes(candidate.permissionBasis)) {
     throw new Error('Candidate is missing its source URL, license, or permission basis.');
   }
+  validateCommercialLicense(candidate);
   if (typeof candidate.rightsReviewedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(candidate.rightsReviewedAt)) {
     throw new Error('Candidate needs its rights-review date in YYYY-MM-DD format.');
   }
   if (candidate.permissionBasis === 'written-permission'
     && !(candidate.sourceRightsEvidenceUrl || candidate.rightsEvidenceUrl)) {
     throw new Error('Written-permission candidates need a rights evidence URL.');
+  }
+  if (candidate.permissionBasis === 'open-data-terms'
+    && !(candidate.sourceRightsEvidenceUrl || candidate.rightsEvidenceUrl)) {
+    throw new Error('Open-data-terms candidates need an official reuse-terms evidence URL.');
   }
 }
 

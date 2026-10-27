@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { validateCommercialLicense } from './menu-training-annotation.mjs';
 import { parseFeed, parseMenuPage } from './menu-training-source.mjs';
 
 const root = process.cwd();
@@ -30,9 +31,11 @@ function validateSource(source, index) {
   if (!source.license || !source.licenseUrl || !source.rightsReviewedAt || !source.rightsEvidenceUrl) {
     throw new Error(`Source ${index + 1} needs its license, license URL, review date, and evidence URL.`);
   }
-  if (!['explicit-license', 'written-permission'].includes(source.permissionBasis)) {
-    throw new Error(`Source ${index + 1} must use an explicit license or written permission; public availability alone is not enough.`);
+  if (!['explicit-license', 'written-permission', 'open-data-terms'].includes(source.permissionBasis)) {
+    throw new Error(`Source ${index + 1} must have an explicit license, written permission, or official open-data reuse terms; public availability alone is not enough.`);
   }
+  try { validateCommercialLicense(source); }
+  catch (error) { throw new Error(`Source ${index + 1}: ${error.message}`); }
   return { ...source, type, url: url.toString() };
 }
 

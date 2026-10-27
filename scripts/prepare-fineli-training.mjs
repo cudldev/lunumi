@@ -21,12 +21,30 @@ const syntheticNoise = {
     ['page', ['Lisätietoja ravintolasta', 'Tietoa palveluistamme', 'Seuraa meitä sosiaalisessa mediassa', 'Tilaa uutiskirje', 'Tervetuloa ravintolaan']],
     ['instructions', ['Katso sijainti kartalta', 'Siirry etusivulle', 'Valitse kieli', 'Avaa yhteystiedot', 'Lue lisää ravintolasta']],
     ['notices', ['Tarkista ajantasaiset tiedot ravintolasta', 'Kysy allergeeneista henkilökunnalta', 'Hinnat sisältävät arvonlisäveron', 'Menu päivitetään viikoittain', 'Tervetuloa uudelleen']],
+    ['opening-hours', ['Avoinna maanantaista perjantaihin kello 10–18', 'Keittiö sulkeutuu puoli tuntia ennen sulkemisaikaa', 'Poikkeavat aukioloajat löydät tältä sivulta', 'Ravintola on suljettu sunnuntaisin', 'Palvelemme lounasaikaan arkisin']],
+    ['contact', ['Osoite: Esimerkkikatu 1', 'Puhelin: 000 000 0000', 'Lähetä meille sähköpostia', 'Yhteydenottolomakkeella saat meihin yhteyden', 'Löydät meidät kaupungin keskustasta', '00100 Helsinki', '12345 Esimerkkikaupunki', 'Osoite: Esimerkkikatu 12, 00100 Helsinki', 'FI-00100 Helsinki', 'Postinumero 12345, Esimerkkikaupunki']],
+    ['reservations', ['Varaa pöytä helposti verkossa', 'Lounaalle emme ota pöytävarauksia', 'Vahvista varauksesi sähköpostitse', 'Kysy vapaita pöytiä henkilökunnalta', 'Muuta varaustasi varauslinkistä']],
+    ['events', ['Järjestä yksityistilaisuus ravintolassamme', 'Juhlamenut suunnitellaan seurueen toiveiden mukaan', 'Pyydä tarjous tapahtumaasi varten', 'Tilamme sopivat myös kokouksiin', 'Ota yhteyttä ryhmävarauksista']],
+    ['story', ['Tutustu ravintolamme tarinaan', 'Haluamme luoda viihtyisän kohtaamispaikan', 'Olemme palvelleet vieraita jo vuosien ajan', 'Meille tärkeintä on hyvä tunnelma', 'Lue lisää ravintolan historiasta']],
+    ['values', ['Vastuullisuus ohjaa toimintaamme', 'Haluamme vähentää ruokahävikkiä', 'Teemme työtämme yhdessä paikallisten kumppanien kanssa', 'Kehitämme palveluamme palautteen perusteella', 'Kaikki ovat tervetulleita ravintolaamme']],
+    ['forms', ['Anna palautetta käynnistäsi', 'Tilaa uutiskirjeemme tästä', 'Valitse haluamasi kieli', 'Lähetä yhteydenottopyyntö', 'Lataa lounaslista PDF-tiedostona']],
+    ['availability', ['Päivän lounaslista julkaistaan aamulla', 'Tämän viikon lounasmenu päivittyy maanantaina', 'Tälle päivälle ei ole lounaslistaa saatavilla', 'Lounaslistaa ei ole vielä julkaistu', 'Tarkista menun voimassaolopäivät']],
+    ['social', ['Seuraa meitä Instagramissa', 'Jaa kokemuksesi sosiaalisessa mediassa', 'Katso uusimmat uutiset kanaviltamme', 'Löydät meidät myös Facebookista', 'Tilaa ajankohtaiset uutiset sähköpostiisi']],
   ],
   sv: [
     ['navigation', ['Startsida', 'Kontaktuppgifter', 'Öppettider', 'Boka bord', 'Hitta restaurang']],
     ['page', ['Mer information om restaurangen', 'Läs om våra tjänster', 'Följ oss på sociala medier', 'Prenumerera på nyhetsbrevet', 'Välkommen till restaurangen']],
     ['instructions', ['Visa platsen på kartan', 'Gå till startsidan', 'Välj språk', 'Öppna kontaktuppgifter', 'Läs mer om restaurangen']],
     ['notices', ['Kontrollera aktuell information med restaurangen', 'Fråga personalen om allergener', 'Priserna inkluderar moms', 'Menyn uppdateras varje vecka', 'Välkommen åter']],
+    ['opening-hours', ['Öppet måndag till fredag klockan 10–18', 'Köket stänger en halvtimme före restaurangen', 'Avvikande öppettider finns på den här sidan', 'Restaurangen är stängd på söndagar', 'Vi serverar lunch på vardagar']],
+    ['contact', ['Adress: Exempelgatan 1', 'Telefon: 000 000 0000', 'Skicka ett e-postmeddelande till oss', 'Kontakta oss via formuläret', 'Du hittar oss i stadens centrum', '123 45 Exempelstad', 'Gatuadress 12, 123 45 Exempelstad', 'Postnummer 123 45, Exempelstad', 'SE-123 45 Exempelstad', '123 45 Stockholm']],
+    ['reservations', ['Boka bord enkelt på nätet', 'Vi tar inga bordsbokningar till lunchen', 'Bekräfta bokningen via e-post', 'Fråga personalen om lediga bord', 'Ändra din bokning via länken']],
+    ['events', ['Ordna ett privat evenemang i restaurangen', 'Festmenyn anpassas efter sällskapets önskemål', 'Be om en offert för ditt evenemang', 'Lokalen passar även för möten', 'Kontakta oss om gruppbokningar']],
+    ['story', ['Läs om restaurangens historia', 'Vi vill skapa en trivsam mötesplats', 'Vi har välkomnat gäster i många år', 'En god stämning är viktig för oss', 'Läs mer om vårt arbete']],
+    ['values', ['Hållbarhet vägleder vårt arbete', 'Vi vill minska matsvinnet', 'Vi samarbetar med lokala producenter', 'Vi utvecklar tjänsten med hjälp av feedback', 'Alla är välkomna till restaurangen']],
+    ['forms', ['Lämna feedback om ditt besök', 'Prenumerera på vårt nyhetsbrev här', 'Välj önskat språk', 'Skicka en kontaktförfrågan', 'Ladda ner lunchlistan som PDF']],
+    ['availability', ['Dagens lunchmeny publiceras på morgonen', 'Veckans lunchmeny uppdateras på måndag', 'Ingen lunchmeny finns tillgänglig i dag', 'Lunchmenyn har inte publicerats ännu', 'Kontrollera menyns giltighetsdatum']],
+    ['social', ['Följ oss på Instagram', 'Dela din upplevelse på sociala medier', 'Se de senaste nyheterna i våra kanaler', 'Du hittar oss också på Facebook', 'Prenumerera på nyheter via e-post']],
   ],
 };
 
@@ -125,6 +143,8 @@ const syntheticSource = {
 const examples = [];
 const exampleKeys = new Set();
 const counts = { fi: 0, sv: 0 };
+const foodNamesByLanguage = { fi: [], sv: [] };
+const syntheticMenuCounts = { fi: 0, sv: 0 };
 for (const csvPath of await filesBelow(extractDir)) {
   const filename = path.basename(csvPath);
   if (!/^food(?:name|\.csv)/i.test(filename)) continue;
@@ -154,15 +174,33 @@ for (const csvPath of await filesBelow(extractDir)) {
       if (exampleKeys.has(key)) continue;
       exampleKeys.add(key);
       counts[language] += 1;
+      foodNamesByLanguage[language].push({ id, name });
       examples.push({ key, schema: 1, language, text: name, label: 'dish', group: `fineli-food-${id}`, source: dataSource });
     }
   }
 }
 
+for (const [language, names] of Object.entries(foodNamesByLanguage)) {
+  const offset = Math.max(1, Math.floor(names.length * 0.371));
+  for (let index = 0; index < names.length; index += 1) {
+    const first = names[index];
+    const second = names[(index + offset) % names.length];
+    if (!second || first.name.toLocaleLowerCase(language) === second.name.toLocaleLowerCase(language)) continue;
+    const conjunction = language === 'fi' ? (index % 2 ? ' ja ' : ' sekä ') : (index % 2 ? ' och ' : ' med ');
+    const text = `${first.name}${conjunction}${second.name}`.replace(/\s+/g, ' ').trim();
+    if (text.length > 220) continue;
+    const key = `${language}\nsynthetic-menu-${first.id}\n${text.toLocaleLowerCase(language)}`;
+    if (exampleKeys.has(key)) continue;
+    exampleKeys.add(key);
+    syntheticMenuCounts[language] += 1;
+    examples.push({ schema: 1, language, text, label: 'dish', group: `fineli-food-${first.id}`, source: dataSource, synthetic: 'fineli-menu-composition-v1' });
+  }
+}
+
 for (const [language, groups] of Object.entries(syntheticNoise)) {
   for (const [group, texts] of groups) {
-    for (const [index, text] of texts.entries()) {
-      examples.push({ schema: 1, language, text, label: 'other', group: `synthetic-${language}-${group}-${index + 1}`, source: syntheticSource });
+    for (const text of texts) {
+      examples.push({ schema: 1, language, text, label: 'other', group: `synthetic-${language}-${group}`, source: syntheticSource });
     }
   }
 }
@@ -177,9 +215,15 @@ const manifest = {
   archiveUrl,
   archiveSha256,
   fetchedAt: new Date().toISOString(),
-  counts: { ...counts, syntheticOtherFi: syntheticNoise.fi.reduce((sum, [, texts]) => sum + texts.length, 0), syntheticOtherSv: syntheticNoise.sv.reduce((sum, [, texts]) => sum + texts.length, 0) },
+  counts: {
+    ...counts,
+    syntheticMenuFi: syntheticMenuCounts.fi,
+    syntheticMenuSv: syntheticMenuCounts.sv,
+    syntheticOtherFi: syntheticNoise.fi.reduce((sum, [, texts]) => sum + texts.length, 0),
+    syntheticOtherSv: syntheticNoise.sv.reduce((sum, [, texts]) => sum + texts.length, 0),
+  },
   labelsPath: path.relative(root, outputPath).replaceAll(path.sep, '/'),
 };
 await writeFile(path.join(privateDir, 'fineli-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`Prepared ${counts.fi} Finnish and ${counts.sv} Swedish CC BY food names plus authored page-noise examples.`);
+console.log(`Prepared ${counts.fi} Finnish and ${counts.sv} Swedish CC BY food names, synthetic menu-line compositions, and authored page-noise examples.`);
 console.log(`Labels: ${path.relative(root, outputPath)} (Git-ignored). Refresh the cached dataset with --refresh.`);

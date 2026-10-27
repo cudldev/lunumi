@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import enMenuClassifier from '../public/models/menu-line-classifier.json';
+import fiMenuClassifier from '../public/models/menu-line-classifier-fi.json';
+import type { MenuClassifier } from './menu-classifier';
 import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
@@ -260,6 +263,28 @@ describe('structured menu extraction', () => {
     expect(parsed.items.map(item => item.name)).toEqual([
       'Roasted root vegetables with lemon-herb sauce',
     ]);
+  });
+
+  it('keeps priced foreign-language dishes when the page language model rejects them', () => {
+    const fiClassifier = fiMenuClassifier as MenuClassifier;
+    const enClassifier = enMenuClassifier as MenuClassifier;
+    const line = 'Roasted salmon with herb potatoes 17 €';
+    const parsedWithSecondary = parseMenu(line, 'fi', fiClassifier, {
+      secondaryClassifiers: [enClassifier],
+      mixedLanguage: true,
+    });
+    const parsedWhenSecondaryIsUnavailable = parseMenu(line, 'fi', fiClassifier, {
+      mixedLanguage: true,
+      missingSecondaryClassifier: true,
+    });
+    const unrelated = parseMenu('Päivän lounas julkaistaan aamulla', 'fi', fiClassifier, {
+      secondaryClassifiers: [enClassifier],
+      mixedLanguage: true,
+    });
+
+    expect(parsedWithSecondary.items.map(item => item.name)).toContain('Roasted salmon with herb potatoes');
+    expect(parsedWhenSecondaryIsUnavailable.items.map(item => item.name)).toContain('Roasted salmon with herb potatoes');
+    expect(unrelated.items).toHaveLength(0);
   });
 
   it('removes a trailing separator left before a compact menu price', () => {
