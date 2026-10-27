@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v29';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v30';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -40,7 +40,7 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
     name: 'English',
     clues: [/\bmonday|tuesday|wednesday|thursday|friday\b/i, /\blunch|menu|allergens\b/i, /\bsalad|soup|chicken|gluten[- ]free\b/i],
     dietSignals: [[/\bvegan\b/i, 'Marked vegan'], [/\bvegetarian\b/i, 'Marked vegetarian'], [/\bgluten[- ]free\b/i, 'Marked gluten-free'], [/\bdairy[- ]free\b/i, 'Marked dairy-free'], [/\blactose[- ]free\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:genic)?\b/i, 'Marked keto']],
-    headings: /^(?:menu|food|drinks|desserts?|starters?|mains?|lunch|dinner|allergens?|monday|tuesday|wednesday|thursday|friday)$/i,
+    headings: /^(?:menu|food|drinks|desserts?|starters?|mains?|cocktails?|sparkling|white|red|ros[eé]|wine|lunch|dinner|allergens?|monday|tuesday|wednesday|thursday|friday)$/i,
   },
 };
 
@@ -476,6 +476,7 @@ const menuLinkClues = [
   /\bmenu(?:s)?\b|\blunch\b|\bfood\b|\bdining\b/i,
   /\blounas\w*\b|\bruokalista\w*\b|\bpäivän lounas\b|\btuotteet\b/i,
   /\bmeny\b|\bdagens\b|\blunchmeny\b|\bmat\b/i,
+  /\bhinnasto\b|\bprice(?:s| list)?\b|\bpricelist\b|\bprislista\b|\bpriser\b/i,
 ];
 
 export function discoverMenuLinks(value: string, sourceUrl: string): string[] {
@@ -799,7 +800,6 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     return suffix ? [...parenthetical, suffix[1].split(/[+,/]/).map(code => code.trim()).join('+')] : parenthetical;
   };
   const modules = language === 'unknown' ? Object.values(languageModules) : [languageModules[language]];
-  const activeLanguage = language === 'unknown' ? 'en' : language;
   const pricePattern = /(?:^|\s)(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\b\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)/;
   const isDietLine = (line: string) => modules.some(module => module.dietSignals.some(([pattern]) => pattern.test(line)));
   const standaloneDiets = (line: string) => (language === 'unknown'
@@ -808,9 +808,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     .filter(([, pattern]) => pattern.test(line))
     .flatMap(([key]) => languageModules[key as Exclude<MenuLanguage, 'unknown'>].dietSignals
       .filter(([pattern]) => pattern.test(line)).map(([, label]) => label));
-  const isSectionPrefix = (line: string) => line === line.toLocaleUpperCase() && (language === 'unknown' ? Object.values(sectionHeadings).some(headings => headings.test(line)) : sectionHeadings[activeLanguage].test(line)); const isSection = (line: string) => (language === 'unknown'
-    ? Object.values(sectionHeadings).some(headings => headings.test(line))
-    : sectionHeadings[activeLanguage].test(line)) || modules.some(module => module.headings.test(line));
+  const isSectionPrefix = (line: string) => line === line.toLocaleUpperCase() && Object.values(sectionHeadings).some(headings => headings.test(line)); const isSection = (line: string) => Object.values(sectionHeadings).some(headings => headings.test(line)) || Object.values(languageModules).some(module => module.headings.test(line));
   const isMenuTitleHeading = (line: string) => /\b(?:lounaslista|ruokalista|lunch menu|dinner menu|menu|meny|à la carte|a la carte)\b/i.test(line)
     || /\blounas\b.*\b(?:maanantaista|perjantaihin|kello)\b/i.test(line);
   const isWeekdayHeading = (line: string) => /^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|måndag|tisdag|onsdag|torsdag|fredag|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}(?:[./]\d{1,2})?(?:[./]\d{2,4})?(?:\s*\.?\s*(?:laajenna|expand|show|more))?$/i.test(line);
@@ -851,10 +849,23 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
         const item = JSON.parse(structured[1]) as Partial<MenuItem>;
         const name = typeof item.name === 'string' ? item.name.trim() : '';
         const itemSection = typeof item.section === 'string' ? item.section.trim() : '';
+        const hasItemDetails = Boolean(item.price || item.description || item.imageUrl
+          || item.ingredients?.length || item.diets?.length || item.dietaryInfo?.length || item.allergenInfo?.length);
         if (nonMenuSectionHeading.test(name) || nonMenuSectionHeading.test(itemSection)
           || nonMenuDetailLine.test(name) || nonMenuStatusLine.test(name)
+          || (isSection(name) && !hasItemDetails)
           || (/[.!?]$/.test(name) && name.split(/\s+/).length >= 4 && !item.price)) continue;
         if (isStrongOtherPrediction(name)) continue;
+        const confidentlyClassifiedAsDish = [classifier, ...(classifierOptions.secondaryClassifiers ?? [])]
+          .some(model => {
+            if (!model) return false;
+            const prediction = classifyMenuLine(name, model);
+            return prediction?.label === 'dish' && prediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+          });
+        // Schema.org MenuItem markup is sometimes applied to page labels or
+        // navigation. A schema type alone is not enough evidence to show it as
+        // a dish; require menu context, details, or a confident local classifier.
+        if (!itemSection && !hasItemDetails && !confidentlyClassifiedAsDish) continue;
         if (name.length >= 3 && name.length <= 120 && !seen.has(name.toLocaleLowerCase())) {
           seen.add(name.toLocaleLowerCase());
           found.push({
@@ -1026,6 +1037,19 @@ export function hasMenuEvidence(sourceText: string, sourceUrl: string, items: Me
   const hasItemDetails = items.some(item => Boolean(item.section || item.price || item.imageUrl
     || item.ingredients?.length || item.diets.length || item.allergenInfo.length));
   return hasMenuHeading || hasItemDetails;
+}
+
+function menuSourceQuality(sourceText: string, sourceUrl: string, items: MenuItem[]): number {
+  if (!items.length) return 0;
+  let pathname = '';
+  try { pathname = new URL(sourceUrl).pathname; } catch { /* Treat malformed sources as generic pages. */ }
+  const menuPath = /(?:^|[\/_.-])(?:menus?|lunch|lounas|ruokalista|ruokalistat|meny|dagens|hinnasto|prices?|prislista)(?:$|[\/_.-])/i.test(pathname);
+  const menuHeading = sourceText.split(/\r?\n/).some(line => /^(?:menu|food menu|lunch|lounas|ruokalista|ruokalistat|meny|dagens|hinnasto|price list|prices)$/i.test(line.trim()));
+  const priced = items.filter(item => item.price.trim()).length;
+  const detailed = items.filter(item => item.ingredients?.length || item.diets.length || item.dietaryInfo?.length || item.allergenInfo.length || item.imageUrl).length;
+  const sectioned = items.filter(item => item.section.trim()).length;
+  return Math.min(priced, 8) * 3 + Math.min(detailed, 8) * 2 + Math.min(sectioned, 5)
+    + (menuPath ? 8 : 0) + (menuHeading ? 8 : 0);
 }
 
 function validCachedMenu(value: unknown): value is CachedMenu {
@@ -1250,16 +1274,18 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
           interpreted = await interpret(source);
           didUseOcr = interpreted.extracted.items.length > 0;
         }
-        if (!hasMenu(source, interpreted)) {
+        let bestSourceQuality = menuSourceQuality(source.text, source.resolvedSourceUrl, interpreted.extracted.items);
+        if (bestSourceQuality < 24) {
           for (const candidateUrl of discoverMenuLinks(source.text, source.resolvedSourceUrl)) {
             if (controller.signal.aborted) break;
             try {
               const candidate = await loadMenuSource(candidateUrl, controller.signal);
               const candidateResult = await interpret(candidate);
-              if (hasMenu(candidate, candidateResult)) {
+              const candidateQuality = menuSourceQuality(candidate.text, candidate.resolvedSourceUrl, candidateResult.extracted.items);
+              if (hasMenu(candidate, candidateResult) && candidateQuality > bestSourceQuality) {
                 source = candidate;
                 interpreted = candidateResult;
-                break;
+                bestSourceQuality = candidateQuality;
               }
             } catch { if (controller.signal.aborted) throw new Error('Menu search cancelled.'); }
           }

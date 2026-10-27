@@ -79,6 +79,23 @@ describe('structured menu extraction', () => {
     }
   });
 
+  it('discovers a same-site price-list page from generic Finnish labels', () => {
+    const html = '<a href="/tuotteet/">Tuotteet</a><a href="/hinnasto/">Hinnasto</a><a href="/privacy/">Privacy</a>';
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      querySelectorAll: () => [
+        { textContent: 'Tuotteet', getAttribute: (key: string) => key === 'href' ? '/tuotteet/' : null },
+        { textContent: 'Hinnasto', getAttribute: (key: string) => key === 'href' ? '/hinnasto/' : null },
+        { textContent: 'Privacy', getAttribute: (key: string) => key === 'href' ? '/privacy/' : null },
+      ],
+    } as unknown as Document; } } as typeof DOMParser;
+    try {
+      expect(discoverMenuLinks(html, 'https://restaurant.example/')).toContain('https://restaurant.example/hinnasto/');
+    } finally {
+      globalThis.DOMParser = original;
+    }
+  });
+
   it('cleans prices repeated in structured item names and attaches dotted codes to the dish', () => {
     const menu = {
       '@type': 'Menu',
@@ -305,6 +322,16 @@ describe('structured menu extraction', () => {
     expect(parsed.items.map(item => item.name)).toEqual([
       'Härkätartar, maustekurkkumajoneesia ja rapeaa sipulia',
     ]);
+  });
+
+  it('does not trust bare Schema.org labels or cross-language category headings as dishes', () => {
+    const structured = (name: string) => `menu-schema-item: ${JSON.stringify({
+      name, section: '', description: '', price: '', diets: [], allergenInfo: [], sourceText: name,
+    })}`;
+    const page = ['Pompier Espa', 'Pompier Albertinkatu', 'Varaa pöytä', 'Tasa-arvo', 'Starters', 'Mains', 'Desserts', 'Sparkling']
+      .map(structured).join('\n');
+
+    expect(parseMenu(page, 'fi', null).items).toEqual([]);
   });
 
   it('removes a trailing separator left before a compact menu price', () => {
