@@ -1,7 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
+import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('reads priced items from collapsed weekday accordions and ignores unrelated panels', () => {
+    const panel = (rows: string[]) => ({
+      textContent: rows.join(' '),
+      children: rows.map(textContent => ({ textContent })),
+      querySelectorAll: (selector: string) => selector === 'p,li,dt,dd,[itemprop="name"]' ? rows.map(textContent => ({ textContent })) : [],
+    });
+    const menuButton = {
+      id: 'fl-accordion-lunch-button-1', textContent: 'Tiistai 27.10.', nextElementSibling: null,
+      getAttribute: (_name: string) => null,
+    };
+    const unrelatedButton = {
+      id: 'faq-button-0', textContent: 'Where to find us', nextElementSibling: null,
+      getAttribute: (_name: string) => null,
+    };
+    const menuPanel = panel([
+      'Pannupihvejä härän paistista, gochujangmajoneesia ja paahdettuja yrttiperunoita 14,50 €',
+      'Runsas salaattipöytä sekä perinteistä kirjolohikeittoa 14,50 €',
+      'Kaikki herkut 19 €',
+    ]);
+    const unrelatedPanel = panel(['Eteläesplanadi 8', '00130 Helsinki']);
+    const document = {
+      querySelectorAll: (selector: string) => selector === 'button[aria-expanded],button[id*="-button-"]' ? [menuButton, unrelatedButton] : [],
+      getElementById: (id: string) => id === 'fl-accordion-lunch-content-1' ? menuPanel : id === 'faq-content-0' ? unrelatedPanel : null,
+    } as unknown as Document;
+
+    const parsed = parseMenu(accordionMenuLines(document).join('\n'), 'fi', null);
+    expect(parsed.items.map(item => item.name)).toEqual([
+      'Pannupihvejä härän paistista, gochujangmajoneesia ja paahdettuja yrttiperunoita',
+      'Runsas salaattipöytä sekä perinteistä kirjolohikeittoa',
+      'Kaikki herkut',
+    ]);
+  });
+
   it('restores PDF headings and attaches priced descriptions to their dish', () => {
     const lines = formatPdfMenuRows([
       [{ x: 273, text: 'P O K E' }, { x: 345, text: 'B O W L' }],
@@ -205,6 +238,29 @@ describe('structured menu extraction', () => {
       dietaryInfo: ['L. G.'],
     });
     expect(parsed.items[0].sourceText).toContain('L. G. 4.8€');
+  });
+
+  it('keeps Pompier location, opening-hours, address, and story copy out of the menu items', () => {
+    const parsed = parseMenu([
+      'Jokainen hetki voi olla Hetki.',
+      'Pompier Espa Ma 11-14 / Ti-Pe 11-14&16.30-23 / La 16.30-23',
+      'menu-section: Pompier Espa',
+      'Eteläesplanadi 8',
+      '00130 Helsinki',
+      '09 66 33 00',
+      'menu-section: Espan lounas maanantaista perjantaihin kello 11–14',
+      'menu-section: Espan lounaslista',
+      'menu-section: Maanantai 26.10.Laajenna',
+      'Hiillostettua kirjolohta, kermaviilitartarkastiketta ja piparjuuriperunapyree 14,50 €',
+      'menu-section: Yksityistilaisuudet Albertinkadulla',
+      'Tarinamme',
+      'menu-section: Tarinamme',
+      'Me emme ole vain ravintola vaan tunnelma.',
+    ].join('\n'), 'fi', null);
+
+    expect(parsed.items.map(item => item.name)).toEqual([
+      'Hiillostettua kirjolohta, kermaviilitartarkastiketta ja piparjuuriperunapyree',
+    ]);
   });
 
   it('removes a trailing separator left before a compact menu price', () => {

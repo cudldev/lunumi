@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v26';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v27';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -75,8 +75,8 @@ const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
 };
 
 const dietaryCodeLine = /^(?:[A-ZÅÄÖ]{1,4}(?:\s*,\s*[A-ZÅÄÖ]{1,4}){1,8})$/i;
-const nonMenuSectionHeading = /^(?:about(?: us| our restaurant)?|our story|our values|values|our locations|contact(?: us)?|opening hours|private events?\b.*|book(?: a table)?|gift cards?\b.*|shop|.*\b(?:arvot|values|värderingar|valeurs)\b.*|tasa-arvo|nautiskelu|avoimuus|vastuullisuus|tarinamme|yhteystiedot|aukioloajat|yksityistilais\w*\b.*|varaa pöytä|lahjakortit?\b.*|kauppaan|vår historia|våra värderingar|kontakt|öppettider|privata evenemang\b.*|boka bord|presentkort|notre histoire|nos valeurs|contactez-nous|horaires|événements privés\b.*|réserver une table|cartes cadeaux)$/i;
-const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b|voimassa\s+\d{1,2}\.\s*\d{1,2}\.?\s*[–-]\s*\d{1,2}\.\s*\d{1,2}\.?$|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\s+\d+\s+tiedostoa\b|kiitos palautteestasi!?$)/i;
+const nonMenuSectionHeading = /^(?:about(?: us| our restaurant)?|our story|our values|values|our locations|contact(?: us)?|opening hours|private events?\b.*|book(?: a table)?|gift cards?\b.*|shop|pompier\s+(?:espa|albertinkatu)|.*\b(?:arvot|values|värderingar|valeurs)\b.*|tasa-arvo|nautiskelu|avoimuus|vastuullisuus|tarinamme|yhteystiedot|aukioloajat|yksityistilais\w*\b.*|varaa pöytä|lahjakortit?\b.*|kauppaan|vår historia|våra värderingar|kontakt|öppettider|privata evenemang\b.*|boka bord|presentkort|notre histoire|nos valeurs|contactez-nous|horaires|événements privés\b.*|réserver une table|cartes cadeaux)$/i;
+const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b|voimassa\s+\d{1,2}\.\s*\d{1,2}\.?\s*[–-]\s*\d{1,2}\.\s*\d{1,2}\.?$|(?:.*\b(?:ma|ti|ke|to|pe|la|su)\b.*)?\d{1,2}(?:[.:]\d{2})?\s*[-–]\s*\d{1,2}(?:[.:]\d{2})?.*\b(?:ma|ti|ke|to|pe|la|su)\b.*|\d{5}\s+[\p{L}-]+|eteläesplanadi\s+\d+|albertinkatu\s+\d+|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\s+\d+\s+tiedostoa\b|kiitos palautteestasi!?$)/iu;
 
 const nonMenuStatusLine = /^(?:voimassa\b|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\b|kiitos palautteestasi!?$)/i;
 
@@ -246,12 +246,39 @@ export function tabbedMenuLines(document: Document): string[] {
   return items;
 }
 
+export function accordionMenuLines(document: Document): string[] {
+  const buttons = [...document.querySelectorAll<HTMLElement>('button[aria-expanded],button[id*="-button-"]')];
+  const lines: string[] = [];
+  for (const button of buttons) {
+    const label = button.textContent?.replace(/\s+/g, ' ').trim() || '';
+    if (!label || label.length > 100) continue;
+    const generatedPanelId = button.id.match(/^(.*)-button-(\d+)$/)?.slice(1).join('-content-');
+    const panelId = button.getAttribute('aria-controls') || generatedPanelId;
+    const panel = (panelId && document.getElementById(panelId))
+      || button.nextElementSibling as HTMLElement | null;
+    if (!panel) continue;
+    const readText = (node: Element) => node.textContent?.replace(/\s+/g, ' ').trim() || '';
+    const semanticRows = [...panel.querySelectorAll('p,li,dt,dd,[itemprop="name"]')]
+      .map(readText).filter(text => text.length > 2 && text.length <= 220);
+    const directRows = [...panel.children].map(readText).filter(text => text.length > 2 && text.length <= 220);
+    const text = panel.textContent?.replace(/\s+/g, ' ').trim() || '';
+    const rows = semanticRows.length ? semanticRows : directRows.length ? directRows : text.length <= 220 ? [text] : [];
+    const hasPrices = rows.some(row => /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?)/.test(row));
+    const menuLabel = /^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|måndag|tisdag|onsdag|torsdag|fredag|monday|tuesday|wednesday|thursday|friday|menu|meny|juomat|drinks|lounas|lunch|dinner|à la carte)\b/i.test(label);
+    if (!rows.length || (!hasPrices && !menuLabel)) continue;
+    lines.push(`menu-section: ${label}`, ...rows);
+  }
+  return lines;
+}
+
 export function cleanMenuText(value: string, sourceUrl?: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
   const structuredItems = schemaMenuLines(document, sourceUrl);
   const tabbedItems = tabbedMenuLines(document);
   if (tabbedItems.length) return [...structuredItems, ...tabbedItems].join('\n');
+  const accordionItems = accordionMenuLines(document);
+  if (accordionItems.length) return [...structuredItems, ...accordionItems].join('\n');
   document.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(node => node.remove());
   const productSections = [...document.querySelectorAll('.category')].map(category => {
     const heading = category.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '';
