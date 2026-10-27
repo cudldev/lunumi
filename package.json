@@ -29,7 +29,7 @@
     "data:apply-link-overrides": "node scripts/apply-restaurant-link-overrides.mjs"
   },
   "dependencies": {
-    "@huggingface/transformers": "4.2.0",
+    "@huggingface/transformers": "4.3.2",
     "@vitejs/plugin-react": "^4.3.4",
     "dexie": "^4.0.8",
     "lucide-react": "^0.468.0",
