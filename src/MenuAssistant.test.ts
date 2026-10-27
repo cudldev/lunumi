@@ -17,9 +17,9 @@ describe('structured menu extraction', () => {
       getAttribute: (_name: string) => null,
     };
     const menuPanel = panel([
-      'Pannupihvejä härän paistista, gochujangmajoneesia ja paahdettuja yrttiperunoita 14,50 €',
-      'Runsas salaattipöytä sekä perinteistä kirjolohikeittoa 14,50 €',
-      'Kaikki herkut 19 €',
+      'Roasted root vegetables with lemon-herb sauce 14,50 €',
+      'Creamy mushroom soup with rye bread 12,50 €',
+      'Chef tasting plate 19 €',
     ]);
     const unrelatedPanel = panel(['Eteläesplanadi 8', '00130 Helsinki']);
     const document = {
@@ -29,9 +29,9 @@ describe('structured menu extraction', () => {
 
     const parsed = parseMenu(accordionMenuLines(document).join('\n'), 'fi', null);
     expect(parsed.items.map(item => item.name)).toEqual([
-      'Pannupihvejä härän paistista, gochujangmajoneesia ja paahdettuja yrttiperunoita',
-      'Runsas salaattipöytä sekä perinteistä kirjolohikeittoa',
-      'Kaikki herkut',
+      'Roasted root vegetables with lemon-herb sauce',
+      'Creamy mushroom soup with rye bread',
+      'Chef tasting plate',
     ]);
   });
 
@@ -240,26 +240,25 @@ describe('structured menu extraction', () => {
     expect(parsed.items[0].sourceText).toContain('L. G. 4.8€');
   });
 
-  it('keeps Pompier location, opening-hours, address, and story copy out of the menu items', () => {
+  it('keeps restaurant location, opening-hours, address, and story copy out of the menu items', () => {
     const parsed = parseMenu([
-      'Jokainen hetki voi olla Hetki.',
-      'Pompier Espa Ma 11-14 / Ti-Pe 11-14&16.30-23 / La 16.30-23',
-      'menu-section: Pompier Espa',
-      'Eteläesplanadi 8',
+      'A good moment is a good meal.',
+      'Nordic Table Ma-Pe 11-14 / La 16-23',
+      'menu-section: Nordic Table',
+      'Harbor Road 8',
       '00130 Helsinki',
-      '09 66 33 00',
-      'menu-section: Espan lounas maanantaista perjantaihin kello 11–14',
-      'menu-section: Espan lounaslista',
-      'menu-section: Maanantai 26.10.Laajenna',
-      'Hiillostettua kirjolohta, kermaviilitartarkastiketta ja piparjuuriperunapyree 14,50 €',
-      'menu-section: Yksityistilaisuudet Albertinkadulla',
-      'Tarinamme',
-      'menu-section: Tarinamme',
-      'Me emme ole vain ravintola vaan tunnelma.',
+      '+358 9 123 4567',
+      'menu-section: Lunch Monday to Friday 11:00–14:00',
+      'menu-section: Friday 27.10.',
+      'Roasted root vegetables with lemon-herb sauce 14,50 €',
+      'menu-section: Private events',
+      'Our story',
+      'menu-section: Our story',
+      'We create a welcoming place to share good food.',
     ].join('\n'), 'fi', null);
 
     expect(parsed.items.map(item => item.name)).toEqual([
-      'Hiillostettua kirjolohta, kermaviilitartarkastiketta ja piparjuuriperunapyree',
+      'Roasted root vegetables with lemon-herb sauce',
     ]);
   });
 
