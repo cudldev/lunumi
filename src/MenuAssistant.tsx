@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v19';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v20';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -362,14 +362,29 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
   const menuTitleIndex = blockNodes.findIndex(node => /^H[1-3]$/.test(node.tagName)
     && /(?:^|\b)(?:menus?|lunch|meny|ruokalista|tuotteet)(?:\b|$)/i.test(blockText(node)));
   const firstSectionIndex = menuTitleIndex < 0 ? -1 : blockNodes.findIndex((node, index) => index > menuTitleIndex
-    && /^H[2-3]$/.test(node.tagName));
+    && /^H[1-3]$/.test(node.tagName));
+  const compactPriceToken = /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?)/g;
   const blocks = blockNodes.flatMap((node, index) => {
     const text = blockText(node);
     if (text.length <= 1) return [];
     // Menu pages often put a table-of-contents list below the page title. Skip
     // those links/labels and keep the actual semantic section headings instead.
     if (index === menuTitleIndex || (firstSectionIndex > menuTitleIndex && index > menuTitleIndex && index < firstSectionIndex)) return [];
-    if (menuTitleIndex >= 0 && index > menuTitleIndex && /^H[2-3]$/.test(node.tagName)) return [`menu-section: ${text}`];
+    if (menuTitleIndex >= 0 && index > menuTitleIndex && /^H[1-3]$/.test(node.tagName)) return [`menu-section: ${text}`];
+    if (/^H[4-6]$/.test(node.tagName)) {
+      const prices = [...text.matchAll(compactPriceToken)];
+      if (prices.length >= 3) {
+        const rows: string[] = [];
+        let start = 0;
+        for (const price of prices) {
+          const end = (price.index ?? 0) + price[0].length;
+          const row = text.slice(start, end).trim();
+          if (row && row.replace(compactPriceToken, '').trim()) rows.push(row);
+          start = end;
+        }
+        if (rows.length === prices.length) return rows;
+      }
+    }
     return [text];
   });
   return [...structuredItems, ...(blocks.length ? blocks : [document.body.textContent?.replace(/\s+/g, ' ').trim() || ''])].filter(Boolean).join('\n');
@@ -657,6 +672,17 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
       if (/^lounasbuffet\b/i.test(line)) pendingMenuPriceLabel = line;
       continue;
     }
+    const dottedCodePrice = line.match(/^((?:[A-ZÅÄÖ]\.\s*){1,8})((?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?))$/i);
+    if (dottedCodePrice) {
+      const last = found[found.length - 1];
+      if (last && last.section === section) {
+        const code = dottedCodePrice[1].replace(/\s+/g, ' ').trim();
+        last.dietaryInfo = [...new Set([...(last.dietaryInfo ?? []), code])];
+        if (!last.price) last.price = dottedCodePrice[2].trim().replace(/\s+/g, ' ');
+        last.sourceText = `${last.sourceText}\n${line}`.slice(0, 500);
+      }
+      continue;
+    }
     if (pricePattern.test(line) && line.replace(pricePattern, '').replace(/[\s€$£]/g, '') === '') {
       const last = found[found.length - 1];
       if (last && last.section === section && !last.price) last.price = line.trim();
@@ -713,7 +739,10 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
       .replace(/\s+([,.;:!?])/g, '$1').replace(/\s+/g, ' ').trim();
     const price = line.match(pricePattern);
     const parts = menuLine.split(/\s+[·|—–]\s+|\s{2,}/);
-    const name = (parts[0] || menuLine).replace(/\s+(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?.*$/, '').trim();
+    const name = (parts[0] || menuLine)
+      .replace(/\s*(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?\s*$/, '')
+      .replace(/\s+\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)\s*$/, '')
+      .trim();
     if (name.length < 3 || name.length > 220) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
     if (language !== 'unknown' && classifier) {

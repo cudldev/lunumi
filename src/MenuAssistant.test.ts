@@ -14,6 +14,8 @@ describe('structured menu extraction', () => {
       block('H2', 'Mochi Ice Cream'),
       block('H4', 'Strawberry Mochi'),
       block('P', '4.8€'),
+      block('H1', 'Mochi Donut'),
+      block('H4', 'Filter coffee 3.6€ Double espresso 3.9€ Espresso macchiato 4.3€'),
     ];
     const original = globalThis.DOMParser;
     globalThis.DOMParser = class { parseFromString() { return {
@@ -35,8 +37,23 @@ describe('structured menu extraction', () => {
     expect(parsed.items.map(item => [item.section, item.name])).toEqual([
       ['Matcha', 'Matcha Latte'],
       ['Mochi Ice Cream', 'Strawberry Mochi'],
+      ['Mochi Donut', 'Filter coffee'],
+      ['Mochi Donut', 'Double espresso'],
+      ['Mochi Donut', 'Espresso macchiato'],
     ]);
-    expect(parsed.items.map(item => item.price)).toEqual(['5.9€', '4.8€']);
+    expect(parsed.items.map(item => item.price)).toEqual(['5.9€', '4.8€', '3.6€', '3.9€', '4.3€']);
+  });
+
+  it('attaches a dotted dietary-code price line to the preceding item', () => {
+    const parsed = parseMenu('menu-section: Mochi Ice Cream\nStrawbry Mochi\nL. G. 4.8€', 'en', null);
+
+    expect(parsed.items).toHaveLength(1);
+    expect(parsed.items[0]).toMatchObject({
+      name: 'Strawbry Mochi',
+      price: '4.8€',
+      dietaryInfo: ['L. G.'],
+    });
+    expect(parsed.items[0].sourceText).toContain('L. G. 4.8€');
   });
 
   it('rejects generic restaurant home-page copy as menu results while accepting menu evidence', () => {
