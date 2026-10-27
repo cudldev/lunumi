@@ -75,7 +75,8 @@ export default function LunumiPet({ places, preferences }: Props) {
   const [progress, setProgress] = useState<MenuModelProgress>({ status: 'Starting local AI' });
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
-  const [speech, setSpeech] = useState<{ messageId: number; visibleWords: number } | null>(null);
+  const [thinkingSeconds, setThinkingSeconds] = useState(0);
+  const [speech, setSpeech] = useState<{ messageId: number; visibleCharacters: number } | null>(null);
   const [reaction, setReaction] = useState(0);
   const nextMessageId = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
@@ -106,6 +107,13 @@ export default function LunumiPet({ places, preferences }: Props) {
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [messages, sending]);
 
   useEffect(() => {
+    if (!sending) { setThinkingSeconds(0); return; }
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => setThinkingSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, [sending]);
+
+  useEffect(() => {
     if (!reaction) return;
     const timer = window.setTimeout(() => setReaction(0), 1100);
     return () => window.clearTimeout(timer);
@@ -115,11 +123,12 @@ export default function LunumiPet({ places, preferences }: Props) {
     if (!speech) return;
     const message = messages.find(entry => entry.id === speech.messageId && entry.role === 'assistant');
     if (!message) { setSpeech(null); return; }
-    const words = message.content.match(/\S+\s*/g) || [];
-    if (speech.visibleWords >= words.length) { setSpeech(null); return; }
+    if (speech.visibleCharacters >= message.content.length) { setSpeech(null); return; }
+    const nextCharacter = message.content[speech.visibleCharacters];
+    const delay = /[.!?,;:]/.test(nextCharacter) ? 150 : 26;
     const timer = window.setTimeout(() => setSpeech(current => current?.messageId === speech.messageId
-      ? { ...current, visibleWords: current.visibleWords + 1 }
-      : current), 48);
+      ? { ...current, visibleCharacters: current.visibleCharacters + 1 }
+      : current), delay);
     return () => window.clearTimeout(timer);
   }, [speech, messages]);
 
@@ -161,7 +170,7 @@ export default function LunumiPet({ places, preferences }: Props) {
       const answerSources = sourcesForAnswer(answer, context.sources);
       const reply: ChatMessage = { id: ++nextMessageId.current, role: 'assistant', content: answer.trim(), sources: answerSources };
       setMessages([...nextMessages, reply]);
-      setSpeech(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? null : { messageId: reply.id, visibleWords: 0 });
+      setSpeech(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? null : { messageId: reply.id, visibleCharacters: 0 });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Lunumi could not answer right now.');
     } finally {
@@ -171,7 +180,7 @@ export default function LunumiPet({ places, preferences }: Props) {
 
   return <>
     {open && <section className="lunumi-chat" role="dialog" aria-modal="false" aria-label="Chat with Lunumi">
-      <header className={`lunumi-chat-header mood-${mood}`}><div className={`lunumi-chat-avatar mood-${mood}${reaction ? ' is-reacting' : ''}`}><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><span aria-hidden="true">{moodIcon}</span></div><div><strong>Chat with Lunumi</strong><span>{reaction ? 'Happy to see you' : moodLabel[mood]}</span></div><button type="button" aria-label="Close chat" onClick={() => setOpen(false)}><X size={19}/></button></header>
+      <header className={`lunumi-chat-header mood-${mood}`}><div className={`lunumi-chat-avatar mood-${mood}${reaction ? ' is-reacting' : ''}`}><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><i className={`lunumi-face-expression expression-${mood}`} aria-hidden="true"><b/><b/><em/></i><span aria-hidden="true">{moodIcon}</span></div><div><strong>Chat with Lunumi</strong><span>{reaction ? 'Happy to see you' : moodLabel[mood]}</span></div><button type="button" aria-label="Close chat" onClick={() => setOpen(false)}><X size={19}/></button></header>
       <div className="lunumi-chat-model" role="status" aria-live="polite">
         {modelState === 'loading' && <><LoaderCircle size={14} className="menu-assistant-spinner"/><span>{progress.status.toLocaleLowerCase().includes('progress') || progress.status.toLocaleLowerCase().includes('download') ? `Downloading ${progress.file || 'the AI model'}${typeof progress.progress === 'number' ? ` · ${Math.round(progress.progress)}%` : ''}` : progress.status}. {progress.device === 'wasm' ? 'The CPU fallback downloads about 920 MB on first use and runs more slowly; it is cached on this device.' : 'First use downloads about 570 MB; it is cached on this device.'}</span></>}
         {modelState === 'ready' && <span>{progress.device === 'wasm' ? 'Local AI is ready on the CPU fallback. It may respond more slowly; your data stays on this device.' : 'Local AI is ready. Nearby listings and saved menu excerpts are sent only to the model on this device.'}</span>}
@@ -180,14 +189,13 @@ export default function LunumiPet({ places, preferences }: Props) {
       <div className="lunumi-chat-messages" aria-live="polite">
         {messages.map(message => {
           const isSpeaking = speech?.messageId === message.id;
-          const words = message.role === 'assistant' ? message.content.match(/\S+\s*/g) || [] : [];
-          const visibleText = isSpeaking ? words.slice(0, speech?.visibleWords ?? 0).join('') : message.content;
+          const visibleText = isSpeaking ? message.content.slice(0, speech?.visibleCharacters ?? 0) : message.content;
           return <article className={`lunumi-chat-message is-${message.role}`} key={message.id}>
-            {message.role === 'assistant' && <div className={`lunumi-chat-speaker${isSpeaking ? ' is-speaking' : ''}`} aria-hidden="true"><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><span className="lunumi-chat-mouth"/></div>}
+            {message.role === 'assistant' && <div className={`lunumi-chat-speaker${isSpeaking ? ' is-speaking' : ''}`} aria-hidden="true"><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><i className={`lunumi-face-expression expression-${isSpeaking ? 'speaking' : uncertainReply ? 'thoughtful' : 'happy'}`}><b/><b/><em/></i></div>}
             <div className={`lunumi-chat-bubble is-${message.role}`}><span aria-label={message.role === 'assistant' ? message.content : undefined}>{visibleText}</span>{!isSpeaking && message.sources?.length ? <div className="lunumi-chat-sources"><small>Sources</small>{message.sources.map(source => <a key={`${message.id}-${source.url}`} href={source.url} target="_blank" rel="noopener noreferrer">{source.name}</a>)}</div> : null}</div>
           </article>;
         })}
-        {sending && <div className="lunumi-chat-working" role="status"><LoaderCircle size={15} className="menu-assistant-spinner"/>Lunumi is thinking…</div>}
+        {sending && <div className="lunumi-chat-working" role="status"><LoaderCircle size={15} className="menu-assistant-spinner"/>{thinkingSeconds < 12 ? 'Lunumi is thinking on this device…' : `Lunumi is still working locally · ${thinkingSeconds}s`}</div>}
         <div ref={endRef}/>
       </div>
       {error && modelState !== 'error' && <p className="lunumi-chat-error" role="alert">{error}</p>}

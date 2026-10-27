@@ -472,6 +472,15 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .lunumi-chat-header.mood-sorry{background:linear-gradient(110deg,#fff4ed,#f9ebe5)}
 .lunumi-chat-avatar{position:relative;display:grid!important;place-items:center;flex:none!important;width:46px;height:46px;border-radius:50%;background:#fff9e9;box-shadow:0 2px 8px #493a3118}
 .lunumi-chat-avatar img{width:42px!important;height:42px!important;object-fit:contain}
+.lunumi-face-expression{position:absolute;left:31%;top:39%;z-index:1;width:38%;height:15%;pointer-events:none;border-radius:48%;background:linear-gradient(120deg,#ffe6df,#ffece6 48%,#f9ddd5);box-shadow:0 0 1px #f9ddd5}
+.lunumi-face-expression b{position:absolute;top:25%;left:21%;width:17%;height:37%;border-radius:50%;background:#71453d}
+.lunumi-face-expression b:nth-child(2){left:auto;right:21%}
+.lunumi-face-expression em{position:absolute;left:50%;top:62%;width:27%;height:28%;transform:translateX(-50%);border-radius:45% 45% 60% 60%;background:#e86f79}
+.lunumi-face-expression.expression-thinking b:first-child,.lunumi-face-expression.expression-curious b:first-child{height:12%;top:37%;border-radius:2px;background:#71453d}
+.lunumi-face-expression.expression-thinking em,.lunumi-face-expression.expression-thoughtful em{top:68%;height:8%;border-radius:0 0 50% 50%;background:transparent;border-bottom:1px solid #a95d57}
+.lunumi-face-expression.expression-sorry em{top:55%;height:20%;border-radius:50% 50% 0 0;background:transparent;border-top:1px solid #a95d57}
+.lunumi-face-expression.expression-curious em{width:18%;height:25%}
+.lunumi-chat-speaker .lunumi-face-expression{left:31%;top:39%;width:38%;height:15%}
 .lunumi-chat-avatar>span{position:absolute;top:-2px;right:-4px;display:grid;place-items:center;width:21px;height:21px;padding:0!important;border:1px solid #ede1d3;border-radius:50%;background:#fffdf8;color:#7a8b67!important;box-shadow:0 2px 5px #493a3118}
 .lunumi-chat-avatar.mood-happy>span{color:#d58539!important}
 .lunumi-chat-avatar.mood-sorry>span,.lunumi-chat-avatar.mood-thoughtful>span{color:#ba755e!important}
@@ -481,17 +490,17 @@ body .app-shell .search-dock>.controls{margin:0;padding:3px 8px 2px}
 .lunumi-chat-message.is-assistant{display:flex;align-items:flex-end;gap:5px;align-self:flex-start;max-width:100%;padding:0;border-radius:0;background:transparent}
 .lunumi-chat-message.is-user{display:block;align-self:flex-end;max-width:88%;padding:0;border-radius:0;background:transparent}
 .lunumi-chat-bubble{display:grid;gap:7px;max-width:calc(100% - 43px);padding:10px 12px;border-radius:14px;background:#f3f1e9;color:#4d453e;font-size:12px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.lunumi-chat-message.is-assistant .lunumi-chat-bubble{transform-origin:bottom left;animation:lunumi-chat-bubble-pop .22s cubic-bezier(.2,.8,.3,1.1) both}
+@keyframes lunumi-chat-bubble-pop{from{opacity:0;transform:translateY(5px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .lunumi-chat-bubble.is-assistant{border-bottom-left-radius:4px}
 .lunumi-chat-bubble.is-user{max-width:100%;border-bottom-right-radius:4px;background:#eaf1e3}
 .lunumi-chat-speaker{position:relative;flex:none;width:39px;height:44px;overflow:visible}
 .lunumi-chat-speaker img{display:block;width:100%;height:100%;object-fit:contain}
-.lunumi-chat-mouth{position:absolute;left:50%;top:38%;width:8%;height:6%;transform:translateX(-50%);border-radius:50%;background:#f8ddcf}
-.lunumi-chat-mouth::after{content:"";position:absolute;inset:0;border-radius:50%;background:#d85469;transform:scaleY(.08)}
 .lunumi-chat-speaker.is-speaking img{animation:lunumi-chat-bob .32s ease-in-out infinite alternate}
-.lunumi-chat-speaker.is-speaking .lunumi-chat-mouth::after{animation:lunumi-chat-talk .16s steps(2,end) infinite}
+.lunumi-chat-speaker.is-speaking .lunumi-face-expression em{animation:lunumi-chat-talk .16s steps(2,end) infinite}
 @keyframes lunumi-chat-talk{0%,100%{transform:scaleY(.08)}50%{transform:scaleY(1)}}
 @keyframes lunumi-chat-bob{from{transform:translateY(0)}to{transform:translateY(-2px)}}
-@media(prefers-reduced-motion:reduce){.lunumi-chat-speaker.is-speaking img,.lunumi-chat-speaker.is-speaking .lunumi-chat-mouth::after{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.lunumi-chat-speaker.is-speaking img,.lunumi-chat-speaker.is-speaking .lunumi-face-expression em,.lunumi-chat-message.is-assistant .lunumi-chat-bubble{animation:none!important}}
 @media(prefers-reduced-motion:reduce){.lunumi-chat-avatar.is-reacting img{animation:none!important}}
 
 .onboard-welcome{min-height:100svh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 42%,#fffdf5 0,#fff8e8 54%,#fff6eb 100%);text-align:center}

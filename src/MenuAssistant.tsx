@@ -1409,6 +1409,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
   const [restaurantProfile, setRestaurantProfile] = useState<RestaurantProfile | undefined>();
   const [busy, setBusy] = useState(Boolean(sourceUrl));
   const [loadingStage, setLoadingStage] = useState<MenuLoadingStage>('source');
+  const [analyzingSeconds, setAnalyzingSeconds] = useState(0);
   const [modelStatus, setModelStatus] = useState<'idle' | 'checking' | 'loading' | 'ready' | 'error'>('idle');
   const [modelProgress, setModelProgress] = useState<MenuModelProgress>({ status: 'Starting local AI' });
   const [modelError, setModelError] = useState('');
@@ -1420,6 +1421,13 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
   const [ocrUsed, setOcrUsed] = useState(false);
   const [verifiedSourceUrl, setVerifiedSourceUrl] = useState<string | null>(null);
   const menuSummary = summarizeMenuItems(items);
+
+  useEffect(() => {
+    if (!busy || loadingStage !== 'analyze') { setAnalyzingSeconds(0); return; }
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => setAnalyzingSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, [busy, loadingStage]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1646,8 +1654,8 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
   }, [sourceUrl]);
 
   return <section className="menu-assistant" aria-label={`Local menu assistant for ${restaurantName}`}>
-    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? menuLoadingLabel[loadingStage] : items.length ? `${items.length} AI-read items${cachedAt ? ' · saved on this device' : ''}` : 'Items appear after the local AI reads the source'}</span></div></div>
-    {busy && <div className="menu-assistant-loading" role="status" aria-live="polite"><LoaderCircle size={16} className="menu-assistant-spinner"/><div><strong>{menuLoadingLabel[loadingStage]}</strong><span>Checking the restaurant’s own pages. Menu text stays on this device.</span><div className="menu-assistant-loading-track" aria-hidden="true"><i/></div></div></div>}
+    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? loadingStage === 'analyze' && analyzingSeconds >= 12 ? `Local AI is still working · ${analyzingSeconds}s` : menuLoadingLabel[loadingStage] : items.length ? `${items.length} AI-read items${cachedAt ? ' · saved on this device' : ''}` : 'Items appear after the local AI reads the source'}</span></div></div>
+    {busy && <div className="menu-assistant-loading" role="status" aria-live="polite"><LoaderCircle size={16} className="menu-assistant-spinner"/><div><strong>{loadingStage === 'analyze' && analyzingSeconds >= 12 ? `Local AI is still working · ${analyzingSeconds}s` : menuLoadingLabel[loadingStage]}</strong><span>Checking the restaurant’s own pages. Menu text stays on this device.</span><div className="menu-assistant-loading-track" aria-hidden="true"><i/></div></div></div>}
     {modelStatus !== 'idle' && <div className={`menu-assistant-model-state${modelStatus === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
       {modelStatus !== 'ready' && modelStatus !== 'error' && <LoaderCircle size={15} className="menu-assistant-spinner"/>}
       <div><strong>{modelStatus === 'ready' ? modelProgress.device === 'wasm' ? 'Local AI ready on CPU' : 'Local AI ready' : modelStatus === 'error' ? 'Local AI unavailable' : modelStatus === 'loading' ? `Downloading ${modelProgress.file || 'model files'}${typeof modelProgress.progress === 'number' ? ` · ${Math.round(modelProgress.progress)}%` : ''}` : `Preparing local AI · ${modelProgress.status}`}</strong>
