@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { ArrowLeft, Check, Clock3, ExternalLink, Globe2, Heart, Leaf, MapPin, Navigation, Sparkles, Utensils, X } from 'lucide-react';
 import type { Place } from './core';
 import { openingHoursStatus } from './opening-hours';
@@ -23,38 +22,66 @@ const safeUrl = (value?: string) => {
 };
 
 type LivePosition = { lat: number; lon: number; accuracy: number };
-function VisitNavigationMap({ place }: { place: Pick<Place, 'lat' | 'lon'> }) {
+function VisitLiveMap({ place, position }: { place: Pick<Place, 'lat' | 'lon'>; position: LivePosition | null }) {
   const mapElement = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<import('maplibre-gl').Map | null>(null);
+  const currentMarker = useRef<import('maplibre-gl').Marker | null>(null);
+  const positionRef = useRef(position);
+  positionRef.current = position;
   useEffect(() => {
     if (!mapElement.current || !Number.isFinite(place.lat) || !Number.isFinite(place.lon)) return;
     let cancelled = false;
-    let map: import('maplibre-gl').Map | null = null;
-    void import('maplibre-gl').then(({ default: maplibregl }) => {
+    void import('maplibre-gl').then(maplibregl => {
       if (cancelled || !mapElement.current) return;
-      const pin = document.createElement('span');
-      pin.className = 'visit-destination-pin';
-      pin.setAttribute('aria-hidden', 'true');
-      pin.innerHTML = '<svg viewBox="0 0 40 48" focusable="false"><path d="M20 46S2 26 2 17a18 18 0 1 1 36 0c0 9-18 29-18 29Z" fill="#d77952" stroke="#fffdf4" stroke-width="3"/><circle cx="20" cy="17" r="6" fill="#fff8e8"/></svg>';
-      map = new maplibregl.Map({
-        container: mapElement.current,
-        style: 'https://tiles.openfreemap.org/styles/positron',
-        center: [place.lon, place.lat],
-        zoom: 16,
-        attributionControl: false,
-        interactive: false,
-        fadeDuration: 0,
-      });
-      map.addControl(new maplibregl.AttributionControl({ compact: true }));
+      const map = new maplibregl.default.Map({ container: mapElement.current, style: 'https://tiles.openfreemap.org/styles/positron', center: [place.lon, place.lat], zoom: 15, attributionControl: false });
+      mapRef.current = map;
+      map.dragPan.enable();
+      map.scrollZoom.enable();
+      map.dragRotate.enable();
+      map.touchZoomRotate.enable();
+      map.touchPitch.enable();
+      map.addControl(new maplibregl.default.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
+      map.addControl(new maplibregl.default.AttributionControl({ compact: true }));
+      const targetPin = document.createElement('span');
+      targetPin.className = 'visit-destination-pin';
+      targetPin.setAttribute('aria-hidden', 'true');
+      targetPin.innerHTML = '<svg viewBox="0 0 40 48" focusable="false"><path d="M20 46S2 26 2 17a18 18 0 1 1 36 0c0 9-18 29-18 29Z" fill="#d77952" stroke="#fffdf4" stroke-width="3"/><circle cx="20" cy="17" r="6" fill="#fff8e8"/></svg>';
+      new maplibregl.default.Marker({ element: targetPin, anchor: 'bottom' }).setLngLat([place.lon, place.lat]).addTo(map);
       map.once('style.load', () => {
-        for (const layer of map?.getStyle().layers ?? []) {
-          if (layer.type === 'symbol') map?.setLayoutProperty(layer.id, 'visibility', 'none');
-        }
+        map.addSource('visit-live-route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'visit-live-route-line', type: 'line', source: 'visit-live-route', paint: { 'line-color': '#70976e', 'line-width': 4, 'line-opacity': .9, 'line-dasharray': [2, 2] } });
+        syncLivePosition(map, maplibregl.Marker, place, positionRef.current, currentMarker);
       });
-      new maplibregl.Marker({ element: pin, anchor: 'bottom' }).setLngLat([place.lon, place.lat]).addTo(map);
     }).catch(() => undefined);
-    return () => { cancelled = true; map?.remove(); };
+    return () => { cancelled = true; currentMarker.current?.remove(); currentMarker.current = null; mapRef.current?.remove(); mapRef.current = null; };
   }, [place.lat, place.lon]);
-  return <div className="visit-navigation-map is-banner" ref={mapElement} role="img" aria-label="OpenStreetMap background centered on the restaurant, with its location marked" />;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map) void import('maplibre-gl').then(module => syncLivePosition(map, module.Marker, place, position, currentMarker));
+  }, [place.lat, place.lon, position?.lat, position?.lon]);
+  return <div className="visit-navigation-map" ref={mapElement} role="region" aria-label="Live map with your position and restaurant" />;
+}
+
+function syncLivePosition(map: import('maplibre-gl').Map, Marker: typeof import('maplibre-gl').Marker, place: Pick<Place, 'lat' | 'lon'>, position: LivePosition | null, marker: { current: import('maplibre-gl').Marker | null }) {
+  if (!map.isStyleLoaded()) return;
+  const source = map.getSource('visit-live-route') as import('maplibre-gl').GeoJSONSource | undefined;
+  if (position) {
+    if (!marker.current) {
+      const character = document.createElement('img');
+      character.className = 'visit-map-character-marker';
+      character.src = visitWalkFrameASrc;
+      character.alt = '';
+      character.draggable = false;
+      const currentMarker = new Marker({ element: character, anchor: 'bottom' }).addTo(map);
+      marker.current = currentMarker;
+    }
+    marker.current?.setLngLat([position.lon, position.lat]);
+    source?.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: [[position.lon, position.lat], [place.lon, place.lat]] }, properties: {} });
+  } else {
+    marker.current?.remove();
+    marker.current = null;
+    source?.setData({ type: 'FeatureCollection', features: [] });
+  }
 }
 
 type VisitOrigin = 'target' | 'explored' | 'nearby' | 'visited';
@@ -315,7 +342,6 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
       <button className="place-detail-handle" type="button" aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'} aria-expanded={detailsExpanded} onClick={() => { if (suppressHandleClick.current) { suppressHandleClick.current = false; return; } setDetailsExpanded(value => !value); }} onPointerDown={event => { dragStartY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={event => { if (dragStartY.current === null) return; const delta = event.clientY - dragStartY.current; dragStartY.current = null; if (Math.abs(delta) > 28) { suppressHandleClick.current = true; setDetailsExpanded(delta < 0); } }} onPointerCancel={() => { dragStartY.current = null; }}><span /></button>
       <button className="place-detail-close" onClick={closeDetails} aria-label="Close details"><X size={20}/></button>
       {visitMode ? <div className={`visit-journey${visitStage === 'outro' ? ' visit-outro' : ''}`} aria-label={visitStage === 'outro' ? `Visit feedback for ${place.name}` : `Starting a visit to ${place.name}`}>
-        {visitStage === 'journey' && <VisitNavigationMap place={place} />}
         {visitStage === 'journey' ? <>
           <div className="visit-route" aria-hidden="true"><span className="visit-character" ref={visitCharacterRef}><img className="visit-character-frame visit-character-frame-a" src={visitWalkFrameASrc} alt="" draggable={false}/></span></div>
           <div className="visit-journey-copy"><span className="eyebrow">A LITTLE ADVENTURE</span><strong>On our way to {place.name}</strong><span>{liveLocationStatus === 'live' ? liveStatusText : 'Good food is just around the corner.'}</span></div>
@@ -329,7 +355,8 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
           {visitStage === 'journey' ? <>
             <button className="back visit-details-back" onClick={() => { stopLiveLocation(); setVisitMode(false); }}><ArrowLeft size={17}/>Place details</button>
             <div className="visit-title"><div><span className="eyebrow">YOUR NEXT STOP</span><h2>{place.name}</h2><p>{cuisine.join(' · ')} · {place.distance < 1000 ? `${Math.round(place.distance / 10) * 10} m away` : `${(place.distance / 1000).toFixed(1)} km away`}</p></div><Sparkles size={23}/></div>
-            <p className="visit-live-status" role="status">{liveStatusText}</p>
+            <div className="visit-map"><VisitLiveMap place={place} position={livePosition}/><span className="visit-map-status" role="status">{liveStatusText}</span></div>
+            <p className="visit-navigation-hint">Your blue dot updates with your location. The line points toward the restaurant; use walking directions below for a road route.</p>
           </> : <>
             {visitFeedbackStep === 'sentiment' ? <div className="visit-feedback" aria-live="polite">
               <span className="eyebrow">QUESTION 1 OF 2</span><h3>Did you like it?</h3><div className="visit-feedback-actions">
