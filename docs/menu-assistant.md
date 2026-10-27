@@ -32,3 +32,7 @@ Set the GitHub Actions repository variable `MENU_READER_WORKER_URL_STAGING` to t
 - Worker and generated allowlist: `menu-reader-worker/` and `scripts/build-menu-reader-hosts.mjs`.
 - Training data and scripts: `docs/menu-training.md` and `training/menu-extractor/`.
 - Deployment workflows: `.github/workflows/deploy.yml` and `.github/workflows/deploy-menu-reader.yml`.
+
+## Separate conversation test
+
+The optional `chat-test/` page tests on-device AI conversation without menu tools or source fetching. See [chatbot-test.md](chatbot-test.md); it does not change this menu assistant’s source or label handling.
