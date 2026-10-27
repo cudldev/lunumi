@@ -27,7 +27,21 @@ describe('menu reader asset endpoint', () => {
     expect([...new Uint8Array(await response.arrayBuffer())]).toEqual([...expected]);
   });
 
-  it('rejects unapproved hosts and non-image assets', async () => {
+  it('returns bounded PDF bytes without caching them', async () => {
+    const expected = new Uint8Array([37, 80, 68, 70]);
+    const response = await handleRequest(
+      menuRequest('/v1/menu-asset', 'https://restaurant.fi/menu.pdf'),
+      { ALLOWED_MENU_HOSTS: 'restaurant.fi' },
+      async () => new Response(expected, { headers: { 'Content-Type': 'application/pdf' } }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/pdf');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect([...new Uint8Array(await response.arrayBuffer())]).toEqual([...expected]);
+  });
+
+  it('rejects unapproved hosts and unsupported asset types', async () => {
     const unapproved = await handleRequest(
       menuRequest('/v1/menu-asset', 'https://other.fi/menu.png'),
       { ALLOWED_MENU_HOSTS: 'restaurant.fi' },
@@ -36,7 +50,7 @@ describe('menu reader asset endpoint', () => {
     const unsupported = await handleRequest(
       menuRequest('/v1/menu-asset', 'https://restaurant.fi/menu.pdf'),
       { ALLOWED_MENU_HOSTS: 'restaurant.fi' },
-      async () => new Response(new Uint8Array([1]), { headers: { 'Content-Type': 'application/pdf' } }),
+      async () => new Response(new Uint8Array([1]), { headers: { 'Content-Type': 'text/html' } }),
     );
 
     expect(unapproved.status).toBe(400);

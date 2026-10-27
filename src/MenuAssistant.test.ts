@@ -2,6 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { cleanMenuText, discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('discovers same-site menu PDFs while excluding unrelated documents and images', () => {
+    const html = '<a href="/files/lunch-menu.pdf">Lunch menu</a><a href="/privacy.pdf">Privacy policy</a><a href="/lunch.jpg">Lunch menu image</a><a href="https://other.fi/menu.pdf">Menu</a>';
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      querySelectorAll: () => [
+        { textContent: 'Lunch menu', getAttribute: (key: string) => key === 'href' ? '/files/lunch-menu.pdf' : null },
+        { textContent: 'Privacy policy', getAttribute: (key: string) => key === 'href' ? '/privacy.pdf' : null },
+        { textContent: 'Lunch menu image', getAttribute: (key: string) => key === 'href' ? '/lunch.jpg' : null },
+        { textContent: 'Menu', getAttribute: (key: string) => key === 'href' ? 'https://other.fi/menu.pdf' : null },
+      ],
+    } as unknown as Document; } } as typeof DOMParser;
+    try {
+      expect(discoverMenuLinks(html, 'https://restaurant.example/')).toEqual(['https://restaurant.example/files/lunch-menu.pdf']);
+    } finally {
+      globalThis.DOMParser = original;
+    }
+  });
+
   it('cleans prices repeated in structured item names and attaches dotted codes to the dish', () => {
     const menu = {
       '@type': 'Menu',

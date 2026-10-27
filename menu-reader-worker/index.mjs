@@ -3,6 +3,7 @@ import allowedHosts from './allowed-hosts.mjs';
 const MAX_REQUEST_BYTES = 4096;
 const MAX_RESPONSE_BYTES = 500_000;
 const MAX_MENU_IMAGE_BYTES = 3_000_000;
+const MAX_MENU_PDF_BYTES = 5_000_000;
 const FETCH_TIMEOUT_MS = 10_000;
 const MAX_REDIRECTS = 3;
 const APP_ORIGINS = new Set([
@@ -161,17 +162,19 @@ export async function handleRequest(request, env = {}, contextOrFetcher) {
     const { response, url } = await fetchMenuPage(target, hosts, fetcher, controller.signal);
     if (!response.ok) return errorResponse(`The restaurant page returned an error (${response.status}).`, 502, origin);
     const contentType = response.headers.get('Content-Type') || '';
-    const imageType = contentType.split(';')[0].trim().toLowerCase();
+    const assetType = contentType.split(';')[0].trim().toLowerCase();
     if (assetRequest) {
-      if (!/^image\/(?:jpeg|png|webp|bmp|tiff|gif)$/.test(imageType)) {
-        return errorResponse('The linked menu asset is not a supported image.', 415, origin);
+      const isImage = /^image\/(?:jpeg|png|webp|bmp|tiff|gif)$/.test(assetType);
+      const isPdf = assetType === 'application/pdf';
+      if (!isImage && !isPdf) {
+        return errorResponse('The linked menu asset is not a supported image or PDF.', 415, origin);
       }
-      const bytes = await readBounded(response.body, MAX_MENU_IMAGE_BYTES);
-      if (!bytes.length) return errorResponse('The menu image is empty.', 422, origin);
-      return binaryResponse(bytes, imageType, origin);
+      const bytes = await readBounded(response.body, isPdf ? MAX_MENU_PDF_BYTES : MAX_MENU_IMAGE_BYTES);
+      if (!bytes.length) return errorResponse('The menu asset is empty.', 422, origin);
+      return binaryResponse(bytes, assetType, origin);
     }
     if (/application\/pdf|image\//i.test(contentType) || /\.pdf(?:$|[?#])/i.test(url.toString())) {
-      return errorResponse('This menu is a PDF or image. Open the source link to view it; automatic document reading is not available yet.', 415, origin);
+      return errorResponse('This menu is a PDF or image. Open the source link to view it, or use the menu asset reader for supported files.', 415, origin);
     }
     if (contentType && !/^(text\/|application\/(json|xml|xhtml\+xml))/i.test(contentType)) {
       return errorResponse('This menu format cannot be read automatically yet. Open the source link instead.', 415, origin);

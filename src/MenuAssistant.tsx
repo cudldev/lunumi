@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v23';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v24';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -446,8 +446,9 @@ export function discoverMenuLinks(value: string, sourceUrl: string): string[] {
     try {
       const url = new URL(href, source);
       url.hash = '';
+      const isPdf = /\.pdf$/i.test(url.pathname);
       if (url.protocol !== 'https:' || url.origin !== source.origin || url.username || url.password || url.href === source.href
-        || /\.(?:pdf|jpe?g|png|webp)(?:$|\?)/i.test(url.pathname)) continue;
+        || (!isPdf && /\.(?:jpe?g|png|webp)(?:$|\?)/i.test(url.pathname))) continue;
       const score = matches * 2 + (menuLinkClues.some(clue => clue.test(url.pathname)) ? 1 : 0) + (label.trim().length ? 1 : 0);
       candidates.set(url.href, Math.max(candidates.get(url.href) ?? 0, score));
     } catch { /* Ignore malformed and external links. */ }
@@ -517,13 +518,64 @@ async function requestMenuAsset(assetUrl: string, signal: AbortSignal): Promise<
   }
   if (!response.ok) {
     const result = await response.json().catch(() => ({})) as { error?: string };
-    throw new Error(result.error || `The menu image could not be fetched (${response.status}).`);
+    throw new Error(result.error || `The menu asset could not be fetched (${response.status}).`);
   }
   const type = response.headers.get('Content-Type')?.split(';')[0].toLowerCase() || '';
-  if (!/^image\/(?:jpeg|png|webp|bmp|tiff|gif)$/.test(type)) throw new Error('The linked menu image format is not supported.');
+  const isImage = /^image\/(?:jpeg|png|webp|bmp|tiff|gif)$/.test(type);
+  const isPdf = type === 'application/pdf';
+  if (!isImage && !isPdf) throw new Error('The linked menu asset format is not supported.');
   const blob = await response.blob();
-  if (!blob.size || blob.size > 3_000_000) throw new Error('The menu image is empty or larger than 3 MB.');
+  const maxBytes = isPdf ? 5_000_000 : 3_000_000;
+  if (!blob.size || blob.size > maxBytes) throw new Error(`The menu ${isPdf ? 'PDF' : 'image'} is empty or larger than ${isPdf ? '5' : '3'} MB.`);
   return blob;
+}
+
+async function extractMenuPdf(pdf: Blob, signal: AbortSignal): Promise<string> {
+  if (pdf.type !== 'application/pdf' || pdf.size > 5_000_000) throw new Error('This menu PDF is not supported or is larger than 5 MB.');
+  const pdfjsUrl = new URL('https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/build/pdf.min.mjs');
+  const pdfjsWorkerUrl = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/build/pdf.worker.min.mjs';
+  const pdfjs = await import(/* @vite-ignore */ pdfjsUrl.href);
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+  if (signal.aborted) throw new Error('Menu search cancelled.');
+  const task = pdfjs.getDocument({ data: new Uint8Array(await pdf.arrayBuffer()), isEvalSupported: false, useWasm: false });
+  let document: Awaited<typeof task.promise>;
+  try {
+    document = await task.promise;
+  } catch (error) {
+    await task.destroy();
+    throw error;
+  }
+  try {
+    if (document.numPages > 20) throw new Error('This menu PDF has more than 20 pages; open the source to view it.');
+    const pages: string[] = [];
+    let charCount = 0;
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      if (signal.aborted) throw new Error('Menu search cancelled.');
+      const page = await document.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const rows = new Map<number, Array<{ x: number; text: string }>>();
+      for (const item of content.items) {
+        if (!('str' in item) || !item.str.trim()) continue;
+        const transform = item.transform;
+        const y = Math.round(transform[5] / 2) * 2;
+        const row = rows.get(y) || [];
+        row.push({ x: transform[4], text: item.str.trim() });
+        rows.set(y, row);
+      }
+      const pageText = [...rows.entries()].sort((a, b) => b[0] - a[0])
+        .map(([, row]) => row.sort((a, b) => a.x - b.x).map(part => part.text).join(' ').replace(/\s+/g, ' ').trim())
+        .filter(Boolean).join('\n');
+      charCount += pageText.length;
+      if (charCount > 120_000) throw new Error('This menu PDF contains too much text to read automatically.');
+      pages.push(pageText);
+      page.cleanup();
+    }
+    const text = pages.join('\n');
+    if (!text.trim()) throw new Error('This PDF has no selectable text. Open the source link to view it.');
+    return text;
+  } finally {
+    await document.destroy();
+  }
 }
 
 async function recognizeMenuImage(image: Blob, language: MenuLanguage, signal: AbortSignal): Promise<string> {
@@ -878,7 +930,11 @@ async function requestMenuSource(sourceUrl: string, signal: AbortSignal): Promis
   let text: string;
   let contentType: string;
   let resolvedSourceUrl = parsedUrl.href;
-  if (menuReaderUrl) {
+  if (/\.pdf$/i.test(parsedUrl.pathname)) {
+    const pdf = await requestMenuAsset(parsedUrl.href, signal);
+    contentType = 'application/pdf';
+    text = await extractMenuPdf(pdf, signal);
+  } else if (menuReaderUrl) {
     const response = await fetch(menuReaderUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -900,7 +956,7 @@ async function requestMenuSource(sourceUrl: string, signal: AbortSignal): Promis
   }
 
   if (/application\/pdf|image\//i.test(contentType) || /\.pdf(?:$|[?#])/i.test(resolvedSourceUrl)) {
-    throw new Error('This menu is a PDF or image and cannot be read automatically yet. Open the source link instead.');
+    throw new Error('This menu is an unsupported PDF or image. Open the source link instead.');
   }
   if (!/text\/|json|xml|html/i.test(contentType) && contentType) {
     throw new Error('This menu format cannot be read automatically yet.');
