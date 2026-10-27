@@ -1,10 +1,10 @@
 # Standalone chatbot test
 
-- Entry: `chat-test/` on live and staging. No onboarding, location, menu fetching, recommendations, or restaurant actions.
-- SmolLM2-1.7B-Instruct (Apache 2.0), revision `31b70e2e869a7173562077fd711b654946d38674`, runs locally through Transformers.js 4.3.2 in a worker.
-- First use downloads about 1.4 GB from Hugging Face/CDN hosts; cached files may remain after clearing chat. WebGPU is preferred; a fresh WASM worker provides slower CPU fallback.
-- Conversation stays in memory on-device, with bounded recent history and streamed replies. Stop cancels work; Clear removes the conversation and releases the worker. Startup times out after six minutes; stalled token generation stops after 90 seconds.
-- Best tested on desktop. Memory limits and browser support can prevent inference. The small model can make mistakes; replies are limited to 160 tokens and repeated phrases are constrained.
-- Main app and full restaurant-agent development are separate from this test.
+- Entry: `chat-test/` on live and staging. No onboarding or restaurant tools.
+- Private Transformers.js worker: SmolLM2-1.7B-Instruct (revision `31b70e2e869a7173562077fd711b654946d38674`, about 1.4 GB) on desktop; SmolLM2-360M-Instruct (revision `a10cc1512eabd3dde888204e902eca88bddb4951`, about 390 MB) on mobile/low-memory devices. Both are Apache 2.0.
+- Desktop preparation begins on entry. Mobile and previously interrupted sessions wait for **Enable private AI**. Progress, pause, and retry appear before messaging becomes available. Loading runs a real inference readiness check.
+- WebGPU is preferred; WASM is used without GPU support. Standard GPU initialization failures retry on CPU; compact GPU failures stop to avoid a second allocation. Phone memory limits may still prevent loading. The compact model gives less reliable answers.
+- Chats stay in memory on-device. Model requests contact Hugging Face/CDN hosts; browser caches can retain weights. Stop cancels work, Clear removes messages and releases the worker. Pending-work recovery flags contain no conversation data. Startup times out after six minutes; stalled generation stops after 90 seconds.
+- The chatbot test uses this policy on both live and staging. Main-app restaurant features are released separately.
 
-Sources: [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct), [Transformers.js](https://huggingface.co/docs/transformers.js/).
+Sources: [standard model](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct), [compact model](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct), [Transformers.js](https://huggingface.co/docs/transformers.js/).
