@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v21';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v22';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -131,14 +131,24 @@ export function schemaMenuLines(document: Document, sourceUrl?: string): string[
     return [];
   });
   const emit = (entry: StructuredMenuItem, section: string) => {
-    const name = text(entry.name);
-    if (!name || name.length > 120) return;
+    const sourceName = text(entry.name);
+    if (!sourceName || sourceName.length > 160) return;
     const imageValue = list(entry.image).map(image => typeof image === 'string' ? image : image && typeof image === 'object' ? text((image as Record<string, unknown>).url) || text((image as Record<string, unknown>)['@id']) : '').find(Boolean) || '';
     const offers = list((entry as Record<string, unknown>).offers)[0];
     const offer = offers && typeof offers === 'object' ? offers as Record<string, unknown> : {};
     const rawPrice = text(entry.price) || text(offer.price) || text(offer.lowPrice);
     const currency = text(offer.priceCurrency);
-    const price = rawPrice && /^\d+(?:[.,]\d{1,2})?$/.test(rawPrice) && currency ? `${rawPrice} ${currency}` : rawPrice;
+    const embeddedPrice = sourceName.match(/\s*(?:[-–—|·:]\s*)?((?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£))\s*$/);
+    const name = embeddedPrice ? sourceName.slice(0, embeddedPrice.index).trim() : sourceName;
+    const price = rawPrice && /^\d+(?:[.,]\d{1,2})?$/.test(rawPrice) && currency ? `${rawPrice} ${currency}` : rawPrice || embeddedPrice?.[1]?.trim().replace(/\s+/g, ' ') || '';
+    // Some restaurant JSON-LD marks allergen/dietary codes as MenuItems (for
+    // example, `L. G. 4.8€`). Keep those as source text so parseMenu can attach
+    // the code and price to the preceding dish instead of showing a fake item.
+    if (/^(?:[A-ZÅÄÖ]\.\s*){1,8}$/i.test(name) && price) {
+      result.push(`${name} ${price}`);
+      return;
+    }
+    if (name.length < 3 || name.length > 120) return;
     const additional = list(entry.additionalProperty).flatMap(property => {
       if (!property || typeof property !== 'object') return [];
       const fields = property as Record<string, unknown>;
@@ -157,7 +167,7 @@ export function schemaMenuLines(document: Document, sourceUrl?: string): string[
       diets,
       ingredients,
       allergenInfo: additional,
-      sourceText: [name, text(entry.description), rawPrice, list(entry.suitableForDiet).map(value => typeof value === 'string' ? value : value && typeof value === 'object' ? text((value as Record<string, unknown>).name) || text((value as Record<string, unknown>)['@id']) : '').filter(Boolean).join('; '), ...ingredients, ...additional].filter(Boolean).join(' · ').slice(0, 500),
+      sourceText: [sourceName, text(entry.description), rawPrice, list(entry.suitableForDiet).map(value => typeof value === 'string' ? value : value && typeof value === 'object' ? text((value as Record<string, unknown>).name) || text((value as Record<string, unknown>)['@id']) : '').filter(Boolean).join('; '), ...ingredients, ...additional].filter(Boolean).join(' · ').slice(0, 500),
     };
     const key = `${section}\n${name}`.toLocaleLowerCase();
     if (seen.has(key)) return;

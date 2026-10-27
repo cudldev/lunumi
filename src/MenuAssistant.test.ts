@@ -2,6 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { cleanMenuText, discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('cleans prices repeated in structured item names and attaches dotted codes to the dish', () => {
+    const menu = {
+      '@type': 'Menu',
+      hasMenuItem: [
+        { '@type': 'MenuItem', name: 'Mochi donut with strawberry filling - 6.2€', price: '6.2€' },
+        { '@type': 'MenuItem', name: 'Strawbry Mochi', price: '4.8€' },
+        { '@type': 'MenuItem', name: 'L. G. 4.8€', price: '4.8€' },
+      ],
+    };
+    const lines = schemaMenuLines({ querySelectorAll: () => [{ textContent: JSON.stringify(menu) }] } as unknown as Document);
+    const parsed = parseMenu(lines.join('\n'), 'en', null);
+
+    expect(parsed.items.map(item => [item.name, item.price])).toEqual([
+      ['Mochi donut with strawberry filling', '6.2€'],
+      ['Strawbry Mochi', '4.8€'],
+    ]);
+    expect(parsed.items[0].sourceText).toContain('Mochi donut with strawberry filling - 6.2€');
+    expect(parsed.items[1].dietaryInfo).toEqual(['L. G.']);
+  });
+
   it('preserves semantic menu sections and skips the category index below a menu title', () => {
     const block = (tagName: string, textContent: string) => ({ tagName, textContent });
     const blocks = [
