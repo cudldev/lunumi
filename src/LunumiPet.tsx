@@ -3,7 +3,7 @@ import { CircleHelp, Heart, LoaderCircle, MessageCircle, Send, Sparkles, X } fro
 import type { Place } from './core';
 import { relevantPlaces } from './assistant-context';
 import { chatWithLocalAssistant, prepareLocalMenuModel, type MenuAssistantTurn, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
-import { isLunumiRequest, lunumiScopeReply } from './assistant-scope';
+import { isLunumiGreeting, isLunumiRequest, lunumiScopeReply } from './assistant-scope';
 import { sourcesForAnswer } from './assistant-sources';
 
 type Props = { places: Place[]; preferences: MenuModelPreferences };
@@ -76,6 +76,7 @@ export default function LunumiPet({ places, preferences }: Props) {
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [speech, setSpeech] = useState<{ messageId: number; visibleWords: number } | null>(null);
+  const [reaction, setReaction] = useState(0);
   const nextMessageId = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -99,6 +100,12 @@ export default function LunumiPet({ places, preferences }: Props) {
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [messages, sending]);
 
   useEffect(() => {
+    if (!reaction) return;
+    const timer = window.setTimeout(() => setReaction(0), 1100);
+    return () => window.clearTimeout(timer);
+  }, [reaction]);
+
+  useEffect(() => {
     if (!speech) return;
     const message = messages.find(entry => entry.id === speech.messageId && entry.role === 'assistant');
     if (!message) { setSpeech(null); return; }
@@ -112,7 +119,7 @@ export default function LunumiPet({ places, preferences }: Props) {
 
   const latestReply = [...messages].reverse().find(message => message.role === 'assistant');
   const uncertainReply = Boolean(latestReply && /\b(unknown|not listed|not available|don't have|do not have|cannot verify|can't verify|not sure|unsure|no nearby|no menu|couldn't find|could not find|i don't see|isn't listed|is not listed)\b/i.test(latestReply.content));
-  const mood: PetMood = modelState === 'error' || Boolean(error) ? 'sorry' : sending ? 'thinking' : draft.trim() ? 'curious' : latestReply ? uncertainReply ? 'thoughtful' : 'happy' : 'idle';
+  const mood: PetMood = modelState === 'error' || Boolean(error) ? 'sorry' : reaction ? 'happy' : sending ? 'thinking' : draft.trim() ? 'curious' : latestReply ? uncertainReply ? 'thoughtful' : 'happy' : 'idle';
   const moodLabel: Record<PetMood, string> = {
     idle: 'Ready to explore', curious: 'Listening to you', thinking: 'Thinking it through',
     happy: 'Glad to help', thoughtful: 'Checking what is known', sorry: 'A small hiccup',
@@ -130,6 +137,11 @@ export default function LunumiPet({ places, preferences }: Props) {
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setDraft('');
+    setError('');
+    if (isLunumiGreeting(text)) {
+      setReaction(value => value + 1);
+      return;
+    }
     const recentUserText = messages.filter(message => message.role === 'user').slice(-3).map(message => message.content).join(' ');
     if (!isLunumiRequest(text, places.map(place => place.name), recentUserText)) {
       setMessages([...nextMessages, { id: ++nextMessageId.current, role: 'assistant', content: lunumiScopeReply(text) }]);
@@ -153,14 +165,13 @@ export default function LunumiPet({ places, preferences }: Props) {
 
   return <>
     {open && <section className="lunumi-chat" role="dialog" aria-modal="false" aria-label="Chat with Lunumi">
-      <header className={`lunumi-chat-header mood-${mood}`}><div className={`lunumi-chat-avatar mood-${mood}`}><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><span aria-hidden="true">{moodIcon}</span></div><div><strong>Chat with Lunumi</strong><span>{moodLabel[mood]}</span></div><button type="button" aria-label="Close chat" onClick={() => setOpen(false)}><X size={19}/></button></header>
+      <header className={`lunumi-chat-header mood-${mood}`}><div className={`lunumi-chat-avatar mood-${mood}${reaction ? ' is-reacting' : ''}`}><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><span aria-hidden="true">{moodIcon}</span></div><div><strong>Chat with Lunumi</strong><span>{reaction ? 'Happy to see you' : moodLabel[mood]}</span></div><button type="button" aria-label="Close chat" onClick={() => setOpen(false)}><X size={19}/></button></header>
       <div className="lunumi-chat-model" role="status" aria-live="polite">
         {modelState === 'loading' && <><LoaderCircle size={14} className="menu-assistant-spinner"/><span>{progress.status.toLocaleLowerCase().includes('progress') || progress.status.toLocaleLowerCase().includes('download') ? `Downloading ${progress.file || 'the AI model'}${typeof progress.progress === 'number' ? ` · ${Math.round(progress.progress)}%` : ''}` : progress.status}. First use downloads about 570 MB; it is cached on this device.</span></>}
         {modelState === 'ready' && <span>Local AI is ready. Nearby listings and saved menu excerpts are sent only to the model on this device.</span>}
         {modelState === 'error' && <span>{error}</span>}
       </div>
       <div className="lunumi-chat-messages" aria-live="polite">
-        {!messages.length && <div className="lunumi-chat-intro"><img src={`${import.meta.env.BASE_URL}mascot/lunumi-front.png`} alt=""/><p>Hi! I can help you explore nearby restaurants and menus Lunumi has loaded. Tap a source link to check where details came from.</p><small>I won’t make up menu or allergy information.</small></div>}
         {messages.map(message => {
           const isSpeaking = speech?.messageId === message.id;
           const words = message.role === 'assistant' ? message.content.match(/\S+\s*/g) || [] : [];

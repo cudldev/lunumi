@@ -16,6 +16,7 @@ let modelPromise: Promise<void> | null = null;
 let nextRequestId = 0;
 const pending = new Map<number, PendingRequest>();
 const progressSubscribers = new Set<(progress: MenuModelProgress) => void>();
+let rejectInitialization: ((error: Error) => void) | null = null;
 
 function ensureWorker(): Worker {
   if (worker) return worker;
@@ -44,6 +45,8 @@ function ensureWorker(): Worker {
   };
   worker.onerror = event => {
     const error = new Error(event.message || 'The local AI worker failed to start.');
+    rejectInitialization?.(error);
+    rejectInitialization = null;
     for (const request of pending.values()) request.reject(error);
     pending.clear();
     modelPromise = null;
@@ -61,13 +64,19 @@ export function prepareLocalMenuModel(onProgress: (progress: MenuModelProgress) 
       const listener = (event: MessageEvent<WorkerResponse>) => {
         if (event.data.type === 'ready') {
           instance.removeEventListener('message', listener);
+          rejectInitialization = null;
           resolve();
         } else if (event.data.type === 'error' && event.data.id === undefined) {
           instance.removeEventListener('message', listener);
+          rejectInitialization = null;
           reject(new Error(event.data.message));
         }
       };
       instance.addEventListener('message', listener);
+      rejectInitialization = error => {
+        instance.removeEventListener('message', listener);
+        reject(error);
+      };
       instance.postMessage({ type: 'initialize' });
     }).catch(error => {
       modelPromise = null;

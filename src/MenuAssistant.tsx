@@ -1153,15 +1153,57 @@ export function summarizeMenuItems(items: MenuItem[]): string {
   return `${items.length} menu items${categories.length ? ` across ${categories.join(', ')}` : ''}.`;
 }
 
-function validatedModelMenu(raw: string, sourceText: string): { summary: string; items: MenuItem[] } {
+function parseModelMenuPayload(raw: string): { summary: string; items: unknown[] } {
   const jsonText = raw.match(/\{[\s\S]*\}/)?.[0];
-  if (!jsonText) throw new Error('The local model did not return structured menu data.');
-  const result: unknown = JSON.parse(jsonText);
-  if (!result || typeof result !== 'object') throw new Error('The local model returned invalid menu data.');
-  const payload = result as { summary?: unknown; items?: unknown };
+  if (jsonText) {
+    try {
+      const result: unknown = JSON.parse(jsonText);
+      if (result && typeof result === 'object') {
+        const payload = result as { summary?: unknown; items?: unknown };
+        return { summary: typeof payload.summary === 'string' ? payload.summary : '', items: Array.isArray(payload.items) ? payload.items : [] };
+      }
+    } catch { /* A model can hit its output limit after emitting complete item objects. */ }
+  }
+
+  // Recover only whole JSON objects from the items array. The caller still requires
+  // every recovered item's quote and details to be present in the source text.
+  const itemsMarker = /"items"\s*:\s*\[/g;
+  const marker = itemsMarker.exec(raw);
+  if (!marker) throw new Error('The local model did not return structured menu data.');
+  let cursor = marker.index + marker[0].length;
+  const items: unknown[] = [];
+  while (cursor < raw.length) {
+    while (cursor < raw.length && /[\s,]/.test(raw[cursor])) cursor += 1;
+    if (raw[cursor] === ']' || cursor >= raw.length) break;
+    if (raw[cursor] !== '{') break;
+    const start = cursor;
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (; cursor < raw.length; cursor += 1) {
+      const char = raw[cursor];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === '\\') escaped = true;
+        else if (char === '"') inString = false;
+      } else if (char === '"') inString = true;
+      else if (char === '{') depth += 1;
+      else if (char === '}' && --depth === 0) {
+        try { items.push(JSON.parse(raw.slice(start, cursor + 1))); } catch { /* Ignore malformed item only. */ }
+        cursor += 1;
+        break;
+      }
+    }
+    if (depth !== 0) break;
+  }
+  return { summary: '', items };
+}
+
+export function validatedModelMenu(raw: string, sourceText: string): { summary: string; items: MenuItem[] } {
+  const payload = parseModelMenuPayload(raw);
   const normalize = (text: string) => text.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
   const normalizedSource = normalize(sourceText);
-  const items = Array.isArray(payload.items) ? payload.items.slice(0, 60).flatMap(value => {
+  const items = payload.items.slice(0, 60).flatMap(value => {
     if (!value || typeof value !== 'object') return [];
     const candidate = value as Record<string, unknown>;
     const name = typeof candidate.name === 'string' ? candidate.name.trim().slice(0, 180) : '';
@@ -1181,8 +1223,8 @@ function validatedModelMenu(raw: string, sourceText: string): { summary: string;
       price: exactField(candidate.price, 30), diets: [], ingredients: exactList(candidate.ingredients, 12, 120),
       allergenInfo: exactList(candidate.allergenInfo, 8, 160), dietaryInfo: exactList(candidate.dietaryInfo, 8, 120), sourceText: sourceQuote,
     }];
-  }) : [];
-  const summary = typeof payload.summary === 'string' ? payload.summary.trim().replace(/\s+/g, ' ').slice(0, 500) : '';
+  });
+  const summary = payload.summary.trim().replace(/\s+/g, ' ').slice(0, 500);
   return { summary, items };
 }
 

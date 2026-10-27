@@ -2,9 +2,18 @@ import { describe, expect, it } from 'vitest';
 import enMenuClassifier from '../public/models/menu-line-classifier.json';
 import fiMenuClassifier from '../public/models/menu-line-classifier-fi.json';
 import type { MenuClassifier } from './menu-classifier';
-import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, summarizeMenuItems, tabbedMenuLines } from './MenuAssistant';
+import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, summarizeMenuItems, tabbedMenuLines, validatedModelMenu } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('keeps complete source-verifiable items when model output is truncated', () => {
+    const raw = '{"summary":"A fresh menu.","items":[{"name":"Lentil soup","sourceText":"Lentil soup with herbs","price":"12 €"},{"name":"Garden salad","sourceText":"Garden salad"},{"name":"Unfinished';
+    const menu = validatedModelMenu(raw, 'Lentil soup with herbs\nGarden salad');
+
+    expect(menu.items.map(item => item.name)).toEqual(['Lentil soup', 'Garden salad']);
+    expect(menu.items[0].price).toBe('');
+    expect(menu.summary).toBe('');
+  });
+
   it('extracts named products and prices from generic price-list tables', () => {
     const cell = (textContent: string, tagName: 'TH' | 'TD') => ({ textContent, tagName });
     let tableRows: Array<{ tagName: string; textContent: string; querySelectorAll: (selector: string) => ReturnType<typeof cell>[]; querySelector: (selector: string) => ReturnType<typeof cell> | null; closest: (selector: string) => unknown }> = [];
