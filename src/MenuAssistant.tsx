@@ -424,13 +424,13 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     .filter(([, pattern]) => pattern.test(line))
     .flatMap(([key]) => languageModules[key as Exclude<MenuLanguage, 'unknown'>].dietSignals
       .filter(([pattern]) => pattern.test(line)).map(([, label]) => label));
-  const isSection = (line: string) => (language === 'unknown'
+  const isSectionPrefix = (line: string) => line === line.toLocaleUpperCase() && (language === 'unknown' ? Object.values(sectionHeadings).some(headings => headings.test(line)) : sectionHeadings[activeLanguage].test(line)); const isSection = (line: string) => (language === 'unknown'
     ? Object.values(sectionHeadings).some(headings => headings.test(line))
     : sectionHeadings[activeLanguage].test(line)) || modules.some(module => module.headings.test(line));
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
   let section = '';
   let pendingImageUrl: string | undefined;
-  for (const line of lines) {
+  for (const originalLine of lines) { let line = originalLine;
     const structured = line.match(/^menu-schema-item:\s*(\{.*\})$/i);
     if (structured) {
       try {
@@ -457,7 +457,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const image = line.match(/^menu-image:\s*(https:\/\/\S+)$/i);
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
-    if (isSection(line)) { section = line; continue; }
+    if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue;
     const lineDiets = standaloneDiets(line);
     if (lineDiets.length) {
       const last = found[found.length - 1];
@@ -517,7 +517,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const diets = [...new Set(modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)))];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
-    found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: line, imageUrl: pendingImageUrl });
+    found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: originalLine, imageUrl: pendingImageUrl });
     pendingImageUrl = undefined;
     if (found.length >= 100) break;
   }
