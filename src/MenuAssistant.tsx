@@ -1410,6 +1410,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
   const [busy, setBusy] = useState(Boolean(sourceUrl));
   const [loadingStage, setLoadingStage] = useState<MenuLoadingStage>('source');
   const [analyzingSeconds, setAnalyzingSeconds] = useState(0);
+  const [modelGenerating, setModelGenerating] = useState(false);
   const [modelStatus, setModelStatus] = useState<'idle' | 'checking' | 'loading' | 'ready' | 'error'>('idle');
   const [modelProgress, setModelProgress] = useState<MenuModelProgress>({ status: 'Starting local AI' });
   const [modelError, setModelError] = useState('');
@@ -1590,6 +1591,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
         if (timeout !== undefined) window.clearTimeout(timeout);
         timeout = undefined;
         setLoadingStage('analyze');
+        setModelGenerating(false);
         const initializationError = await modelReady;
         if (initializationError) throw initializationError;
         const readableSource = feedText(source.text, source.contentType, source.resolvedSourceUrl);
@@ -1601,12 +1603,14 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
             language: detectedLanguage === 'unknown' ? 'the source language' : languageModules[detectedLanguage].name,
             sourceText: readableSource,
             preferences: preferences ?? { likes: [], dislikes: [], diet: [], notes: '' },
-          });
+          }, () => setModelGenerating(true));
           const validated = validatedModelMenu(rawModelOutput, readableSource);
           if (!validated.items.length) throw new Error('The AI did not return menu items that could be verified against the source.');
           extracted = { ...extracted, items: validated.items };
           nextAiSummary = validated.summary;
+          setModelGenerating(false);
         } catch (cause) {
+          setModelGenerating(false);
           const message = cause instanceof Error ? cause.message : 'The local AI could not read this menu.';
           setModelStatus('error');
           setModelError(message);
@@ -1654,13 +1658,13 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
   }, [sourceUrl]);
 
   return <section className="menu-assistant" aria-label={`Local menu assistant for ${restaurantName}`}>
-    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? loadingStage === 'analyze' && analyzingSeconds >= 12 ? `Local AI is still working · ${analyzingSeconds}s` : menuLoadingLabel[loadingStage] : items.length ? `${items.length} AI-read items${cachedAt ? ' · saved on this device' : ''}` : 'Items appear after the local AI reads the source'}</span></div></div>
-    {busy && <div className="menu-assistant-loading" role="status" aria-live="polite"><LoaderCircle size={16} className="menu-assistant-spinner"/><div><strong>{loadingStage === 'analyze' && analyzingSeconds >= 12 ? `Local AI is still working · ${analyzingSeconds}s` : menuLoadingLabel[loadingStage]}</strong><span>Checking the restaurant’s own pages. Menu text stays on this device.</span><div className="menu-assistant-loading-track" aria-hidden="true"><i/></div></div></div>}
+    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? loadingStage === 'analyze' && modelGenerating ? `AI is reading the menu · ${analyzingSeconds}s` : loadingStage === 'analyze' && analyzingSeconds >= 12 ? `Waiting for local AI · ${analyzingSeconds}s` : menuLoadingLabel[loadingStage] : items.length ? `${items.length} AI-read items${cachedAt ? ' · saved on this device' : ''}` : 'Items appear after the local AI reads the source'}</span></div></div>
+    {busy && <div className="menu-assistant-loading" role="status" aria-live="polite"><LoaderCircle size={16} className="menu-assistant-spinner"/><div><strong>{loadingStage === 'analyze' && modelGenerating ? `AI is reading the menu · ${analyzingSeconds}s` : loadingStage === 'analyze' && analyzingSeconds >= 12 ? `Waiting for local AI · ${analyzingSeconds}s` : menuLoadingLabel[loadingStage]}</strong><span>Checking the restaurant’s own pages. Menu text stays on this device.</span><div className="menu-assistant-loading-track" aria-hidden="true"><i/></div></div></div>}
     {modelStatus !== 'idle' && <div className={`menu-assistant-model-state${modelStatus === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
       {modelStatus !== 'ready' && modelStatus !== 'error' && <LoaderCircle size={15} className="menu-assistant-spinner"/>}
-      <div><strong>{modelStatus === 'ready' ? modelProgress.device === 'wasm' ? 'Local AI ready on CPU' : 'Local AI ready' : modelStatus === 'error' ? 'Local AI unavailable' : modelStatus === 'loading' ? `Downloading ${modelProgress.file || 'model files'}${typeof modelProgress.progress === 'number' ? ` · ${Math.round(modelProgress.progress)}%` : ''}` : `Preparing local AI · ${modelProgress.status}`}</strong>
-        {modelStatus === 'loading' && <span>{modelProgress.device === 'wasm' ? 'The CPU fallback downloads about 920 MB on first use and runs more slowly. The browser caches it on this device.' : 'First use downloads about 570 MB. The browser caches the model on this device for later visits.'}</span>}
-        {modelStatus === 'checking' && <span>{modelProgress.device === 'wasm' ? 'Preparing the local CPU model…' : 'Starting the on-device WebGPU model…'}</span>}
+      <div><strong>{modelStatus === 'ready' ? 'Local WebGPU AI ready' : modelStatus === 'error' ? 'Local AI unavailable' : modelStatus === 'loading' ? `Downloading ${modelProgress.file || 'model files'}${typeof modelProgress.progress === 'number' ? ` · ${Math.round(modelProgress.progress)}%` : ''}` : `Preparing local AI · ${modelProgress.status}`}</strong>
+        {modelStatus === 'loading' && <span>First use downloads about 570 MB. The browser caches the model on this device for later visits.</span>}
+        {modelStatus === 'checking' && <span>Checking WebGPU and starting the on-device model…</span>}
         {modelStatus === 'error' && <span>{modelError}</span>}
         {modelStatus === 'loading' && typeof modelProgress.progress === 'number' && <div className="menu-assistant-loading-track" role="progressbar" aria-label="Local AI model download" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(modelProgress.progress)}><i style={{ width: `${Math.max(0, Math.min(100, modelProgress.progress))}%` }}/></div>}
       </div>
