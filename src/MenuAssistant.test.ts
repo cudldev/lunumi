@@ -2,24 +2,28 @@ import { describe, expect, it } from 'vitest';
 import enMenuClassifier from '../public/models/menu-line-classifier.json';
 import fiMenuClassifier from '../public/models/menu-line-classifier-fi.json';
 import type { MenuClassifier } from './menu-classifier';
-import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
+import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, summarizeMenuItems, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
   it('extracts named products and prices from generic price-list tables', () => {
     const cell = (textContent: string, tagName: 'TH' | 'TD') => ({ textContent, tagName });
+    let tableRows: Array<{ tagName: string; textContent: string; querySelectorAll: (selector: string) => ReturnType<typeof cell>[]; querySelector: (selector: string) => ReturnType<typeof cell> | null; closest: (selector: string) => unknown }> = [];
+    const table = { querySelectorAll: (_selector: string) => tableRows };
     const row = (cells: ReturnType<typeof cell>[]) => ({
       tagName: 'TR',
       textContent: cells.map(item => item.textContent).join(' '),
       querySelectorAll: (selector: string) => selector === 'th,td' ? cells : [],
       querySelector: (selector: string) => selector === 'th' ? cells.find(item => item.tagName === 'TH') ?? null : null,
+      closest: (selector: string) => selector === 'table' ? table : null,
     });
     const blocks = [
       { tagName: 'H1', textContent: 'Hinnasto' },
       { tagName: 'H2', textContent: 'Liekillä grillatut' },
       row([cell('Tuote', 'TH'), cell('Ateria', 'TH'), cell('Hampurilainen', 'TH')]),
+      row([cell('Double Ultimate Chili Cheese', 'TD'), cell('16,45 €', 'TD'), cell('12,95 €', 'TD')]),
       row([cell('WHOPPER®', 'TD'), cell('10,95 €', 'TD'), cell('7,45 €', 'TD')]),
-      row([cell('Plant-based WHOPPER', 'TD'), cell('10,45 €', 'TD'), cell('6,95 €', 'TD')]),
     ];
+    tableRows = blocks.filter(block => block.tagName === 'TR') as unknown as typeof tableRows;
     const original = globalThis.DOMParser;
     globalThis.DOMParser = class { parseFromString() { return {
       body: { textContent: '', querySelectorAll: () => blocks },
@@ -34,9 +38,40 @@ describe('structured menu extraction', () => {
     }
     const parsed = parseMenu(extracted, 'fi', fiMenuClassifier as unknown as MenuClassifier);
 
-    expect(parsed.items.map(item => item.name)).toEqual(['WHOPPER®', 'Plant-based WHOPPER']);
-    expect(parsed.items.map(item => item.price)).toEqual(['10,95 €', '10,45 €']);
+    expect(parsed.items.map(item => item.name)).toEqual(['Double Ultimate Chili Cheese', 'WHOPPER®']);
+    expect(parsed.items.map(item => item.price)).toEqual(['16,45 €', '10,95 €']);
+    expect(parsed.items[0].priceOptions).toEqual([
+      { label: 'Ateria', value: '16,45 €' },
+      { label: 'Hampurilainen', value: '12,95 €' },
+    ]);
+    expect(parsed.items[0].sourceText).toBe('Double Ultimate Chili Cheese · 16,45 € · 12,95 €');
     expect(parsed.items.every(item => item.section === 'Liekillä grillatut')).toBe(true);
+  });
+
+  it('summarizes restaurant name, cuisine, and address from official structured metadata', () => {
+    const jsonLd = {
+      '@type': 'Restaurant', name: 'Example Bistro', description: 'A neighborhood restaurant serving seasonal food.',
+      servesCuisine: ['Finnish', 'French'],
+      address: { streetAddress: 'Example Street 2', postalCode: '00100', addressLocality: 'Helsinki', addressCountry: 'Finland' },
+    };
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      title: 'Example Bistro',
+      body: { textContent: '', querySelectorAll: () => [] },
+      querySelectorAll: (selector: string) => selector === 'script[type="application/ld+json"]' ? [{ textContent: JSON.stringify(jsonLd) }] : [],
+      querySelector: () => null,
+    } as unknown as Document; } } as typeof DOMParser;
+    let extracted: string;
+    try { extracted = cleanMenuText('<html><head></head><body></body></html>', 'https://restaurant.example/'); }
+    finally { globalThis.DOMParser = original; }
+
+    const parsed = parseMenu(extracted, 'en', null);
+    expect(parsed.restaurantProfile).toEqual({
+      name: 'Example Bistro', description: 'A neighborhood restaurant serving seasonal food.',
+      cuisine: ['Finnish', 'French'], location: 'Example Street 2, 00100, Helsinki, Finland',
+    });
+    const menu = parseMenu('menu-section: Burgers\nmenu-schema-item: {"name":"House burger","section":"Burgers","price":"12 €","diets":[],"allergenInfo":[],"sourceText":"House burger 12 €"}\nmenu-section: Salads\nmenu-schema-item: {"name":"Garden salad","section":"Salads","price":"9 €","diets":[],"allergenInfo":[],"sourceText":"Garden salad 9 €"}', 'en', null);
+    expect(summarizeMenuItems(menu.items)).toBe('2 menu items across Burgers (1), Salads (1).');
   });
 
   it('reads priced items from collapsed weekday accordions and ignores unrelated panels', () => {

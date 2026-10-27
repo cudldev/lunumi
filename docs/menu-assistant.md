@@ -11,7 +11,9 @@ The assistant is a lightweight browser feature, not a hosted LLM. A small Cloudf
 
 ## Extraction and labels
 
-Generic HTML pricing tables are also extracted row by row: column headers are skipped, product text and price cells stay together, and surrounding category headings label the rows. This supports published price lists without a per-restaurant parser.
+Generic HTML pricing tables are extracted row by row. Product names, each available price, and its column label (such as “Ateria” or “Hampurilainen”) stay together; category headings label the rows. This keeps meal and item prices distinct without a per-restaurant parser.
+
+When the fetched page publishes Schema.org restaurant metadata, Lunumi can show its official name, description, cuisine labels, and postal address. Otherwise it uses the page's published title or description metadata where available. The menu overview counts extracted entries by their printed sections. These are source-based summaries, not generated claims: cuisine and location are omitted when the restaurant has not published them, and the displayed source link points to the page they came from.
 
 The parser skips recognized restaurant-story, values, booking, gift-card, and private-event sections. Restaurant location headings and nearby opening-hours, address, and postal-code lines are excluded as well. It reads matching content panels from collapsed accordions without requiring the user to open them, but only uses panels with menu headings or priced rows. It also treats lunch-list and weekday/date toggles as headings, and filters sentence-like marketing copy instead of listing it as a dish. Structured entries must include menu context or item details, or receive a high-confidence dish prediction from a local language classifier; schema markup by itself does not make a page label a dish. Category-only headings are excluded across the supported languages even when they appear inside structured data. The assistant compares likely menu sources by their price, section, and item-detail evidence when the initial page is weak. These rules are conservative heuristics; unusual pages may still need improved extraction.
 
