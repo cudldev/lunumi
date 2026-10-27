@@ -99,7 +99,9 @@ function ensureWorker(): Worker {
     stopWorker(displayWorkerError(error));
   };
   worker.onerror = event => {
-    stopWorker(displayWorkerError(new Error(event.message || 'The local AI worker failed to start.')));
+    const location = event.filename ? ` (${event.filename}${event.lineno ? `:${event.lineno}` : ''})` : '';
+    const detail = event.message || 'The local AI worker failed to start.';
+    stopWorker(displayWorkerError(new Error(`${detail}${location}`)));
   };
   return worker;
 }
