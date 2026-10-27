@@ -16,6 +16,7 @@
     "model:label": "node scripts/label-menu-training.mjs",
     "model:prepare": "node scripts/prepare-fndds-training.mjs",
     "model:prepare:fineli": "node scripts/prepare-fineli-training.mjs",
+    "model:prepare:menustat": "node scripts/prepare-menustat-training.mjs",
     "model:train:fineli": "node training/menu-extractor/train.mjs data/private-menu-training/fineli-labels.jsonl public/models",
     "model:train": "node training/menu-extractor/train.mjs",
     "data:helsinki": "node scripts/build-osm-food-data.mjs",

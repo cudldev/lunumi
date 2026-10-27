@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { trainingSourceMetadata } from '../../scripts/menu-training-annotation.mjs';
+import { trainingSourceMetadata, validateCommercialLicense } from '../../scripts/menu-training-annotation.mjs';
+import { splitByGroup } from './split.mjs';
 
 const root = process.cwd();
 const privateDir = path.resolve(root, 'data/private-menu-training');
@@ -9,10 +9,6 @@ const labelsPath = path.resolve(process.argv[2] ?? path.join(privateDir, 'labels
 const outputDir = path.resolve(process.argv[3] ?? path.join(root, 'public/models'));
 const buckets = 4096;
 const allowedLabels = new Set(['dish', 'section', 'other']);
-
-function stableBucket(value, modulo) {
-  return createHash('sha256').update(value).digest().readUInt32BE(0) % modulo;
-}
 
 function features(text) {
   const normalized = `^${text.toLowerCase().trim()}$`;
@@ -56,9 +52,12 @@ const all = lines.map((line, index) => {
     throw new Error(`Invalid annotation on line ${index + 1}.`);
   }
   const source = trainingSourceMetadata(example);
+  try { validateCommercialLicense(source); }
+  catch (error) { throw new Error(`Line ${index + 1}: ${error.message}`); }
   if (source.approvedForModelRelease !== true || source.commercialUseApproved !== true || !source.license
-    || !source.licenseUrl || !source.sourceUrl || !['explicit-license', 'written-permission'].includes(source.permissionBasis)
-    || (source.permissionBasis === 'written-permission' && !(source.rightsEvidenceUrl || source.sourceRightsEvidenceUrl))) {
+    || !source.licenseUrl || !source.sourceUrl || !['explicit-license', 'written-permission', 'open-data-terms'].includes(source.permissionBasis)
+    || (['written-permission', 'open-data-terms'].includes(source.permissionBasis)
+      && !(source.rightsEvidenceUrl || source.sourceRightsEvidenceUrl))) {
     throw new Error(`Line ${index + 1} has no license evidence approved for released weights and future commercial use.`);
   }
   return { ...example, source, text: example.text.trim() };
@@ -95,33 +94,22 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
     : `${sourceKey(example)}\n${String(example.group).trim()}`;
   const sources = [...new Set(languageExamples.map(sourceKey))];
   const groups = [...new Set(languageExamples.map(groupKey).filter(Boolean))];
-  const sourceHoldout = sources.length >= 5;
-  const groupHoldout = !sourceHoldout && groups.length >= 5;
-  let splitKind = sourceHoldout ? 'source-held-out' : groupHoldout ? 'item-group-held-out' : 'exact-text-held-out';
-  let train = [];
-  let validation = [];
-  for (const example of languageExamples) {
-    const identity = sourceHoldout ? sourceKey(example)
-      : groupHoldout ? groupKey(example)
-        : `${example.label}\n${example.text.toLowerCase()}`;
-    (stableBucket(identity, 5) === 0 ? validation : train).push(example);
+  let splitKind = '';
+  let split;
+  if (sources.length >= 5) {
+    split = splitByGroup(languageExamples, classes, sourceKey);
+    if (split) splitKind = 'source-held-out';
   }
-  if (classes.some(label => !train.some(example => example.label === label) || !validation.some(example => example.label === label))) {
-    if (sourceHoldout || groupHoldout) {
-      splitKind = 'exact-text-held-out';
-      train = [];
-      validation = [];
-      for (const example of languageExamples) {
-        const identity = `${example.label}\n${example.text.toLowerCase()}`;
-        (stableBucket(identity, 5) === 0 ? validation : train).push(example);
-      }
-    }
+  if (!split && groups.length >= 5) {
+    split = splitByGroup(languageExamples, classes, groupKey);
+    if (split) splitKind = 'item-group-held-out';
   }
-  for (const label of classes) {
-    if (!train.some(example => example.label === label) || !validation.some(example => example.label === label)) {
-      throw new Error(`${language}: the dataset split does not include ${label} in both train and validation.`);
-    }
+  if (!split) {
+    split = splitByGroup(languageExamples, classes, example => `${example.label}\n${example.text.toLowerCase()}`);
+    splitKind = 'exact-text-held-out';
   }
+  if (!split) throw new Error(`${language}: could not create a deterministic holdout with every label represented in train and validation.`);
+  const { train, validation } = split;
 
   const fitted = fit(train, classes);
   const classMetrics = Object.fromEntries(classes.map(label => [label, { truePositive: 0, falsePositive: 0, falseNegative: 0, support: 0 }]));
@@ -144,7 +132,7 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
     else { classMetrics[predicted].falsePositive += 1; classMetrics[example.label].falseNegative += 1; }
   }
   const evaluation = {
-    split: `deterministic 80/20 ${splitKind}${splitKind === 'exact-text-held-out' ? ' only' : ''}`,
+    split: `deterministic approximately 80/20 ${splitKind}${splitKind === 'exact-text-held-out' ? ' only' : ''}`,
     trainingExamples: train.length,
     validationExamples: validation.length,
     accuracy: correct / validation.length,

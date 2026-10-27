@@ -25,6 +25,31 @@ describe('private training annotation', () => {
       .toThrow(/rights evidence URL/);
   });
 
+  it('rejects noncommercial and no-derivatives licenses unless separate written permission is recorded', () => {
+    const explicit = { ...candidate, permissionBasis: 'explicit-license' };
+    expect(() => validateCandidateForAnnotation({ ...explicit, license: 'CC BY-NC 4.0' }))
+      .toThrow(/Noncommercial licenses/);
+    expect(() => validateCandidateForAnnotation({ ...explicit, license: 'CC BY-ND 4.0' }))
+      .toThrow(/NoDerivatives licenses/);
+    expect(() => validateCandidateForAnnotation({ ...explicit, license: 'CC BY-NC 4.0', permissionBasis: 'written-permission' }))
+      .not.toThrow();
+  });
+
+  it('requires official reuse evidence for government open-data terms', () => {
+    expect(() => validateCandidateForAnnotation({
+      ...candidate,
+      permissionBasis: 'open-data-terms',
+      rightsEvidenceUrl: undefined,
+      sourceRightsEvidenceUrl: undefined,
+    })).toThrow(/official reuse-terms evidence URL/);
+    expect(() => validateCandidateForAnnotation({
+      ...candidate,
+      permissionBasis: 'open-data-terms',
+      rightsEvidenceUrl: 'https://city.example/open-data-terms',
+      sourceRightsEvidenceUrl: undefined,
+    })).not.toThrow();
+  });
+
   it('adds a reviewed label without dropping provenance or permissions', () => {
     const record = makeAnnotationRecord(candidate, 'dish', '2026-10-27T12:00:00.000Z');
     expect(record).toMatchObject({

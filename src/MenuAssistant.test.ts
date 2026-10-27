@@ -1,7 +1,43 @@
 import { describe, expect, it } from 'vitest';
-import { cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
+import enMenuClassifier from '../public/models/menu-line-classifier.json';
+import fiMenuClassifier from '../public/models/menu-line-classifier-fi.json';
+import type { MenuClassifier } from './menu-classifier';
+import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('reads priced items from collapsed weekday accordions and ignores unrelated panels', () => {
+    const panel = (rows: string[]) => ({
+      textContent: rows.join(' '),
+      children: rows.map(textContent => ({ textContent })),
+      querySelectorAll: (selector: string) => selector === 'p,li,dt,dd,[itemprop="name"]' ? rows.map(textContent => ({ textContent })) : [],
+    });
+    const menuButton = {
+      id: 'fl-accordion-lunch-button-1', textContent: 'Tiistai 27.10.', nextElementSibling: null,
+      getAttribute: (_name: string) => null,
+    };
+    const unrelatedButton = {
+      id: 'faq-button-0', textContent: 'Where to find us', nextElementSibling: null,
+      getAttribute: (_name: string) => null,
+    };
+    const menuPanel = panel([
+      'Roasted root vegetables with lemon-herb sauce 14,50 €',
+      'Creamy mushroom soup with rye bread 12,50 €',
+      'Chef tasting plate 19 €',
+    ]);
+    const unrelatedPanel = panel(['Eteläesplanadi 8', '00130 Helsinki']);
+    const document = {
+      querySelectorAll: (selector: string) => selector === 'button[aria-expanded],button[id*="-button-"]' ? [menuButton, unrelatedButton] : [],
+      getElementById: (id: string) => id === 'fl-accordion-lunch-content-1' ? menuPanel : id === 'faq-content-0' ? unrelatedPanel : null,
+    } as unknown as Document;
+
+    const parsed = parseMenu(accordionMenuLines(document).join('\n'), 'fi', null);
+    expect(parsed.items.map(item => item.name)).toEqual([
+      'Roasted root vegetables with lemon-herb sauce',
+      'Creamy mushroom soup with rye bread',
+      'Chef tasting plate',
+    ]);
+  });
+
   it('restores PDF headings and attaches priced descriptions to their dish', () => {
     const lines = formatPdfMenuRows([
       [{ x: 273, text: 'P O K E' }, { x: 345, text: 'B O W L' }],
@@ -116,6 +152,48 @@ describe('structured menu extraction', () => {
     expect(parsed.items.map(item => item.price)).toEqual(['5.9€', '4.8€', '3.6€', '3.9€', '4.3€']);
   });
 
+  it('extracts dishes from a mixed lunch-and-dinner homepage without listing restaurant copy', () => {
+    const block = (tagName: string, textContent: string) => ({ tagName, textContent });
+    const blocks = [
+      block('H2', 'Restaurant location'),
+      block('H3', 'Lounas maanantaista perjantaihin klo 10–14'),
+      block('H4', 'Lounaslista'),
+      block('H5', 'Tiistai 27.10.Laajenna'),
+      block('P', 'Paistettua kirjolohta ja perunaa 14,50 €'),
+      block('P', 'Ravintola tarjoaa kiireiseen päivään sopivan lounaan.'),
+      block('H3', 'À la carte dinner'),
+      block('P', 'Valitse omat annoksesi alla olevista vaihtoehdoista.'),
+      block('H4', 'Alkuruoat'),
+      block('P', 'Siikacrudo 14 €'),
+      block('H2', 'Yksityistilaisuudet Albertinkadulla'),
+      block('P', 'Tapahtumat suunnitellaan asiakkaan tarpeiden mukaan.'),
+      block('H2', 'Tarinamme'),
+      block('P', 'Hyvä ruoka tuo ihmiset yhteen.'),
+      block('H2', 'Ravintolan arvot'),
+      block('H3', 'Yhdenvertaisuus'),
+      block('P', 'Kaikki ovat tervetulleita yhteiseen pöytään.'),
+    ];
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      body: { textContent: '', querySelectorAll: () => blocks },
+      querySelectorAll: () => [],
+      querySelector: () => null,
+    } as unknown as Document; } } as typeof DOMParser;
+    let extracted: string;
+    try {
+      extracted = cleanMenuText('<html></html>', 'https://restaurant.example/');
+    } finally {
+      globalThis.DOMParser = original;
+    }
+
+    const parsed = parseMenu(extracted, 'fi', null);
+    expect(parsed.items.map(item => item.name)).toEqual([
+      'Paistettua kirjolohta ja perunaa',
+      'Siikacrudo',
+    ]);
+    expect(parsed.items.some(item => /lounaslista|tiistai|tarinamme|arvot|yksityistilaisuudet|ravintola tarjoaa/i.test(item.name))).toBe(false);
+  });
+
   it('attaches a dotted dietary-code price line to the preceding item', () => {
     const parsed = parseMenu('menu-section: Mochi Ice Cream\nStrawbry Mochi\nL. G. 4.8€', 'en', null);
 
@@ -163,6 +241,50 @@ describe('structured menu extraction', () => {
       dietaryInfo: ['L. G.'],
     });
     expect(parsed.items[0].sourceText).toContain('L. G. 4.8€');
+  });
+
+  it('keeps restaurant location, opening-hours, address, and story copy out of the menu items', () => {
+    const parsed = parseMenu([
+      'A good moment is a good meal.',
+      'Nordic Table Ma-Pe 11-14 / La 16-23',
+      'menu-section: Nordic Table',
+      'Harbor Road 8',
+      '00130 Helsinki',
+      '+358 9 123 4567',
+      'menu-section: Lunch Monday to Friday 11:00–14:00',
+      'menu-section: Friday 27.10.',
+      'Roasted root vegetables with lemon-herb sauce 14,50 €',
+      'menu-section: Private events',
+      'Our story',
+      'menu-section: Our story',
+      'We create a welcoming place to share good food.',
+    ].join('\n'), 'fi', null);
+
+    expect(parsed.items.map(item => item.name)).toEqual([
+      'Roasted root vegetables with lemon-herb sauce',
+    ]);
+  });
+
+  it('keeps priced foreign-language dishes when the page language model rejects them', () => {
+    const fiClassifier = fiMenuClassifier as MenuClassifier;
+    const enClassifier = enMenuClassifier as MenuClassifier;
+    const line = 'Roasted salmon with herb potatoes 17 €';
+    const parsedWithSecondary = parseMenu(line, 'fi', fiClassifier, {
+      secondaryClassifiers: [enClassifier],
+      mixedLanguage: true,
+    });
+    const parsedWhenSecondaryIsUnavailable = parseMenu(line, 'fi', fiClassifier, {
+      mixedLanguage: true,
+      missingSecondaryClassifier: true,
+    });
+    const unrelated = parseMenu('Päivän lounas julkaistaan aamulla', 'fi', fiClassifier, {
+      secondaryClassifiers: [enClassifier],
+      mixedLanguage: true,
+    });
+
+    expect(parsedWithSecondary.items.map(item => item.name)).toContain('Roasted salmon with herb potatoes');
+    expect(parsedWhenSecondaryIsUnavailable.items.map(item => item.name)).toContain('Roasted salmon with herb potatoes');
+    expect(unrelated.items).toHaveLength(0);
   });
 
   it('removes a trailing separator left before a compact menu price', () => {

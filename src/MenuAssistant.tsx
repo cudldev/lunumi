@@ -6,8 +6,8 @@ import { classifyMenuLine, loadMenuClassifier, MENU_OTHER_FILTER_THRESHOLD, type
 type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; dietaryInfo?: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
-type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v25';
+type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v28';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -75,17 +75,35 @@ const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
 };
 
 const dietaryCodeLine = /^(?:[A-ZÅÄÖ]{1,4}(?:\s*,\s*[A-ZÅÄÖ]{1,4}){1,8})$/i;
-const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b|voimassa\s+\d{1,2}\.\s*\d{1,2}\.?\s*[–-]\s*\d{1,2}\.\s*\d{1,2}\.?$|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\s+\d+\s+tiedostoa\b|kiitos palautteestasi!?$)/i;
+const nonMenuSectionHeading = /^(?:about(?: us| our restaurant)?|our story|our values|values|our locations|contact(?: us)?|opening hours|private events?\b.*|book(?: a table)?|gift cards?\b.*|shop|.*\b(?:arvot|values|värderingar|valeurs)\b.*|tasa-arvo|nautiskelu|avoimuus|vastuullisuus|tarinamme|yhteystiedot|aukioloajat|yksityistilais\w*\b.*|varaa pöytä|lahjakortit?\b.*|kauppaan|vår historia|våra värderingar|kontakt|öppettider|privata evenemang\b.*|boka bord|presentkort|notre histoire|nos valeurs|contactez-nous|horaires|événements privés\b.*|réserver une table|cartes cadeaux)$/i;
+const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b|voimassa\s+\d{1,2}\.\s*\d{1,2}\.?\s*[–-]\s*\d{1,2}\.\s*\d{1,2}\.?$|(?:.*\b(?:ma|ti|ke|to|pe|la|su)\b.*)?\d{1,2}(?:[.:]\d{2})?\s*[-–]\s*\d{1,2}(?:[.:]\d{2})?.*\b(?:ma|ti|ke|to|pe|la|su)\b.*|(?:palvelemme osoitteessa|we are located at|our address\s*:|address\s*:|visit us at|vi finns på|vår adress\s*:)[^.!?]*|\d{5}\s+[\p{L}-]+|(?=.*\b(?:street|st\.?|road|rd\.?|avenue|ave\.?|boulevard|blvd\.?|esplanadi|katu|tie|kuja|gata|väg)\b).*\s+\d{1,4}[a-z]?(?:\s*[,./-].*)?$|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\s+\d+\s+tiedostoa\b|kiitos palautteestasi!?$)/iu;
 
 const nonMenuStatusLine = /^(?:voimassa\b|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\b|kiitos palautteestasi!?$)/i;
 
-function detectLanguage(value: string): MenuLanguage {
+function languageClueScores(value: string): Array<{ language: Exclude<MenuLanguage, 'unknown'>; score: number }> {
   const sample = value.slice(0, 20_000);
-  const scores = (Object.entries(languageModules) as Array<[Exclude<MenuLanguage, 'unknown'>, LanguageModule]>)
+  return (Object.entries(languageModules) as Array<[Exclude<MenuLanguage, 'unknown'>, LanguageModule]>)
     .map(([language, module]) => ({ language, score: module.clues.reduce((sum, clue) => sum + Number(clue.test(sample)), 0) }))
     .sort((a, b) => b.score - a.score);
+}
+
+function detectLanguage(value: string): MenuLanguage {
+  const scores = languageClueScores(value);
   return scores[0]?.score && scores[0].score > (scores[1]?.score || 0) ? scores[0].language : 'unknown';
 }
+
+const MIXED_LANGUAGE_CLUE_THRESHOLD = 2;
+
+function canLoadSecondaryMenuModels(): boolean {
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  return !connection?.saveData && connection?.effectiveType !== 'slow-2g' && connection?.effectiveType !== '2g';
+}
+
+type MenuClassifierOptions = {
+  secondaryClassifiers?: MenuClassifier[];
+  mixedLanguage?: boolean;
+  missingSecondaryClassifier?: boolean;
+};
 
 function splitMenuNotice(value: string): string[] {
   const sentences = value.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(part => part.trim()).filter(Boolean) ?? [value];
@@ -245,12 +263,39 @@ export function tabbedMenuLines(document: Document): string[] {
   return items;
 }
 
+export function accordionMenuLines(document: Document): string[] {
+  const buttons = [...document.querySelectorAll<HTMLElement>('button[aria-expanded],button[id*="-button-"]')];
+  const lines: string[] = [];
+  for (const button of buttons) {
+    const label = button.textContent?.replace(/\s+/g, ' ').trim() || '';
+    if (!label || label.length > 100) continue;
+    const generatedPanelId = button.id.match(/^(.*)-button-(\d+)$/)?.slice(1).join('-content-');
+    const panelId = button.getAttribute('aria-controls') || generatedPanelId;
+    const panel = (panelId && document.getElementById(panelId))
+      || button.nextElementSibling as HTMLElement | null;
+    if (!panel) continue;
+    const readText = (node: Element) => node.textContent?.replace(/\s+/g, ' ').trim() || '';
+    const semanticRows = [...panel.querySelectorAll('p,li,dt,dd,[itemprop="name"]')]
+      .map(readText).filter(text => text.length > 2 && text.length <= 220);
+    const directRows = [...panel.children].map(readText).filter(text => text.length > 2 && text.length <= 220);
+    const text = panel.textContent?.replace(/\s+/g, ' ').trim() || '';
+    const rows = semanticRows.length ? semanticRows : directRows.length ? directRows : text.length <= 220 ? [text] : [];
+    const hasPrices = rows.some(row => /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?)/.test(row));
+    const menuLabel = /^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|måndag|tisdag|onsdag|torsdag|fredag|monday|tuesday|wednesday|thursday|friday|menu|meny|juomat|drinks|lounas|lunch|dinner|à la carte)\b/i.test(label);
+    if (!rows.length || (!hasPrices && !menuLabel)) continue;
+    lines.push(`menu-section: ${label}`, ...rows);
+  }
+  return lines;
+}
+
 export function cleanMenuText(value: string, sourceUrl?: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
   const structuredItems = schemaMenuLines(document, sourceUrl);
   const tabbedItems = tabbedMenuLines(document);
   if (tabbedItems.length) return [...structuredItems, ...tabbedItems].join('\n');
+  const accordionItems = accordionMenuLines(document);
+  if (accordionItems.length) return [...structuredItems, ...accordionItems].join('\n');
   document.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(node => node.remove());
   const productSections = [...document.querySelectorAll('.category')].map(category => {
     const heading = category.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '';
@@ -371,16 +416,19 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
   const blockNodes = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')];
   const blockText = (node: Element) => node.textContent?.replace(/\s+/g, ' ').trim() || '';
   const menuTitleIndex = blockNodes.findIndex(node => /^H[1-3]$/.test(node.tagName)
-    && /(?:^|\b)(?:menus?|lunch|meny|ruokalista|tuotteet)(?:\b|$)/i.test(blockText(node)));
+    && /(?:^|\b)(?:menus?|lunch|lounas\w*|meny|ruokalista|tuotteet|a\s+la\s+carte)(?:\b|$)/i.test(blockText(node)));
   const firstSectionIndex = menuTitleIndex < 0 ? -1 : blockNodes.findIndex((node, index) => index > menuTitleIndex
     && /^H[1-3]$/.test(node.tagName));
+  const sectionRegionHasMenuPrices = firstSectionIndex > menuTitleIndex
+    && blockNodes.slice(menuTitleIndex + 1, firstSectionIndex).some(node => /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+)/.test(blockText(node)));
   const compactPriceToken = /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?)/g;
   const blocks = blockNodes.flatMap((node, index) => {
     const text = blockText(node);
     if (text.length <= 1) return [];
     // Menu pages often put a table-of-contents list below the page title. Skip
     // those links/labels and keep the actual semantic section headings instead.
-    if (index === menuTitleIndex || (firstSectionIndex > menuTitleIndex && index > menuTitleIndex && index < firstSectionIndex)) return [];
+    if (index === menuTitleIndex || (firstSectionIndex > menuTitleIndex && !sectionRegionHasMenuPrices && index > menuTitleIndex && index < firstSectionIndex)) return [];
+    if (/^H[1-2]$/.test(node.tagName)) return [`menu-section: ${text}`];
     if (menuTitleIndex >= 0 && index > menuTitleIndex && /^H[1-3]$/.test(node.tagName)) return [`menu-section: ${text}`];
     if (/^H[4-6]$/.test(node.tagName)) {
       const prices = [...text.matchAll(compactPriceToken)];
@@ -699,7 +747,7 @@ async function readMenuResponse(response: Response): Promise<string> {
   return text + decoder.decode();
 }
 
-export function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassifier | null): ParsedMenu {
+export function parseMenu(value: string, language: MenuLanguage, classifier: MenuClassifier | null, classifierOptions: MenuClassifierOptions = {}): ParsedMenu {
   const lines = cleanMenuText(value).split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const found: MenuItem[] = [];
   const notes: string[] = [];
@@ -763,13 +811,29 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   const isSectionPrefix = (line: string) => line === line.toLocaleUpperCase() && (language === 'unknown' ? Object.values(sectionHeadings).some(headings => headings.test(line)) : sectionHeadings[activeLanguage].test(line)); const isSection = (line: string) => (language === 'unknown'
     ? Object.values(sectionHeadings).some(headings => headings.test(line))
     : sectionHeadings[activeLanguage].test(line)) || modules.some(module => module.headings.test(line));
+  const isMenuTitleHeading = (line: string) => /\b(?:lounaslista|ruokalista|lunch menu|dinner menu|menu|meny|à la carte|a la carte)\b/i.test(line)
+    || /\blounas\b.*\b(?:maanantaista|perjantaihin|kello)\b/i.test(line);
+  const isWeekdayHeading = (line: string) => /^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|måndag|tisdag|onsdag|torsdag|fredag|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}(?:[./]\d{1,2})?(?:[./]\d{2,4})?(?:\s*\.?\s*(?:laajenna|expand|show|more))?$/i.test(line);
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
   let section = '';
+  let skippingNonMenuSection = false;
   let pendingImageUrl: string | undefined;
   let pendingMenuPriceLabel = '';
   for (const originalLine of lines) { let line = originalLine;
     if (inlineLegendLines.has(originalLine)) continue;
-    if (line.startsWith('menu-section:')) { section = line.slice('menu-section:'.length).trim(); continue; }
+    if (line.startsWith('menu-section:')) {
+      const heading = line.slice('menu-section:'.length).trim();
+      if (nonMenuSectionHeading.test(heading)) {
+        section = '';
+        skippingNonMenuSection = true;
+      } else if (skippingNonMenuSection && (isSection(heading) || isMenuTitleHeading(heading) || isWeekdayHeading(heading))) {
+        section = heading;
+        skippingNonMenuSection = false;
+      } else if (!skippingNonMenuSection) {
+        section = heading;
+      }
+      continue;
+    }
     if (line.startsWith('menu-diet-legend:')) continue;
     const structured = line.match(/^menu-schema-item:\s*(\{.*\})$/i);
     if (structured) {
@@ -798,6 +862,20 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const image = line.match(/^menu-image:\s*(https:\/\/\S+)$/i);
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
+    if (nonMenuSectionHeading.test(line)) {
+      section = '';
+      skippingNonMenuSection = true;
+      continue;
+    }
+    if (skippingNonMenuSection) {
+      if (isSection(line) || isMenuTitleHeading(line) || isWeekdayHeading(line)) {
+        section = line;
+        skippingNonMenuSection = false;
+        continue;
+      }
+      continue;
+    }
+    if (isMenuTitleHeading(line) || isWeekdayHeading(line)) { section = line; continue; }
     if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue; if (isSection(line)) { section = line; continue; }
     if (/^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}[./]\d{1,2}[./]\d{4}$/i.test(line)
       || nonMenuDetailLine.test(line) || nonMenuStatusLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
@@ -876,6 +954,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
       .replace(/\s+\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)\s*$/, '')
       .replace(/\s*[-–—|·:]\s*$/, '')
       .trim();
+    if (!price && !lineDietCodes.length && /[.!?]$/.test(name) && name.split(/\s+/).length >= 4) continue;
     if (name.length < 3 || name.length > 220) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
     if (language !== 'unknown' && classifier) {
@@ -883,11 +962,25 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
       if (prediction?.label === 'other' && prediction.confidence >= MENU_OTHER_FILTER_THRESHOLD) {
         const last = found[found.length - 1];
         const looksLikeDescription = last && last.section === section && line.length >= 35 && line.length <= 180 && !pricePattern.test(line) && !isDietLine(line) && /[.!,:;]/.test(line);
+        const recognizedAsForeignDish = (classifierOptions.secondaryClassifiers ?? []).some(secondary => {
+          if (secondary.language === classifier.language) return false;
+          const secondaryPrediction = classifyMenuLine(name, secondary);
+          return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+        });
+        const keepUnresolvedPricedLine = classifierOptions.mixedLanguage && Boolean(price)
+          && classifierOptions.missingSecondaryClassifier;
+        if (!recognizedAsForeignDish && !keepUnresolvedPricedLine) {
+          if (looksLikeDescription) {
+            last.description = [last.description, line].filter(Boolean).join(' ').slice(0, 240);
+            last.sourceText = `${last.sourceText}\n${line}`.slice(0, 500);
+          }
+          continue;
+        }
         if (looksLikeDescription) {
           last.description = [last.description, line].filter(Boolean).join(' ').slice(0, 240);
           last.sourceText = `${last.sourceText}\n${line}`.slice(0, 500);
+          continue;
         }
-        continue;
       }
     }
     const key = name.toLocaleLowerCase();
@@ -927,6 +1020,7 @@ function validCachedMenu(value: unknown): value is CachedMenu {
     && (entry.resolvedSourceUrl === undefined || (typeof entry.resolvedSourceUrl === 'string' && entry.resolvedSourceUrl.length <= 2048))
     && typeof entry.cachedAt === 'string' && Number.isFinite(Date.parse(entry.cachedAt))
     && (entry.language === undefined || ['fi', 'sv', 'en', 'unknown'].includes(entry.language))
+    && (entry.modelsUsed === undefined || (Array.isArray(entry.modelsUsed) && entry.modelsUsed.every(model => ['fi', 'sv', 'en'].includes(model))))
     && Array.isArray(entry.items) && entry.items.length <= 100
     && Array.isArray(entry.notes) && entry.notes.length <= 30 && entry.notes.every(note => typeof note === 'string' && note.length <= 220)
     && entry.items.every(item => Boolean(item) && typeof item.name === 'string' && item.name.length <= 220
@@ -954,7 +1048,7 @@ function readCachedMenu(sourceUrl: string): CachedMenu | null {
   }
 }
 
-function writeCachedMenu(sourceUrl: string, resolvedSourceUrl: string, menu: ParsedMenu, language: MenuLanguage): string | null {
+function writeCachedMenu(sourceUrl: string, resolvedSourceUrl: string, menu: ParsedMenu, language: MenuLanguage, modelsUsed: Array<Exclude<MenuLanguage, 'unknown'>>): string | null {
   const cachedAt = new Date().toISOString();
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(MENU_CACHE_KEY) || '[]');
@@ -964,7 +1058,7 @@ function writeCachedMenu(sourceUrl: string, resolvedSourceUrl: string, menu: Par
       const age = now - Date.parse(candidate.cachedAt);
       return age >= 0 && age < MENU_CACHE_TTL_MS && candidate.sourceUrl !== sourceUrl;
     }) : [];
-    const next: CachedMenu[] = [{ sourceUrl, resolvedSourceUrl, cachedAt, ...menu, language }, ...recent].slice(0, MENU_CACHE_MAX_ENTRIES);
+    const next: CachedMenu[] = [{ sourceUrl, resolvedSourceUrl, cachedAt, ...menu, language, modelsUsed }, ...recent].slice(0, MENU_CACHE_MAX_ENTRIES);
     localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(next));
     return cachedAt;
   } catch {
@@ -1058,7 +1152,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
   const [error, setError] = useState('');
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [language, setLanguage] = useState<MenuLanguage>('unknown');
-  const [modelUsed, setModelUsed] = useState(false);
+  const [modelsUsed, setModelsUsed] = useState<Array<Exclude<MenuLanguage, 'unknown'>>>([]);
   const [ocrUsed, setOcrUsed] = useState(false);
   const [verifiedSourceUrl, setVerifiedSourceUrl] = useState<string | null>(null);
 
@@ -1071,7 +1165,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     setError('');
     setCachedAt(null);
     setLanguage('unknown');
-    setModelUsed(false);
+    setModelsUsed([]);
     setOcrUsed(false);
     setVerifiedSourceUrl(null);
     if (!sourceUrl) {
@@ -1087,6 +1181,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       setNotes(cached.notes);
       setCachedAt(cached.cachedAt);
       setLanguage(cached.language ?? 'unknown');
+      setModelsUsed(cached.modelsUsed ?? []);
       setVerifiedSourceUrl(cached.resolvedSourceUrl ?? menuUrl);
       setBusy(false);
       return () => controller.abort();
@@ -1099,11 +1194,28 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
         const interpret = async (candidate: CachedMenuSource) => {
           const readable = feedText(candidate.text, candidate.contentType, candidate.resolvedSourceUrl);
           const detectedLanguage = detectLanguage(readable);
+          const secondaryLanguages = detectedLanguage === 'unknown' ? [] : languageClueScores(readable)
+            .filter(score => score.language !== detectedLanguage && score.score >= MIXED_LANGUAGE_CLUE_THRESHOLD)
+            .map(score => score.language);
           let classifier: MenuClassifier | null = null;
           if (detectedLanguage !== 'unknown') {
             try { classifier = await loadMenuClassifier(detectedLanguage); } catch { /* keep rule-based extraction if language weights are not available */ }
           }
-          return { detectedLanguage, classifier, extracted: parseMenu(readable, detectedLanguage, classifier) };
+          const secondaryClassifiers: MenuClassifier[] = [];
+          if (classifier && secondaryLanguages.length && canLoadSecondaryMenuModels()) {
+            const loadedSecondary = await Promise.all(secondaryLanguages.map(language => loadMenuClassifier(language).catch(() => null)));
+            secondaryClassifiers.push(...loadedSecondary.filter((model): model is MenuClassifier => Boolean(model)));
+          }
+          const classifierOptions: MenuClassifierOptions = {
+            secondaryClassifiers,
+            mixedLanguage: secondaryLanguages.length > 0,
+            missingSecondaryClassifier: secondaryClassifiers.length < secondaryLanguages.length,
+          };
+          const modelsUsed = [...new Set([
+            ...(classifier ? [classifier.language as Exclude<MenuLanguage, 'unknown'>] : []),
+            ...secondaryClassifiers.map(model => model.language as Exclude<MenuLanguage, 'unknown'>),
+          ])];
+          return { detectedLanguage, classifier, modelsUsed, extracted: parseMenu(readable, detectedLanguage, classifier, classifierOptions) };
         };
         const hasMenu = (candidate: CachedMenuSource, result: Awaited<ReturnType<typeof interpret>>) =>
           hasMenuEvidence(candidate.text, candidate.resolvedSourceUrl, result.extracted.items);
@@ -1166,18 +1278,18 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
             }
           }
         }
-        const { detectedLanguage, classifier, extracted } = interpreted;
+        const { detectedLanguage, extracted } = interpreted;
         if (!didUseOcr && !hasMenu(source, interpreted)) throw new Error(ocrFailure || 'No verifiable menu items were found on the restaurant page.');
         if (!controller.signal.aborted) {
           setItems(extracted.items);
           setNotes(extracted.notes);
           setLanguage(detectedLanguage);
-          setModelUsed(Boolean(classifier));
+          setModelsUsed(interpreted.modelsUsed);
           setOcrUsed(didUseOcr);
           setVerifiedSourceUrl(source.resolvedSourceUrl);
           setCachedAt(source.refreshError
             ? new Date(source.fetchedAt).toISOString()
-            : writeCachedMenu(menuUrl, source.resolvedSourceUrl, extracted, detectedLanguage));
+            : writeCachedMenu(menuUrl, source.resolvedSourceUrl, extracted, detectedLanguage, interpreted.modelsUsed));
           if (source.refreshError) setError(`Showing the menu saved on this device from ${new Date(source.fetchedAt).toLocaleString()}; refresh failed: ${source.refreshError}`);
         }
       } catch (cause) {
@@ -1219,8 +1331,8 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
       {ocrUsed && <p className="menu-assistant-note">Text was recognized from the linked menu image on this device; OCR can make mistakes. Check the source image.</p>}
       {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
-      {modelUsed && language === 'en' && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>.</p>}
-      {modelUsed && language !== 'en' && language !== 'unknown' && <p className="menu-assistant-note">{languageModules[language].name} line filter uses Fineli food names (CC BY 4.0) and CC0 synthetic text. <a href="https://fineli.fi/fineli/fi/avoin-data" target="_blank" rel="noopener noreferrer">Fineli open data</a> is provided by THL.</p>}
+      {modelsUsed.includes('en') && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a> and <a href="https://github.com/cudldev/lunumi" target="_blank" rel="noopener noreferrer">Lunumi-authored synthetic CC0 examples</a>.</p>}
+      {modelsUsed.some(model => model === 'fi' || model === 'sv') && <p className="menu-assistant-note">Finnish and Swedish line filters use Fineli food names (CC BY 4.0), synthetic menu-line combinations, and CC0 page-noise examples. <a href="https://fineli.fi/fineli/fi/avoin-data" target="_blank" rel="noopener noreferrer">Fineli open data</a> is provided by THL.</p>}
     </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
     {(verifiedSourceUrl || sourceUrl) && <a className="menu-assistant-source" href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
   </section>;
