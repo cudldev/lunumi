@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { trainingSourceMetadata } from '../../scripts/menu-training-annotation.mjs';
 
 const root = process.cwd();
 const privateDir = path.resolve(root, 'data/private-menu-training');
@@ -54,15 +55,7 @@ const all = lines.map((line, index) => {
   if (!['en', 'fi', 'sv'].includes(example.language) || !allowedLabels.has(example.label) || typeof example.text !== 'string' || !example.text.trim()) {
     throw new Error(`Invalid annotation on line ${index + 1}.`);
   }
-  const source = example.source ?? {
-    name: example.sourceName,
-    sourceUrl: example.sourceUrl,
-    license: example.license,
-    licenseUrl: example.licenseUrl,
-    permissionBasis: example.permissionBasis,
-    approvedForModelRelease: example.approvedForModelRelease,
-    commercialUseApproved: example.commercialUseApproved,
-  };
+  const source = trainingSourceMetadata(example);
   if (source.approvedForModelRelease !== true || source.commercialUseApproved !== true || !source.license
     || !source.licenseUrl || !source.sourceUrl || !['explicit-license', 'written-permission'].includes(source.permissionBasis)
     || (source.permissionBasis === 'written-permission' && !(source.rightsEvidenceUrl || source.sourceRightsEvidenceUrl))) {

@@ -13,7 +13,27 @@ Synthetic examples can help exercise formatting variants (prices, separators, li
 ## Local workflow
 
 1. Run `npm run model:prepare`. It downloads the pinned USDA FNDDS JSON archive if needed, extracts it under `data/private-menu-training/`, and prepares English `dish`, `section`, and `other` examples in ignored `labels.jsonl`.
-2. For additional languages, collect only explicitly licensed or permission-cleared feeds with `npm run model:collect`; manually review and label candidate text lines as `dish`, `section`, or `other` in the ignored `labels.jsonl`. Each labeled row must retain its language and source fields (`sourceName`, `sourceUrl`, `license`, `licenseUrl`, `permissionBasis`, `approvedForModelRelease`, and `commercialUseApproved`). The trainer rejects rows without commercial and weight-release approval.
+2. For additional languages, create the ignored local manifest `data/menu-training-sources.local.json` and collect only explicitly licensed or permission-cleared feeds/pages with `npm run model:collect`. A source entry looks like this:
+
+   ```json
+   {
+     "sources": [{
+       "sourceName": "Restaurant feed",
+       "url": "https://restaurant.example/feed.json",
+       "type": "feed",
+       "language": "fi",
+       "license": "CC BY 4.0",
+       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+       "permissionBasis": "explicit-license",
+       "rightsReviewedAt": "2026-10-27",
+       "rightsEvidenceUrl": "https://restaurant.example/terms",
+       "approvedForModelRelease": true,
+       "commercialUseApproved": true
+     }]
+   }
+   ```
+
+   Replace every example value with verified source details. These approval fields are declarations that you reviewed the actual license or written permission; they do not grant permission by themselves. Review each new candidate interactively with `npm run model:label`; the tool displays the source and license evidence and records `dish`, `section`, or `other` labels with the original language, source, license, permission, and rights-evidence fields. It skips previously labeled hashes and keeps the private corpus under the Git-ignored `data/private-menu-training/` directory. The trainer rejects rows without commercial and weight-release approval.
 3. Run `npm run model:train`. It trains one standard-library character n-gram Naive Bayes model per language present, reports precision/recall/F1 by label, and writes weights to `public/models/menu-line-classifier.json` for English and `menu-line-classifier-fi.json` / `menu-line-classifier-sv.json` when those datasets exist. It uses a deterministic source-held-out split when at least five source groups are available; otherwise it marks its exact-text split as a weak fallback. The FNDDS baseline reports 90.2% accuracy but only 21.6% precision for its section label, so the classifier must not decide category headings alone; those remain grounded in explicit page structure and rules.
 4. Do not commit `data/private-menu-training/`. The weights include source/license metadata and can be distributed commercially only when every source permits commercial use; keep source attribution in the app and published documentation.
 

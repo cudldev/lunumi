@@ -13,6 +13,7 @@
     "menu-reader:dev": "npm run menu-reader:hosts && npx --yes wrangler@4.134.0 dev --config menu-reader-worker/wrangler.jsonc",
     "menu-reader:deploy": "npx --yes wrangler@4.134.0 deploy --config menu-reader-worker/wrangler.jsonc",
     "model:collect": "node scripts/collect-menu-training.mjs",
+    "model:label": "node scripts/label-menu-training.mjs",
     "model:prepare": "node scripts/prepare-fndds-training.mjs",
     "model:train": "node training/menu-extractor/train.mjs",
     "data:helsinki": "node scripts/build-osm-food-data.mjs",

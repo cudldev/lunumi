@@ -114,6 +114,8 @@ for (const [index, source] of sources.entries()) {
       license: source.license,
       licenseUrl: source.licenseUrl,
       permissionBasis: source.permissionBasis,
+      rightsReviewedAt: source.rightsReviewedAt,
+      sourceRightsEvidenceUrl: source.rightsEvidenceUrl,
       approvedForModelRelease: true,
       commercialUseApproved: true,
       language: source.language,
