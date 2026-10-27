@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v8';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v9';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -74,7 +74,7 @@ const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
   en: /^(?:ingredients?|made with)\s*[:\-]\s*(.+)$/i,
 };
 
-const dietaryCodeLine = /^(?:[A-ZÅÄÖ](?:\s*,\s*[A-ZÅÄÖ]){1,8})(?:\s*,\s*(?:VEG|VEGAANINEN|VEGETAARINEN))?$/i;
+const dietaryCodeLine = /^(?:[A-ZÅÄÖ]{1,4}(?:\s*,\s*[A-ZÅÄÖ]{1,4}){1,8})$/i;
 const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b)/i;
 
 function detectLanguage(value: string): MenuLanguage {
@@ -184,10 +184,57 @@ export function schemaMenuLines(document: Document, sourceUrl?: string): string[
   return result;
 }
 
+export function tabbedMenuLines(document: Document): string[] {
+  const tabs = [...document.querySelectorAll<HTMLElement>('[role="tab"][aria-selected="true"]')];
+  const panels = [...document.querySelectorAll<HTMLElement>('[role="tabpanel"][id^="panel-"]')];
+  const controlledId = tabs[0]?.getAttribute('aria-controls')?.split(/\s+/)[0];
+  const panel = panels.find(candidate => candidate.id === controlledId)
+    || panels.find(candidate => candidate.getAttribute('aria-hidden') === 'false' || candidate.getAttribute('hidden') === 'false');
+  if (!panel) return [];
+
+  const sections = [...panel.querySelectorAll<HTMLElement>('li')]
+    .filter(section => section.querySelector(':scope > .option-title') && section.querySelector(':scope > ul'));
+  const items: string[] = [];
+  for (const sectionNode of sections) {
+    const section = sectionNode.querySelector(':scope > .option-title')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+    const list = sectionNode.querySelector(':scope > ul');
+    if (!list) continue;
+    for (const row of [...list.children]) {
+      const button = row.querySelector('button.accordion__button, button[aria-expanded], button');
+      const name = button?.textContent?.replace(/\s+/g, ' ').trim() || '';
+      if (!name || name.length > 120) continue;
+
+      const paragraphs = [...row.querySelectorAll('p')].map(node => node.textContent?.replace(/\s+/g, ' ').trim() || '').filter(Boolean);
+      const textBlocks = [...row.querySelectorAll('p, span, div')].map(node => node.textContent?.replace(/\s+/g, ' ').trim() || '').filter(Boolean);
+      const code = textBlocks.find(text => dietaryCodeLine.test(text)) || '';
+      const ingredientsLine = paragraphs.find(text => /^ainesosat?\s*:?/i.test(text)) || '';
+      const ingredients = ingredientsLine.replace(/^ainesosat?\s*:?\s*/i, '').trim();
+      const allergenInfo = paragraphs.filter(text => /^allergeenit?\s*:?/i.test(text))
+        .map(text => text.replace(/^allergeenit?\s*:?\s*/i, '').trim())
+        .filter(Boolean).map(text => `Allergeenit: ${text}`);
+      const item = {
+        section,
+        name,
+        description: '',
+        price: '',
+        diets: [],
+        dietaryInfo: code ? [code] : [],
+        ingredients: ingredients ? [ingredients.slice(0, 240)] : [],
+        allergenInfo,
+        sourceText: [name, code, ingredientsLine, ...allergenInfo].filter(Boolean).join('\n').slice(0, 500),
+      };
+      items.push(`menu-schema-item: ${JSON.stringify(item)}`);
+    }
+  }
+  return items;
+}
+
 function cleanMenuText(value: string, sourceUrl?: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
   const structuredItems = schemaMenuLines(document, sourceUrl);
+  const tabbedItems = tabbedMenuLines(document);
+  if (tabbedItems.length) return [...structuredItems, ...tabbedItems].join('\n');
   document.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(node => node.remove());
   const productSections = [...document.querySelectorAll('.category')].map(category => {
     const heading = category.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '';
