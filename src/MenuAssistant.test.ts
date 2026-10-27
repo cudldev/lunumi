@@ -5,6 +5,40 @@ import type { MenuClassifier } from './menu-classifier';
 import { accordionMenuLines, cleanMenuText, discoverMenuImages, discoverMenuLinks, formatPdfMenuRows, hasMenuEvidence, normalizePdfGlyphSpacing, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
+  it('extracts named products and prices from generic price-list tables', () => {
+    const cell = (textContent: string, tagName: 'TH' | 'TD') => ({ textContent, tagName });
+    const row = (cells: ReturnType<typeof cell>[]) => ({
+      tagName: 'TR',
+      textContent: cells.map(item => item.textContent).join(' '),
+      querySelectorAll: (selector: string) => selector === 'th,td' ? cells : [],
+      querySelector: (selector: string) => selector === 'th' ? cells.find(item => item.tagName === 'TH') ?? null : null,
+    });
+    const blocks = [
+      { tagName: 'H1', textContent: 'Hinnasto' },
+      { tagName: 'H2', textContent: 'Liekillä grillatut' },
+      row([cell('Tuote', 'TH'), cell('Ateria', 'TH'), cell('Hampurilainen', 'TH')]),
+      row([cell('WHOPPER®', 'TD'), cell('10,95 €', 'TD'), cell('7,45 €', 'TD')]),
+      row([cell('Plant-based WHOPPER', 'TD'), cell('10,45 €', 'TD'), cell('6,95 €', 'TD')]),
+    ];
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      body: { textContent: '', querySelectorAll: () => blocks },
+      querySelectorAll: () => [],
+      querySelector: () => null,
+    } as unknown as Document; } } as typeof DOMParser;
+    let extracted: string;
+    try {
+      extracted = cleanMenuText('<html><body><table></table></body></html>', 'https://restaurant.example/hinnasto/');
+    } finally {
+      globalThis.DOMParser = original;
+    }
+    const parsed = parseMenu(extracted, 'fi', fiMenuClassifier as unknown as MenuClassifier);
+
+    expect(parsed.items.map(item => item.name)).toEqual(['WHOPPER®', 'Plant-based WHOPPER']);
+    expect(parsed.items.map(item => item.price)).toEqual(['10,95 €', '10,45 €']);
+    expect(parsed.items.every(item => item.section === 'Liekillä grillatut')).toBe(true);
+  });
+
   it('reads priced items from collapsed weekday accordions and ignores unrelated panels', () => {
     const panel = (rows: string[]) => ({
       textContent: rows.join(' '),
@@ -358,10 +392,17 @@ describe('structured menu extraction', () => {
     expect(homepageItems.length).toBeGreaterThan(0);
     expect(hasMenuEvidence(homePage, 'https://momochi.fi/', homepageItems)).toBe(false);
 
+    const promotionOnly = [{
+      section: 'Limited-time offer', name: 'Sandwich promotion', description: '', price: '', diets: [],
+      allergenInfo: [], imageUrl: 'https://restaurant.example/promotion.jpg', sourceText: 'Sandwich promotion',
+    }];
+    expect(hasMenuEvidence('Promotion heading\nSandwich promotion', 'https://restaurant.example/', promotionOnly)).toBe(false);
+
     const menuText = 'Lunch\nRoasted vegetable bowl';
     const menuItems = parseMenu(menuText, 'en', null).items;
     expect(hasMenuEvidence(menuText, 'https://restaurant.example/', menuItems)).toBe(true);
     expect(hasMenuEvidence('Roasted vegetable bowl', 'https://restaurant.example/menu', menuItems)).toBe(true);
+    expect(hasMenuEvidence('WHOPPER 10,95 €', 'https://restaurant.example/hinnasto/', menuItems)).toBe(true);
   });
 
   it('reads Schema.org menu items, section, image, price, explicit diet, and allergen metadata', () => {

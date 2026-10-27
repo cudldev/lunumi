@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v30';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v31';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -413,10 +413,10 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
 
   // DOMParser creates a detached document where innerText can collapse the whole page.
   // Keep semantic content blocks on separate lines for the local item parser.
-  const blockNodes = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')];
+  const blockNodes = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,tr,[itemprop="name"],[itemprop="description"]')];
   const blockText = (node: Element) => node.textContent?.replace(/\s+/g, ' ').trim() || '';
   const menuTitleIndex = blockNodes.findIndex(node => /^H[1-3]$/.test(node.tagName)
-    && /(?:^|\b)(?:menus?|lunch|lounas\w*|meny|ruokalista|tuotteet|a\s+la\s+carte)(?:\b|$)/i.test(blockText(node)));
+    && /(?:^|\b)(?:menus?|lunch|lounas\w*|meny|ruokalista|tuotteet|hinnasto|price\s*list|prices|pricelist|a\s+la\s+carte)(?:\b|$)/i.test(blockText(node)));
   const firstSectionIndex = menuTitleIndex < 0 ? -1 : blockNodes.findIndex((node, index) => index > menuTitleIndex
     && /^H[1-3]$/.test(node.tagName));
   const sectionRegionHasMenuPrices = firstSectionIndex > menuTitleIndex
@@ -425,6 +425,13 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
   const blocks = blockNodes.flatMap((node, index) => {
     const text = blockText(node);
     if (text.length <= 1) return [];
+    if (node.tagName === 'TR') {
+      const cells = [...node.querySelectorAll('th,td')].map(cell => blockText(cell)).filter(Boolean);
+      if (!cells.length || cells.every(cell => /^(?:tuote|product|item|price|hinta|ateria|meal|hamburilainen|burger)$/i.test(cell))) return [];
+      const isHeader = node.querySelector('th') !== null;
+      if (isHeader) return [];
+      return [cells.join(' · ')];
+    }
     // Menu pages often put a table-of-contents list below the page title. Skip
     // those links/labels and keep the actual semantic section headings instead.
     if (index === menuTitleIndex || (firstSectionIndex > menuTitleIndex && !sectionRegionHasMenuPrices && index > menuTitleIndex && index < firstSectionIndex)) return [];
@@ -1027,16 +1034,15 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
 
 export function hasMenuEvidence(sourceText: string, sourceUrl: string, items: MenuItem[]): boolean {
   if (!items.length) return false;
-  if (/^menu-schema-item:\s*\{/im.test(sourceText)) return true;
   try {
     const pathname = new URL(sourceUrl).pathname;
-    if (/(?:^|[\/_.-])(?:menus?|lunch|lounas|ruokalista|ruokalistat|meny|dagens)(?:$|[\/_.-])/i.test(pathname)) return true;
+    if (/(?:^|[\/_.-])(?:menus?|lunch|lounas|ruokalista|ruokalistat|meny|dagens|hinnasto|prices?|pricelist|tuotteet)(?:$|[\/_.-])/i.test(pathname)) return true;
   } catch { /* Without a valid source URL, require page-level evidence below. */ }
   const hasMenuHeading = sourceText.split(/\r?\n/).some(line =>
-    /^(?:menu|food menu|lunch|lounas|ruokalista|ruokalistat|meny|dagens)$/i.test(line.trim()));
-  const hasItemDetails = items.some(item => Boolean(item.section || item.price || item.imageUrl
-    || item.ingredients?.length || item.diets.length || item.allergenInfo.length));
-  return hasMenuHeading || hasItemDetails;
+    /^(?:menu|food menu|lunch|lounas|ruokalista|ruokalistat|meny|dagens|hinnasto|price list|prices)$/i.test(line.trim()));
+  const hasExplicitItemDetails = items.some(item => Boolean(item.price || item.ingredients?.length
+    || item.diets.length || item.dietaryInfo?.length || item.allergenInfo.length));
+  return hasMenuHeading || hasExplicitItemDetails;
 }
 
 function menuSourceQuality(sourceText: string, sourceUrl: string, items: MenuItem[]): number {
