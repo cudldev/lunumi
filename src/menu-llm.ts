@@ -1,4 +1,4 @@
-export type MenuModelProgress = { status: string; file?: string; progress?: number; device?: 'webgpu' | 'wasm' };
+export type MenuModelProgress = { status: string; file?: string; progress?: number; device?: 'webgpu' };
 export type MenuModelPreferences = { likes: string[]; dislikes: string[]; diet: string[]; notes: string };
 export type MenuAssistantTurn = { role: 'user' | 'assistant'; content: string };
 type WorkerResponse =
@@ -7,7 +7,7 @@ type WorkerResponse =
   | { type: 'activity'; id: number; text: string }
   | { type: 'result'; id: number; text: string }
   | { type: 'error'; id?: number; message: string };
-type PendingRequest = { resolve: (text: string) => void; reject: (error: Error) => void; onActivity?: (text: string) => void; task: WorkerTask; timeout: number };
+type PendingRequest = { resolve: (text: string) => void; reject: (error: Error) => void; onActivity?: (text: string) => void; timeout: number };
 type WorkerTask =
   | { type: 'analyze'; restaurantName: string; language: string; sourceText: string; preferences: MenuModelPreferences }
   | { type: 'chat'; turns: MenuAssistantTurn[]; context: string; preferences: MenuModelPreferences };
@@ -18,22 +18,13 @@ let nextRequestId = 0;
 const pending = new Map<number, PendingRequest>();
 const progressSubscribers = new Set<(progress: MenuModelProgress) => void>();
 let rejectInitialization: ((error: Error) => void) | null = null;
-let forceCpuWorker = false;
-let currentDevice: 'webgpu' | 'wasm' = 'webgpu';
 const MODEL_START_TIMEOUT_MS = 4 * 60_000;
 // This is an inactivity timeout, refreshed whenever the worker produces output.
-// It catches a lost WebGPU context without cutting off slower menu generations.
 const INFERENCE_IDLE_TIMEOUT_MS = 90_000;
 
 function armRequestTimeout(request: PendingRequest): void {
   window.clearTimeout(request.timeout);
-  request.timeout = window.setTimeout(() => {
-    if (currentDevice === 'webgpu' && !forceCpuWorker) {
-      retryPendingRequestsOnCpu();
-      return;
-    }
-    stopWorker(new Error('The local AI stopped responding. It was stopped to free this device; please try again.'));
-  }, INFERENCE_IDLE_TIMEOUT_MS);
+  request.timeout = window.setTimeout(() => stopWorker(new Error('Lunumi’s WebGPU model stopped responding. The request was stopped; please retry or reload the app.')), INFERENCE_IDLE_TIMEOUT_MS);
 }
 
 function refreshPendingTimeouts(): void {
@@ -42,6 +33,11 @@ function refreshPendingTimeouts(): void {
 
 function isWebGpuFailure(error: Error): boolean {
   return /webgpu|gpu|adapter|device lost|ortRun|groupqueryattention|external instance|compute pipeline/i.test(error.message);
+}
+
+function displayWorkerError(error: Error): Error {
+  if (!isWebGpuFailure(error)) return error;
+  return new Error(`Lunumi needs working WebGPU on this device. The local model could not run; no CPU model will be downloaded. Try reloading or using a supported browser. ${error.message.slice(0, 260)}`);
 }
 
 function stopWorker(error: Error): void {
@@ -58,25 +54,6 @@ function stopWorker(error: Error): void {
   pending.clear();
 }
 
-function retryPendingRequestsOnCpu(): void {
-  if (forceCpuWorker) return;
-  worker?.terminate();
-  worker = null;
-  modelPromise = null;
-  forceCpuWorker = true;
-  currentDevice = 'wasm';
-  for (const request of pending.values()) window.clearTimeout(request.timeout);
-  const progress: MenuModelProgress = { status: 'WebGPU stopped responding; retrying with the local CPU model', device: 'wasm' };
-  for (const subscriber of progressSubscribers) subscriber(progress);
-  void prepareLocalMenuModel(() => undefined).then(() => {
-    const instance = ensureWorker();
-    for (const [id, request] of pending) {
-      armRequestTimeout(request);
-      instance.postMessage({ ...request.task, id });
-    }
-  }).catch(error => stopWorker(error instanceof Error ? error : new Error('The local CPU model could not be started.')));
-}
-
 export function subscribeLocalMenuModelProgress(onProgress: (progress: MenuModelProgress) => void): () => void {
   progressSubscribers.add(onProgress);
   return () => progressSubscribers.delete(onProgress);
@@ -88,7 +65,6 @@ function ensureWorker(): Worker {
   worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
     const message = event.data;
     if (message.type === 'progress') {
-      currentDevice = message.progress.device ?? currentDevice;
       for (const subscriber of progressSubscribers) subscriber(message.progress);
       return;
     }
@@ -110,8 +86,8 @@ function ensureWorker(): Worker {
     }
     const error = new Error(message.message);
     if (message.id !== undefined) {
-      if (currentDevice === 'webgpu' && !forceCpuWorker && isWebGpuFailure(error)) {
-        retryPendingRequestsOnCpu();
+      if (isWebGpuFailure(error)) {
+        stopWorker(displayWorkerError(error));
         return;
       }
       const request = pending.get(message.id);
@@ -120,19 +96,34 @@ function ensureWorker(): Worker {
       pending.delete(message.id);
       return;
     }
-    stopWorker(error);
+    stopWorker(displayWorkerError(error));
   };
   worker.onerror = event => {
-    stopWorker(new Error(event.message || 'The local AI worker failed to start.'));
+    stopWorker(displayWorkerError(new Error(event.message || 'The local AI worker failed to start.')));
   };
   return worker;
 }
 
-export function prepareLocalMenuModel(onProgress: (progress: MenuModelProgress) => void): Promise<void> {
+async function requireWebGpuAdapter(): Promise<void> {
+  type NavigatorWithWebGpu = Navigator & { gpu?: { requestAdapter: () => Promise<unknown> } };
+  const gpu = (navigator as NavigatorWithWebGpu).gpu;
+  if (!gpu) throw new Error('Lunumi AI needs WebGPU, which is not available in this browser. The assistant is disabled on this device.');
+  try {
+    const adapter = await gpu.requestAdapter();
+    if (!adapter) throw new Error('No compatible WebGPU adapter was found.');
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Lunumi AI needs a compatible WebGPU adapter. The assistant is disabled on this device. ${detail.slice(0, 180)}`);
+  }
+}
+
+export async function prepareLocalMenuModel(onProgress: (progress: MenuModelProgress) => void): Promise<void> {
   progressSubscribers.add(onProgress);
-  const instance = ensureWorker();
-  if (!modelPromise) {
-    modelPromise = new Promise<void>((resolve, reject) => {
+  try {
+    await requireWebGpuAdapter();
+    const instance = ensureWorker();
+    if (!modelPromise) {
+      modelPromise = new Promise<void>((resolve, reject) => {
       const timeout = window.setTimeout(() => stopWorker(new Error('The local AI took too long to start. Please try again.')), MODEL_START_TIMEOUT_MS);
       const finish = (result?: Error) => {
         window.clearTimeout(timeout);
@@ -150,13 +141,16 @@ export function prepareLocalMenuModel(onProgress: (progress: MenuModelProgress) 
       };
       instance.addEventListener('message', listener);
       rejectInitialization = finish;
-      instance.postMessage({ type: 'initialize', ...(forceCpuWorker ? { device: 'wasm' as const } : {}) });
-    }).catch(error => {
-      modelPromise = null;
-      throw error;
-    });
+      instance.postMessage({ type: 'initialize' });
+      }).catch(error => {
+        modelPromise = null;
+        throw error;
+      });
+    }
+    await modelPromise;
+  } finally {
+    progressSubscribers.delete(onProgress);
   }
-  return modelPromise.finally(() => progressSubscribers.delete(onProgress));
 }
 
 export async function analyzeMenuLocally(input: {
@@ -186,7 +180,6 @@ async function sendToWorker(request: WorkerTask, onActivity?: (text: string) => 
       resolve: text => { window.clearTimeout(requestState.timeout); resolve(text); },
       reject: error => { window.clearTimeout(requestState.timeout); reject(error); },
       onActivity,
-      task: request,
       timeout: 0,
     };
     armRequestTimeout(requestState);
