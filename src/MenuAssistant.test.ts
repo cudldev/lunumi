@@ -287,6 +287,26 @@ describe('structured menu extraction', () => {
     expect(unrelated.items).toHaveLength(0);
   });
 
+  it('filters page noise from structured menu entries and keeps real priced dishes', () => {
+    const structured = (name: string, section = '') => `menu-schema-item: ${JSON.stringify({
+      name, section, description: '', price: '', diets: [], allergenInfo: [], sourceText: name,
+    })}`;
+    const page = [
+      structured('Pompier Espa'),
+      structured('Varaa pöytä'),
+      structured('Lahjakortti Pompier Espaan'),
+      structured('Yksityistilaisuudet Albertinkadulla'),
+      structured('Tasa-arvo'),
+      structured('Härkätartar, maustekurkkumajoneesia ja rapeaa sipulia', 'Starters'),
+    ].join('\n');
+
+    const parsed = parseMenu(page, 'fi', fiMenuClassifier as MenuClassifier);
+
+    expect(parsed.items.map(item => item.name)).toEqual([
+      'Härkätartar, maustekurkkumajoneesia ja rapeaa sipulia',
+    ]);
+  });
+
   it('removes a trailing separator left before a compact menu price', () => {
     const parsed = parseMenu('Mochi donut with strawberry filling - 4.8€', 'en', null);
 

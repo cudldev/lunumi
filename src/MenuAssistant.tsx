@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v28';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v29';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -815,6 +815,16 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     || /\blounas\b.*\b(?:maanantaista|perjantaihin|kello)\b/i.test(line);
   const isWeekdayHeading = (line: string) => /^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|måndag|tisdag|onsdag|torsdag|fredag|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}(?:[./]\d{1,2})?(?:[./]\d{2,4})?(?:\s*\.?\s*(?:laajenna|expand|show|more))?$/i.test(line);
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
+  const isStrongOtherPrediction = (candidate: string) => {
+    if (language === 'unknown' || !classifier) return false;
+    const prediction = classifyMenuLine(candidate, classifier);
+    if (prediction?.label !== 'other' || prediction.confidence < MENU_OTHER_FILTER_THRESHOLD) return false;
+    return !(classifierOptions.secondaryClassifiers ?? []).some(secondary => {
+      if (secondary.language === classifier.language) return false;
+      const secondaryPrediction = classifyMenuLine(candidate, secondary);
+      return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+    });
+  };
   let section = '';
   let skippingNonMenuSection = false;
   let pendingImageUrl: string | undefined;
@@ -840,10 +850,15 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
       try {
         const item = JSON.parse(structured[1]) as Partial<MenuItem>;
         const name = typeof item.name === 'string' ? item.name.trim() : '';
+        const itemSection = typeof item.section === 'string' ? item.section.trim() : '';
+        if (nonMenuSectionHeading.test(name) || nonMenuSectionHeading.test(itemSection)
+          || nonMenuDetailLine.test(name) || nonMenuStatusLine.test(name)
+          || (/[.!?]$/.test(name) && name.split(/\s+/).length >= 4 && !item.price)) continue;
+        if (isStrongOtherPrediction(name)) continue;
         if (name.length >= 3 && name.length <= 120 && !seen.has(name.toLocaleLowerCase())) {
           seen.add(name.toLocaleLowerCase());
           found.push({
-            section: typeof item.section === 'string' ? item.section : '',
+            section: itemSection,
             name,
             description: typeof item.description === 'string' ? item.description.slice(0, 240) : '',
             price: typeof item.price === 'string' ? item.price : '',
