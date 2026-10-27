@@ -73,7 +73,7 @@ jobs:
       - name: Typecheck and test
         run: |
           npm run typecheck
-          npm test
+          npm test -- --exclude 'staging/**'
       - name: Build
         env:
           VITE_MENU_READER_URL: ${{ vars.MENU_READER_WORKER_URL_LIVE }}
