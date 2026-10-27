@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { classifyMenuLine, loadMenuClassifier, MENU_OTHER_FILTER_THRESHOLD, type MenuClassifier } from './menu-classifier';
+import { analyzeMenuLocally, prepareLocalMenuModel, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
 
 type MenuPriceOption = { label: string; value: string };
 type MenuItem = { section: string; name: string; description: string; price: string; priceOptions?: MenuPriceOption[]; diets: string[]; dietaryInfo?: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
 type RestaurantProfile = { name?: string; description?: string; cuisine?: string[]; location?: string };
-type ParsedMenu = { items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile };
-type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
-type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v32';
+type ParsedMenu = { items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile; aiSummary?: string };
+type MenuLanguage = 'fi' | 'sv' | 'en' | 'fr' | 'unknown';
+type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile; aiSummary?: string; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v34';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -25,8 +26,9 @@ class MenuSourceCacheDatabase extends Dexie {
 }
 const menuSourceCache = new MenuSourceCacheDatabase();
 
+type SupportedMenuLanguage = Exclude<MenuLanguage, 'unknown'>;
 type LanguageModule = { name: string; clues: RegExp[]; dietSignals: Array<[RegExp, string]>; headings: RegExp };
-const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> = {
+const languageModules: Record<SupportedMenuLanguage, LanguageModule> = {
   fi: {
     name: 'Finnish',
     clues: [/\blounas\b/i, /\bmaanantai|tiistai|keskiviikko|torstai|perjantai\b/i, /\bkeitto|salaatti|kasvis\w*|gluteenittom\w*\b/i],
@@ -45,49 +47,61 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
     dietSignals: [[/\bvegan\b/i, 'Marked vegan'], [/\bvegetarian\b/i, 'Marked vegetarian'], [/\bgluten[- ]free\b/i, 'Marked gluten-free'], [/\bdairy[- ]free\b/i, 'Marked dairy-free'], [/\blactose[- ]free\b/i, 'Marked lactose-free'], [/\bhalal\b/i, 'Marked halal'], [/\bketo(?:genic)?\b/i, 'Marked keto']],
     headings: /^(?:menu|food|drinks|desserts?|starters?|mains?|cocktails?|sparkling|white|red|ros[eé]|wine|lunch|dinner|allergens?|monday|tuesday|wednesday|thursday|friday)$/i,
   },
+  fr: {
+    name: 'French',
+    clues: [/\b(?:déjeuner|dîner|carte|menu du jour)\b/i, /\b(?:lundi|mardi|mercredi|jeudi|vendredi)\b/i, /\b(?:salade|soupe|poulet|végétarien|sans gluten)\b/i],
+    dietSignals: [[/\bvégan\w*\b/i, 'Marked vegan'], [/\bvégétarien\w*\b/i, 'Marked vegetarian'], [/\bsans gluten\b/i, 'Marked gluten-free'], [/\bsans lactose\b/i, 'Marked lactose-free'], [/\bsans produits laitiers\b/i, 'Marked dairy-free'], [/\bhalal\b/i, 'Marked halal'] ],
+    headings: /^(?:menu|carte|déjeuner|dîner|entrées|plats?|plat principal|desserts?|boissons|allergènes|lundi|mardi|mercredi|jeudi|vendredi)$/i,
+  },
 };
 
-const lineLanguageMarkers: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+const lineLanguageMarkers: Record<SupportedMenuLanguage, RegExp> = {
   fi: /\b(?:päivän|lounas|ruokalista|annos|tarjoillaan|kanssa|sisältää|keitto|perunat?)\b/giu,
   sv: /\b(?:dagens|lunchmeny|serveras|med|innehåller|soppa|potatis)\b/giu,
   en: /\b(?:with|served|daily|includes|contains|soup|potatoes)\b/giu,
+  fr: /\b(?:avec|servi|du jour|contient|soupe|pommes de terre)\b/giu,
 };
 
 function foreignLineHasStrongerLanguageEvidence(text: string, primary: Exclude<MenuLanguage, 'unknown'>, secondary: string): boolean {
-  if (!['fi', 'sv', 'en'].includes(secondary) || secondary === primary) return false;
+  if (!['fi', 'sv', 'en', 'fr'].includes(secondary) || secondary === primary) return false;
   const count = (pattern: RegExp) => [...text.matchAll(new RegExp(pattern.source, pattern.flags))].length;
   return count(lineLanguageMarkers[secondary as Exclude<MenuLanguage, 'unknown'>])
     > count(lineLanguageMarkers[primary]);
 }
 
-const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+const sectionHeadings: Record<SupportedMenuLanguage, RegExp> = {
   fi: /^(?:alkuruoat|pääruoat?|pääruoaksi|pääruoan kaveriksi|jälkiruoat?|jälkiruoaksi|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|lastenruoat|jälkiruoat ja juomat)$/i,
   sv: /^(?:förrätter|huvudrätter|efterrätter|drycker|burgare|sallader|soppor|tillbehör|dagens|måndag|tisdag|onsdag|torsdag|fredag)$/i,
   en: /^(?:starters?|appetizers?|mains?|main courses|burgers?|sandwiches|salads?|soups?|sides|desserts?|drinks|lunch|dinner|specials?|meals|kids'? meals|chicken|burgers? meals|monday|tuesday|wednesday|thursday|friday)$/i,
+  fr: /^(?:entrées|plats?|plat principal|burgers?|sandwichs?|salades?|soupes?|accompagnements|desserts?|boissons|déjeuner|dîner|menu du jour|lundi|mardi|mercredi|jeudi|vendredi)$/i,
 };
 
-const allergenNotices: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+const allergenNotices: Record<SupportedMenuLanguage, RegExp> = {
   fi: /^(?:\*?\s*(?:allerg(?:ia|iat|eenit|eeneja)\b|sisältää\b|saattaa sisältää\b)|.*(?:samassa öljyssä|emme takaa.*gluteenittomuutta)|.*henkilökuntamme auttaa.*allergeen)/i,
   sv: /^(?:allerg(?:i|ener)\b|innehåller\b|kan innehålla\b)/i,
   en: /^(?:allerg(?:en|ens)\b|contains\b|may contain\b)/i,
+  fr: /^(?:allergènes?\b|contient\b|peut contenir\b|traces de\b)/i,
 };
 
-const standaloneDietLabels: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+const standaloneDietLabels: Record<SupportedMenuLanguage, RegExp> = {
   fi: /^(?:vegaaninen|vegaanista|kasvis|kasvisruoka|gluteeniton|maidoton|laktoositon|halal|keto(?:geeninen)?)$/i,
   sv: /^(?:vegansk|vegetarisk|glutenfri|mejerifri|laktosfri|halal|keto(?:genisk)?)$/i,
   en: /^(?:vegan|vegetarian|gluten[- ]free|dairy[- ]free|lactose[- ]free|halal|keto(?:genic)?)$/i,
+  fr: /^(?:végan|végétarien|sans gluten|sans lactose|sans produits laitiers|halal)$/i,
 };
 
-const itemAllergenLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+const itemAllergenLines: Record<SupportedMenuLanguage, RegExp> = {
   fi: /^(?:sisältää|saattaa sisältää|allergeenit?\s*[:\-])/i,
   sv: /^(?:innehåller|kan innehålla|allergener?\s*[:\-])/i,
   en: /^(?:contains|may contain|allergens?\s*[:\-])/i,
+  fr: /^(?:contient|peut contenir|allergènes?\s*[:\-])/i,
 };
 
-const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+const ingredientLines: Record<SupportedMenuLanguage, RegExp> = {
   fi: /^(?:ainesosat|ainesosa)\s*[:\-]\s*(.+)$/i,
   sv: /^(?:ingredienser|ingredienserna)\s*[:\-]\s*(.+)$/i,
   en: /^(?:ingredients?|made with)\s*[:\-]\s*(.+)$/i,
+  fr: /^(?:ingrédients?)\s*[:\-]\s*(.+)$/i,
 };
 
 const dietaryCodeLine = /^(?:[A-ZÅÄÖ]{1,4}(?:\s*,\s*[A-ZÅÄÖ]{1,4}){1,8})$/i;
@@ -759,7 +773,7 @@ async function extractMenuPdf(pdf: Blob, signal: AbortSignal): Promise<string> {
 }
 
 async function recognizeMenuImage(image: Blob, language: MenuLanguage, signal: AbortSignal): Promise<string> {
-  const languageCode = language === 'fi' ? 'fin' : language === 'sv' ? 'swe' : 'eng';
+  const languageCode = language === 'fi' ? 'fin' : language === 'sv' ? 'swe' : language === 'fr' ? 'fra' : 'eng';
   const bitmap = await createImageBitmap(image);
   if (signal.aborted) {
     bitmap.close();
@@ -1139,6 +1153,55 @@ export function summarizeMenuItems(items: MenuItem[]): string {
   return `${items.length} menu items${categories.length ? ` across ${categories.join(', ')}` : ''}.`;
 }
 
+function validatedModelMenu(raw: string, sourceText: string): { summary: string; items: MenuItem[] } {
+  const jsonText = raw.match(/\{[\s\S]*\}/)?.[0];
+  if (!jsonText) throw new Error('The local model did not return structured menu data.');
+  const result: unknown = JSON.parse(jsonText);
+  if (!result || typeof result !== 'object') throw new Error('The local model returned invalid menu data.');
+  const payload = result as { summary?: unknown; items?: unknown };
+  const normalize = (text: string) => text.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+  const normalizedSource = normalize(sourceText);
+  const items = Array.isArray(payload.items) ? payload.items.slice(0, 60).flatMap(value => {
+    if (!value || typeof value !== 'object') return [];
+    const candidate = value as Record<string, unknown>;
+    const name = typeof candidate.name === 'string' ? candidate.name.trim().slice(0, 180) : '';
+    const sourceQuote = typeof candidate.sourceText === 'string' ? candidate.sourceText.trim().slice(0, 500) : '';
+    if (!name || !sourceQuote || !normalize(sourceQuote) || !normalizedSource.includes(normalize(sourceQuote))
+      || !normalize(sourceQuote).includes(normalize(name))) return [];
+    const exactField = (field: unknown, maxLength: number) => {
+      if (typeof field !== 'string') return '';
+      const text = field.trim().slice(0, maxLength);
+      return text && normalize(sourceQuote).includes(normalize(text)) ? text : '';
+    };
+    return [{
+      section: exactField(candidate.section, 80), name, description: exactField(candidate.description, 240),
+      price: exactField(candidate.price, 30), diets: [], allergenInfo: [], sourceText: sourceQuote,
+    }];
+  }) : [];
+  const summary = typeof payload.summary === 'string' ? payload.summary.trim().replace(/\s+/g, ' ').slice(0, 500) : '';
+  return { summary, items };
+}
+
+function mergeModelMenuItems(parsedItems: MenuItem[], modelItems: MenuItem[]): MenuItem[] {
+  const merged = parsedItems.map(item => ({ ...item }));
+  const byName = new Map(merged.map(item => [item.name.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase(), item]));
+  for (const item of modelItems) {
+    const key = item.name.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+    const current = byName.get(key);
+    if (current) {
+      if (!current.section) current.section = item.section;
+      if (!current.description) current.description = item.description;
+      if (!current.price) current.price = item.price;
+      if (!current.sourceText) current.sourceText = item.sourceText;
+    } else {
+      byName.set(key, item);
+      merged.push(item);
+    }
+    if (merged.length >= 100) break;
+  }
+  return merged;
+}
+
 export function hasMenuEvidence(sourceText: string, sourceUrl: string, items: MenuItem[]): boolean {
   if (!items.length) return false;
   try {
@@ -1171,13 +1234,14 @@ function validCachedMenu(value: unknown): value is CachedMenu {
   return typeof entry.sourceUrl === 'string' && entry.sourceUrl.length <= 2048
     && (entry.resolvedSourceUrl === undefined || (typeof entry.resolvedSourceUrl === 'string' && entry.resolvedSourceUrl.length <= 2048))
     && typeof entry.cachedAt === 'string' && Number.isFinite(Date.parse(entry.cachedAt))
+    && (entry.aiSummary === undefined || (typeof entry.aiSummary === 'string' && entry.aiSummary.length <= 500))
     && (entry.restaurantProfile === undefined || (Boolean(entry.restaurantProfile) && typeof entry.restaurantProfile === 'object'
       && (entry.restaurantProfile.name === undefined || (typeof entry.restaurantProfile.name === 'string' && entry.restaurantProfile.name.length <= 100))
       && (entry.restaurantProfile.description === undefined || (typeof entry.restaurantProfile.description === 'string' && entry.restaurantProfile.description.length <= 240))
       && (entry.restaurantProfile.location === undefined || (typeof entry.restaurantProfile.location === 'string' && entry.restaurantProfile.location.length <= 180))
       && (entry.restaurantProfile.cuisine === undefined || (Array.isArray(entry.restaurantProfile.cuisine) && entry.restaurantProfile.cuisine.length <= 5 && entry.restaurantProfile.cuisine.every(entry => typeof entry === 'string' && entry.length <= 50)))))
-    && (entry.language === undefined || ['fi', 'sv', 'en', 'unknown'].includes(entry.language))
-    && (entry.modelsUsed === undefined || (Array.isArray(entry.modelsUsed) && entry.modelsUsed.every(model => ['fi', 'sv', 'en'].includes(model))))
+    && (entry.language === undefined || ['fi', 'sv', 'en', 'fr', 'unknown'].includes(entry.language))
+    && (entry.modelsUsed === undefined || (Array.isArray(entry.modelsUsed) && entry.modelsUsed.every(model => ['fi', 'sv', 'en', 'fr'].includes(model))))
     && Array.isArray(entry.items) && entry.items.length <= 100
     && Array.isArray(entry.notes) && entry.notes.length <= 30 && entry.notes.every(note => typeof note === 'string' && note.length <= 220)
     && entry.items.every(item => Boolean(item) && typeof item.name === 'string' && item.name.length <= 220
@@ -1303,13 +1367,26 @@ async function loadMenuSource(sourceUrl: string, signal: AbortSignal): Promise<C
   }
 }
 
-type Props = { restaurantName: string; sourceUrl?: string | null; listingLocation?: { text: string; sourceUrl: string; sourceLabel: string } };
+type Props = { restaurantName: string; sourceUrl?: string | null; listingLocation?: { text: string; sourceUrl: string; sourceLabel: string }; preferences?: MenuModelPreferences };
+type MenuLoadingStage = 'source' | 'read' | 'interpret' | 'image' | 'analyze';
+const menuLoadingLabel: Record<MenuLoadingStage, string> = {
+  source: 'Finding the restaurant’s menu…',
+  read: 'Reading the restaurant page…',
+  interpret: 'Understanding the menu items…',
+  image: 'Reading a menu image on this device…',
+  analyze: 'Having the local AI review the menu…',
+};
 
-export default function MenuAssistant({ restaurantName, sourceUrl, listingLocation }: Props) {
+export default function MenuAssistant({ restaurantName, sourceUrl, listingLocation, preferences }: Props) {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [notes, setNotes] = useState<string[]>([]);
   const [restaurantProfile, setRestaurantProfile] = useState<RestaurantProfile | undefined>();
   const [busy, setBusy] = useState(Boolean(sourceUrl));
+  const [loadingStage, setLoadingStage] = useState<MenuLoadingStage>('source');
+  const [modelStatus, setModelStatus] = useState<'idle' | 'checking' | 'loading' | 'ready' | 'error'>('idle');
+  const [modelProgress, setModelProgress] = useState<MenuModelProgress>({ status: 'Starting local AI' });
+  const [modelError, setModelError] = useState('');
+  const [aiSummary, setAiSummary] = useState('');
   const [error, setError] = useState('');
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [language, setLanguage] = useState<MenuLanguage>('unknown');
@@ -1323,6 +1400,10 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
     let timeout: number | undefined;
     let timedOut = false;
     setItems([]);
+    setAiSummary('');
+    setModelError('');
+    setLoadingStage('source');
+    setModelStatus('idle');
     setNotes([]);
     setRestaurantProfile(undefined);
     setError('');
@@ -1341,6 +1422,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
     const cached = readCachedMenu(menuUrl);
     if (cached) {
       setItems(cached.items);
+      setAiSummary(cached.aiSummary ?? '');
       setNotes(cached.notes);
       setRestaurantProfile(cached.restaurantProfile);
       setCachedAt(cached.cachedAt);
@@ -1351,11 +1433,29 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
       return () => controller.abort();
     }
     setBusy(true);
+    setModelStatus('checking');
+    let active = true;
+    const modelReady = prepareLocalMenuModel(progress => {
+      if (!active) return;
+      setModelProgress(progress);
+      setModelStatus(['download', 'progress'].includes(progress.status.toLocaleLowerCase()) ? 'loading' : 'checking');
+    }).then(() => {
+      if (active) setModelStatus('ready');
+      return null;
+    }, cause => {
+      const error = cause instanceof Error ? cause : new Error('The local AI model could not be loaded.');
+      if (active) {
+        setModelError(error.message);
+        setModelStatus('error');
+      }
+      return error;
+    });
 
     async function loadMenu() {
       try {
         timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15_000);
         const interpret = async (candidate: CachedMenuSource) => {
+          setLoadingStage('interpret');
           const readable = feedText(candidate.text, candidate.contentType, candidate.resolvedSourceUrl);
           const detectedLanguage = detectLanguage(readable);
           const secondaryLanguages = detectedLanguage === 'unknown' ? [] : languageClueScores(readable)
@@ -1387,11 +1487,13 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
         let interpreted: Awaited<ReturnType<typeof interpret>>;
         let didUseOcr = false;
         try {
+          setLoadingStage('read');
           source = await loadMenuSource(menuUrl, controller.signal);
           interpreted = await interpret(source);
         } catch (cause) {
           if (controller.signal.aborted) throw cause;
           if (!/\.(?:jpe?g|png|webp|bmp|tiff|gif)(?:$|[?#])/i.test(menuUrl)) throw cause;
+          setLoadingStage('image');
           const image = await requestMenuAsset(menuUrl, controller.signal);
           const languageHint = detectLanguage(menuUrl);
           const text = await recognizeMenuImage(image, languageHint, controller.signal);
@@ -1404,6 +1506,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
           for (const candidateUrl of discoverMenuLinks(source.text, source.resolvedSourceUrl)) {
             if (controller.signal.aborted) break;
             try {
+              setLoadingStage('source');
               const candidate = await loadMenuSource(candidateUrl, controller.signal);
               const candidateResult = await interpret(candidate);
               const candidateQuality = menuSourceQuality(candidate.text, candidate.resolvedSourceUrl, candidateResult.extracted.items);
@@ -1421,6 +1524,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
           for (const imageUrl of discoverMenuImages(source.text, source.resolvedSourceUrl)) {
             if (controller.signal.aborted) break;
             try {
+              setLoadingStage('image');
               const image = await requestMenuAsset(imageUrl, controller.signal);
               const text = await recognizeMenuImage(image, sourceLanguage, controller.signal);
               if (!text) continue;
@@ -1444,10 +1548,36 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
             }
           }
         }
-        const { detectedLanguage, extracted } = interpreted;
-        if (!didUseOcr && !hasMenu(source, interpreted)) throw new Error(ocrFailure || 'No verifiable menu items were found on the restaurant page.');
+        const { detectedLanguage } = interpreted;
+        if (timeout !== undefined) window.clearTimeout(timeout);
+        timeout = undefined;
+        setLoadingStage('analyze');
+        const initializationError = await modelReady;
+        if (initializationError) throw initializationError;
+        const readableSource = feedText(source.text, source.contentType, source.resolvedSourceUrl);
+        let extracted = interpreted.extracted;
+        let nextAiSummary = '';
+        try {
+          const rawModelOutput = await analyzeMenuLocally({
+            restaurantName,
+            language: detectedLanguage === 'unknown' ? 'the source language' : languageModules[detectedLanguage].name,
+            sourceText: readableSource,
+            preferences: preferences ?? { likes: [], dislikes: [], diet: [], notes: '' },
+          });
+          const validated = validatedModelMenu(rawModelOutput, readableSource);
+          const mergedItems = mergeModelMenuItems(extracted.items, validated.items);
+          if (mergedItems.length) extracted = { ...extracted, items: mergedItems };
+          nextAiSummary = validated.summary;
+        } catch (cause) {
+          if (!('gpu' in navigator)) throw cause;
+          if (!extracted.items.length) throw cause;
+          setModelError(cause instanceof Error ? `The AI summary could not be prepared; showing the source-extracted items. ${cause.message}` : 'The AI summary could not be prepared; showing source-extracted items.');
+        }
+        if (!didUseOcr && !hasMenuEvidence(source.text, source.resolvedSourceUrl, extracted.items)) throw new Error(ocrFailure || 'No verifiable menu items were found on the restaurant page.');
+        extracted = { ...extracted, aiSummary: nextAiSummary };
         if (!controller.signal.aborted) {
           setItems(extracted.items);
+          setAiSummary(nextAiSummary);
           setNotes(extracted.notes);
           setRestaurantProfile(extracted.restaurantProfile);
           setLanguage(detectedLanguage);
@@ -1470,20 +1600,33 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
         }
       } finally {
         if (timeout !== undefined) window.clearTimeout(timeout);
+      active = false;
         if (!controller.signal.aborted || timedOut) setBusy(false);
       }
     }
 
     void loadMenu();
     return () => {
+      active = false;
       controller.abort();
       if (timeout !== undefined) window.clearTimeout(timeout);
     };
   }, [sourceUrl]);
 
   return <section className="menu-assistant" aria-label={`Local menu assistant for ${restaurantName}`}>
-    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? <><LoaderCircle size={13} className="menu-assistant-spinner"/> Loading items…</> : items.length ? `${items.length} items${cachedAt ? ' · saved on this device' : ''}` : 'Items from the restaurant’s own page'}</span></div></div>
+    <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? menuLoadingLabel[loadingStage] : items.length ? `${items.length} items${cachedAt ? ' · saved on this device' : ''}` : 'Items from the restaurant’s own page'}</span></div></div>
+    {busy && <div className="menu-assistant-loading" role="status" aria-live="polite"><LoaderCircle size={16} className="menu-assistant-spinner"/><div><strong>{menuLoadingLabel[loadingStage]}</strong><span>Checking the restaurant’s own pages. Menu text stays on this device.</span><div className="menu-assistant-loading-track" aria-hidden="true"><i/></div></div></div>}
+    {modelStatus !== 'idle' && <div className={`menu-assistant-model-state${modelStatus === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
+      {modelStatus !== 'ready' && modelStatus !== 'error' && <LoaderCircle size={15} className="menu-assistant-spinner"/>}
+      <div><strong>{modelStatus === 'ready' ? 'Local AI ready' : modelStatus === 'error' ? 'Local AI unavailable' : modelStatus === 'loading' ? `Downloading ${modelProgress.file || 'model files'}${typeof modelProgress.progress === 'number' ? ` · ${Math.round(modelProgress.progress)}%` : ''}` : `Preparing local AI · ${modelProgress.status}`}</strong>
+        {modelStatus === 'loading' && <span>First use downloads about 570 MB. The browser caches the model on this device for later visits.</span>}
+        {modelStatus === 'checking' && <span>Starting the on-device WebGPU model…</span>}
+        {modelStatus === 'error' && <span>{modelError}</span>}
+        {modelStatus === 'loading' && typeof modelProgress.progress === 'number' && <div className="menu-assistant-loading-track" role="progressbar" aria-label="Local AI model download" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(modelProgress.progress)}><i style={{ width: `${Math.max(0, Math.min(100, modelProgress.progress))}%` }}/></div>}
+      </div>
+    </div>}
     {(restaurantProfile || listingLocation || menuSummary) && <aside className="menu-assistant-overview"><strong>About {restaurantProfile?.name || restaurantName}</strong>{restaurantProfile?.description && <p>{restaurantProfile.description}</p>}{restaurantProfile?.cuisine?.length ? <p>Cuisine listed: {restaurantProfile.cuisine.join(', ')}</p> : null}{restaurantProfile && <span>Restaurant details · <a href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer">website source</a></span>}{menuSummary && <p>Menu: {menuSummary}</p>}{(listingLocation?.text || restaurantProfile?.location) && <p>Location: {listingLocation?.text || restaurantProfile?.location}</p>}{listingLocation ? <span>Location · <a href={listingLocation.sourceUrl} target="_blank" rel="noopener noreferrer">{listingLocation.sourceLabel}</a></span> : restaurantProfile?.location ? <span>Location · <a href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer">restaurant website</a></span> : null}</aside>}
+    {aiSummary && <aside className="menu-assistant-ai-summary"><strong>Local AI summary</strong><p>{aiSummary}</p><span>Generated from the linked restaurant source. Open each item’s source text to verify details.</span></aside>}
     {items.length > 0 ? <>
       {notes.length > 0 && <aside className="menu-assistant-menu-notes"><strong>Menu information</strong>{notes.map((note, index) => <p key={`${note}-${index}`}>{note}</p>)}</aside>}
       <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}>
@@ -1496,11 +1639,13 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
       </li>)}</ul>
       {cachedAt && <p className="menu-assistant-note">Saved on this device · Updated {new Date(cachedAt).toLocaleString()}</p>}
       {error && <p className="menu-assistant-note" role="status">{error}</p>}
+      {modelError && <p className="menu-assistant-note" role="status">{modelError}</p>}
       <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
       {ocrUsed && <p className="menu-assistant-note">Text was recognized from the linked menu image on this device; OCR can make mistakes. Check the source image.</p>}
       {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
       {modelsUsed.includes('en') && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>, historical <a href="https://data.cityofnewyork.us/Health/MenuStat/qgc5-ecnb" target="_blank" rel="noopener noreferrer">NYC DOHMH MenuStat data</a>, and <a href="https://github.com/cudldev/lunumi" target="_blank" rel="noopener noreferrer">Lunumi-authored synthetic CC0 examples</a>. NYC data is provided as-is and is not guaranteed to be complete or accurate.</p>}
       {modelsUsed.some(model => model === 'fi' || model === 'sv') && <p className="menu-assistant-note">Finnish and Swedish line filters use Fineli food names (CC BY 4.0), synthetic menu-line combinations, and CC0 page-noise examples. <a href="https://fineli.fi/fineli/fi/avoin-data" target="_blank" rel="noopener noreferrer">Fineli open data</a> is provided by THL.</p>}
+      {modelsUsed.includes('fr') && <p className="menu-assistant-note">French line filter trained from CROUStillant restaurant menus, published by Paul Bayfield on <a href="https://www.data.gouv.fr/datasets/menus-du-crous" target="_blank" rel="noopener noreferrer">data.gouv.fr</a> under the Open Licence 2.0. The dataset page lists its latest update as 22 October 2026; the resource used for this model was updated 27 October 2026.</p>}
     </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
     {(verifiedSourceUrl || sourceUrl) && <a className="menu-assistant-source" href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
   </section>;

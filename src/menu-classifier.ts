@@ -10,9 +10,9 @@ export type MenuClassifier = {
 
 export const MENU_OTHER_FILTER_THRESHOLD = 0.9;
 
-const classifierRequests: Partial<Record<'fi' | 'sv' | 'en', Promise<MenuClassifier>>> = {};
+const classifierRequests: Partial<Record<'fi' | 'sv' | 'en' | 'fr', Promise<MenuClassifier>>> = {};
 
-export function loadMenuClassifier(language: 'fi' | 'sv' | 'en'): Promise<MenuClassifier> {
+export function loadMenuClassifier(language: 'fi' | 'sv' | 'en' | 'fr'): Promise<MenuClassifier> {
   if (!classifierRequests[language]) {
     const file = language === 'en' ? 'menu-line-classifier.json' : `menu-line-classifier-${language}.json`;
     classifierRequests[language] = fetch(`${import.meta.env.BASE_URL}models/${file}`, { cache: 'force-cache' })
@@ -72,7 +72,7 @@ function features(text: string, buckets: number): Map<number, number> {
 }
 
 export function classifyMenuLine(text: string, model: MenuClassifier): { label: string; confidence: number } | null {
-  if (!['fi', 'sv', 'en'].includes(model.language) || !model.classes.length || text.length < 2) return null;
+  if (!['fi', 'sv', 'en', 'fr'].includes(model.language) || !model.classes.length || text.length < 2) return null;
   const vector = features(text, model.featureBuckets);
   const scores = Object.fromEntries(model.classes.map(label => {
     let score = model.logPrior[label] ?? 0;

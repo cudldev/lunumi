@@ -27,7 +27,7 @@ export function trainingSourceMetadata(example) {
 
 export function validateCandidateForAnnotation(candidate) {
   if (!candidate || typeof candidate !== 'object') throw new Error('Candidate must be an object.');
-  if (!['fi', 'sv', 'en'].includes(candidate.language)) throw new Error('Candidate has an unsupported language.');
+  if (!['fi', 'sv', 'en', 'fr'].includes(candidate.language)) throw new Error('Candidate has an unsupported language.');
   if (typeof candidate.text !== 'string' || !candidate.text.trim()) throw new Error('Candidate text is empty.');
   if (typeof candidate.contentHash !== 'string' || !/^[a-f0-9]{64}$/i.test(candidate.contentHash)) {
     throw new Error('Candidate needs its SHA-256 content hash.');

@@ -1,13 +1,17 @@
 # Local menu assistant
 
-The assistant is a lightweight browser feature, not a hosted LLM. A small Cloudflare Worker fetches approved restaurant pages that the static app cannot read because of browser cross-origin rules. Menu extraction, language detection, dietary labels, and English, Finnish, and Swedish line classifiers run in the browser.
+The assistant runs in the browser. A floating Lunumi pet opens a chat backed by Qwen3-0.6B ONNX in a Web Worker through Transformers.js. The model requires WebGPU and downloads about 570 MB on first use; browser caching avoids repeat downloads when storage is retained. The model is a general base model, not fine-tuned on Lunumi's menu examples. A small Cloudflare Worker fetches approved restaurant pages that the static app cannot read because of browser cross-origin rules. Page extraction, OCR, language detection, dietary-label handling, and English, Finnish, Swedish, and French line classifiers run in the browser.
 
 ## User flow
 
-1. Opening a restaurant detail checks the device's parsed-menu cache. Otherwise, the app sends the listed public HTTPS menu URL to the Worker.
+1. Opening a restaurant detail checks the device's parsed-menu cache. Otherwise, the menu card shows a live status while it finds a source, reads the restaurant page, interprets menu items, or runs on-device OCR. The first-run profile asks about cuisines, foods to avoid, and dietary requirements; these preferences remain on-device and can guide the local model's menu summary and chat responses.
 2. The Worker uses Cloudflare's platform fetch API, accepts only generated allowlisted hosts, follows up to three allowlisted redirects, forwards no restaurant cookies or authorization headers, and returns at most 500,000 bytes of page text, 3 MB of image bytes, or 5 MB of PDF bytes.
 3. The browser extracts structured restaurant product cards and semantic text blocks into up to 100 scrollable items. It only accepts results with menu evidence: a menu-specific source URL or heading, structured menu data, a section, or item details such as price, ingredients, explicit dietary data, or an image. If the first page has weak item evidence, it checks up to four likely same-site menu links (including price-list labels such as Finnish “hinnasto”) and chooses the source with stronger menu and item evidence. It can also check up to three same-site images clearly marked as menus, with optional OCR on the user's device. Same-site links labeled as menus can include PDFs; selectable PDF text is extracted locally. It shows the exact page used and each item's extracted source text so users can verify it.
 4. If fetching or extraction fails, the list remains empty and says **Menu not available**.
+
+Tapping the Lunumi pet opens a chat. The model receives up to 25 nearby restaurant records and matching menu excerpts already cached on the device. It does not perform web search, read Google results, or fetch menu pages as part of chat; open a restaurant menu first to load its source. Replies may be inaccurate, and source links are shown when the response names a supplied restaurant. Verify details with those sources, especially dietary and allergen information.
+
+The pet has a fixed restaurant-and-food persona. A local scope check rejects unrelated requests before model inference, and the model instructions direct it to ignore role changes, requests to expose hidden prompts, and instructions embedded in source pages. Model-special-token strings in user preferences, chat history, and fetched text are neutralized before inference. These controls reduce misuse and prompt injection; a small on-device language model cannot be guaranteed jailbreak-proof, so factual menu claims still require source verification.
 
 ## Extraction and labels
 
@@ -27,9 +31,10 @@ The bundled Finnish and Swedish weights use Fineli CC BY 4.0 food names and Lunu
 
 - The Worker processes requested URLs, page text, or bounded image/PDF bytes in transit. It sends no credentials, does not persist menu content, and uses `Cache-Control: no-store`. PDF parsing and OCR run on the device; PDF bytes, images, and extracted text are not sent to the PDF.js or OCR package hosts.
 - Parsed items and source excerpts are cached in browser local storage for 24 hours, up to 20 URLs. The parsed cache uses a versioned key; parser updates advance it to trigger a fresh page read. When that cache misses, the app fetches the current page; raw source text in IndexedDB is used only as a stale fallback if fetching fails, for up to seven days. Both caches stay on the device and are removed by clearing Lunumi site data. Daily menus split across `<br>` lines are preserved as separate items, including longer dish descriptions, and source navigation/form links are excluded from extracted dish text.
+- Chat messages, preferences, and model inference stay on the device. The model runtime is loaded from jsDelivr and pinned model weights are downloaded from Hugging Face; no menu text or prompt is sent to those hosts. The Qwen3 q4f16 weights are about 570 MB, so first use needs a large download and WebGPU. Browser-managed model cache can be evicted. No model API or per-request inference charge is used.
 - Worker requests are capped at 100,000 per day on Cloudflare's free plan. Hosts must be in the allowlist; restaurants may still block requests.
 - Worker fetch timeout is 10 seconds; browser timeout is 15 seconds and each search reads at most five pages. PDF.js and its worker are loaded from jsDelivr on first PDF use, so the first open needs an internet connection; the document itself stays on-device during text extraction. Text-based PDFs up to 5 MB and 20 pages are supported; image-only PDFs are not OCR'd. OCR supports clearly labeled same-site menu images up to 3 MB; unlabeled images are not OCR'd. The OCR engine is lazy-loaded and may take extra time on first use; JavaScript-only content may be missing from returned HTML. Product images are loaded directly from the approved HTTPS source host; Hesburger's official `fi-www.hesburger.net` image host is also allowed. Other third-party image hosts are omitted.
-- The English classifier's 90.4% item-group-held-out accuracy is a food-vocabulary/page-noise check, not a restaurant-menu evaluation. It may suppress valid dishes.
+- The English classifier's 90.4% item-group-held-out accuracy is a food-vocabulary/page-noise check, not a restaurant-menu evaluation. French weights use restaurant-held-out CROUS lines from one public dataset; this checks French item/section filtering, not extraction quality on arbitrary restaurant pages. Either classifier may suppress valid dishes.
 
 ## Setup and deployment
 
@@ -42,6 +47,7 @@ The GitHub Pages workflow builds the live and Staging sites from their respectiv
 ## Implementation map
 
 - UI, parsing, labels, and device caches: `src/MenuAssistant.tsx`.
+- Pet chat UI and local context: `src/LunumiPet.tsx`; local model client and WebGPU worker: `src/menu-llm.ts`, `src/menu-llm.worker.ts`.
 - Classifier: `src/menu-classifier.ts`; weights: `public/models/menu-line-classifier.json`.
 - Worker and allowlist: `menu-reader-worker/` and `scripts/build-menu-reader-hosts.mjs`.
 - Deployment workflows: `.github/workflows/deploy.yml` and `.github/workflows/deploy-menu-reader.yml`.
