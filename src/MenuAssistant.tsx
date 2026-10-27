@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v13';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v14';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -234,7 +234,7 @@ export function tabbedMenuLines(document: Document): string[] {
   return items;
 }
 
-function cleanMenuText(value: string, sourceUrl?: string): string {
+export function cleanMenuText(value: string, sourceUrl?: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
   const structuredItems = schemaMenuLines(document, sourceUrl);
@@ -258,6 +258,77 @@ function cleanMenuText(value: string, sourceUrl?: string): string {
     return [heading, ...products, ...notices].filter(Boolean).join('\n');
   }).filter(Boolean);
   if (productSections.length) return [...structuredItems, ...productSections].join('\n');
+
+  // Many lunch sites put each daily menu in ordinary divs after a weekday heading.
+  // Extract those groups before generic page text so navigation and form copy cannot
+  // become menu items just because the URL contains "lounas".
+  const contentRoot = document.querySelector('main,[role="main"],#primary,.site-main') || document.body;
+  const dayHeading = (node: Element) => /^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|måndag|tisdag|onsdag|torsdag|fredag|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}[./]\d{1,2}[./]\d{4}$/i
+    .test((node.textContent || '').replace(/\s+/g, ' ').trim());
+  const weekdayHeadings = [...contentRoot.querySelectorAll('h1,h2,h3,h4,h5')].filter(dayHeading);
+  if (weekdayHeadings.length) {
+    const sampleLanguage = detectLanguage(contentRoot.textContent || '');
+    const weekdayLanguage = (node: Element): MenuLanguage => {
+      const text = (node.textContent || '').trim().toLocaleLowerCase();
+      if (/^(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\b/.test(text)) return 'fi';
+      if (/^(?:måndag|tisdag|onsdag|torsdag|fredag)\b/.test(text)) return 'sv';
+      if (/^(?:monday|tuesday|wednesday|thursday|friday)\b/.test(text)) return 'en';
+      return 'unknown';
+    };
+    const preferredLanguage = sampleLanguage === 'unknown' ? weekdayLanguage(weekdayHeadings[0]) : sampleLanguage;
+    const selectedDays = preferredLanguage === 'unknown'
+      ? weekdayHeadings
+      : weekdayHeadings.filter(node => weekdayLanguage(node) === preferredLanguage);
+    const dayLines: string[] = [];
+    const legendLabels: Array<[RegExp, string]> = [
+      [/laktoositon|lactose[- ]free/i, 'Marked lactose-free'],
+      [/vähälaktoosinen|low[- ]lactose/i, 'Marked low-lactose'],
+      [/gluteeniton|gluten[- ]free/i, 'Marked gluten-free'],
+      [/vegaaninen|vegan/i, 'Marked vegan'],
+      [/maidoton|dairy[- ]free/i, 'Marked dairy-free'],
+      [/sis\.\s*valkosipulia|contains garlic/i, 'Marked contains garlic'],
+    ];
+    const contentLeaves = [...contentRoot.querySelectorAll('p,li,dt,dd,div,span')]
+      .filter(node => node.children.length === 0)
+      .map(node => (node.textContent || '').replace(/\s+/g, ' ').trim());
+    for (let index = 0; index < contentLeaves.length - 1; index++) {
+      const code = contentLeaves[index].match(/^(?:VL|VE|VS|L|G|M)$/i)?.[0].toLocaleUpperCase();
+      const label = contentLeaves[index + 1];
+      if (code && legendLabels.some(([pattern]) => pattern.test(label))) dayLines.push(`menu-diet-legend: ${code}=${label}`);
+    }
+    for (const heading of selectedDays) {
+      const day = (heading.textContent || '').replace(/\s+/g, ' ').trim();
+      dayLines.push(`menu-section: ${day}`);
+      let sibling = heading.nextElementSibling;
+      while (sibling && !dayHeading(sibling)) {
+        if (!/^H[1-6]$/.test(sibling.tagName)) {
+          const readable = (node: Element) => (node.textContent || '').replace(/\s+/g, ' ').trim();
+          const semanticRows = [...sibling.querySelectorAll('p,li,dt,dd,[itemprop="name"]')]
+            .filter(node => {
+              const text = readable(node);
+              return text.length > 2 && text.length <= 220 && !node.closest('a,button,form,[role="navigation"]');
+            });
+          const directRows = [...sibling.children]
+            .filter(node => {
+              const text = readable(node);
+              return text.length > 2 && text.length <= 220 && !/^H[1-6]$/.test(node.tagName)
+                && !node.closest('a,button,form,[role="navigation"]');
+            });
+          const leafBlocks = [...sibling.querySelectorAll('p,li,dt,dd,div,span')]
+            .filter(node => node.children.length === 0 && !node.closest('a,button,form,[role="navigation"]'));
+          const candidates = semanticRows.length ? semanticRows : directRows.length ? directRows : leafBlocks.length ? leafBlocks : [sibling];
+          for (const candidate of candidates) {
+            const text = readable(candidate);
+            if (text.length > 2 && text.length <= 220 && !dayLines.includes(text)) dayLines.push(text);
+          }
+        }
+        sibling = sibling.nextElementSibling;
+      }
+    }
+    if (dayLines.some(line => !line.startsWith('menu-section:'))) {
+      return [...structuredItems, ...dayLines].join('\n');
+    }
+  }
 
   // DOMParser creates a detached document where innerText can collapse the whole page.
   // Keep semantic content blocks on separate lines for the local item parser.
@@ -469,6 +540,33 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   const found: MenuItem[] = [];
   const notes: string[] = [];
   const seen = new Set<string>();
+  const dietaryLegend = new Map<string, string>();
+  const legendLabels: Array<[RegExp, string]> = [
+    [/laktoositon|lactose[- ]free/i, 'Marked lactose-free'],
+    [/vähälaktoosinen|low[- ]lactose/i, 'Marked low-lactose'],
+    [/gluteeniton|gluten[- ]free/i, 'Marked gluten-free'],
+    [/vegaaninen|vegan/i, 'Marked vegan'],
+    [/maidoton|dairy[- ]free/i, 'Marked dairy-free'],
+    [/sis\.\s*valkosipulia|contains garlic/i, 'Marked contains garlic'],
+  ];
+  for (const line of lines) {
+    const explicitLegend = line.match(/^menu-diet-legend:\s*([A-ZÅÄÖ]{1,4})=(.+)$/i);
+    if (explicitLegend) {
+      const mapping = legendLabels.find(([pattern]) => pattern.test(explicitLegend[2]));
+      if (mapping) dietaryLegend.set(explicitLegend[1].toLocaleUpperCase(), mapping[1]);
+    }
+  }
+  for (let index = 0; index < lines.length - 1; index++) {
+    const code = lines[index].trim().match(/^(?:VL|VE|VS|L|G|M)$/i)?.[0].toLocaleUpperCase();
+    if (!code) continue;
+    const label = lines[index + 1].trim();
+    const mapping = legendLabels.find(([pattern]) => pattern.test(label));
+    if (mapping) dietaryLegend.set(code, mapping[1]);
+  }
+  const inlineCodes = (line: string) => [...line.matchAll(/\(([^()]*)\)/g)].flatMap(match => {
+    const codes = match[1].match(/[A-ZÅÄÖ]{1,4}(?=\s*(?:[+,/)]|$))/g) || [];
+    return codes.length ? [codes.join('+')] : [];
+  });
   const modules = language === 'unknown' ? Object.values(languageModules) : [languageModules[language]];
   const activeLanguage = language === 'unknown' ? 'en' : language;
   const pricePattern = /(?:^|\s)(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\b\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)/;
@@ -487,6 +585,8 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   let pendingImageUrl: string | undefined;
   let pendingMenuPriceLabel = '';
   for (const originalLine of lines) { let line = originalLine;
+    if (line.startsWith('menu-section:')) { section = line.slice('menu-section:'.length).trim(); continue; }
+    if (line.startsWith('menu-diet-legend:')) continue;
     const structured = line.match(/^menu-schema-item:\s*(\{.*\})$/i);
     if (structured) {
       try {
@@ -515,7 +615,8 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
     if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue; if (isSection(line)) { section = line; continue; }
-    if (nonMenuDetailLine.test(line) || nonMenuStatusLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
+    if (/^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}[./]\d{1,2}[./]\d{4}$/i.test(line)
+      || nonMenuDetailLine.test(line) || nonMenuStatusLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
       if (/^lounasbuffet\b/i.test(line)) pendingMenuPriceLabel = line;
       continue;
     }
@@ -570,9 +671,11 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
       continue;
     }
     if (line.length > 220 || /^https?:\/\//i.test(line)) continue;
+    const lineDietCodes = inlineCodes(line);
+    const menuLine = line.replace(/\(([^()]*)\)/g, (whole, value: string) => inlineCodes(`(${value})`).length ? '' : whole).replace(/\s+/g, ' ').trim();
     const price = line.match(pricePattern);
-    const parts = line.split(/\s+[·|—–]\s+|\s{2,}/);
-    const name = (parts[0] || line).replace(/\s+(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?.*$/, '').trim();
+    const parts = menuLine.split(/\s+[·|—–]\s+|\s{2,}/);
+    const name = (parts[0] || menuLine).replace(/\s+(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?.*$/, '').trim();
     if (name.length < 3 || name.length > 90) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
     if (language !== 'unknown' && classifier) {
@@ -590,10 +693,13 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const key = name.toLocaleLowerCase();
     if (seen.has(key)) { pendingImageUrl = undefined; continue; }
     seen.add(key);
-    const diets = [...new Set(modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)))];
+    const diets = [...new Set([
+      ...modules.flatMap(module => module.dietSignals.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)),
+      ...lineDietCodes.flatMap(codes => codes.split(/[+,/]/).map(code => dietaryLegend.get(code.toLocaleUpperCase())).filter((label): label is string => Boolean(label))),
+    ])];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
-    found.push({ section, name, description, price: priceText, diets, dietaryInfo: [], allergenInfo: hasAllergenInfo ? [line] : [], sourceText: originalLine, imageUrl: pendingImageUrl });
+    found.push({ section, name, description, price: priceText, diets, dietaryInfo: lineDietCodes, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: originalLine, imageUrl: pendingImageUrl });
     pendingImageUrl = undefined;
     if (found.length >= 100) break;
   }

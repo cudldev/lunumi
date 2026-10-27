@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
+import { cleanMenuText, discoverMenuImages, discoverMenuLinks, hasMenuEvidence, parseMenu, schemaMenuLines, tabbedMenuLines } from './MenuAssistant';
 
 describe('structured menu extraction', () => {
   it('rejects generic restaurant home-page copy as menu results while accepting menu evidence', () => {
@@ -191,6 +191,61 @@ it('keeps Finnish lunch dishes and source dietary codes while dropping page meta
   expect(parsed.items[0].diets).toEqual([]);
   expect(parsed.items[0].sourceText).toContain('A, G, L, M');
   expect(parsed.notes).toContain('Lounasbuffet: 13,70 €');
+});
+
+it('extracts daily dishes from weekday menu blocks and expands only source-listed dietary codes', () => {
+  type FakeNode = { textContent: string; tagName: string; children: FakeNode[]; nextElementSibling?: FakeNode; closest: () => null; querySelectorAll: (selector: string) => FakeNode[] };
+  const node = (textContent: string, tagName = 'DIV', children: FakeNode[] = []): FakeNode => ({
+    textContent, tagName, children, closest: () => null,
+    querySelectorAll: (selector: string) => selector === 'p,li,dt,dd,div,span' ? children : [],
+  });
+  const leaves = ['L', 'Laktoositon', 'G', 'Gluteeniton', 'VE', 'Vegaaninen', 'M', 'Maidoton', 'VS', 'Sis. valkosipulia']
+    .map(text => node(text, 'SPAN'));
+  const dishes = ['Tom Yam -rapukeitto (M+G+VS)', 'Siirappipaahdettuja bataattilohkoja ja tofua (VE+G)']
+    .map(text => node(text));
+  const dayHeading = node('Tiistai 27.10.2026', 'H3');
+  const ordinal = node('3', 'H3');
+  const menuBlock = node('', 'DIV', dishes);
+  const englishHeading = node('Tuesday 27.10.2026', 'H3');
+  const englishOrdinal = node('3', 'H3');
+  const englishBlock = node('', 'DIV', [node('Tom Yum shrimp soup (M+G+VS)')]);
+  dayHeading.nextElementSibling = ordinal;
+  ordinal.nextElementSibling = menuBlock;
+  menuBlock.nextElementSibling = englishHeading;
+  englishHeading.nextElementSibling = englishOrdinal;
+  englishOrdinal.nextElementSibling = englishBlock;
+  const main = {
+    textContent: 'Lounas Tiistai 27.10.2026 Tom Yam -rapukeitto Gluteeniton Tuesday 27.10.2026 Tom Yum shrimp soup',
+    querySelectorAll: (selector: string) => selector.startsWith('h1,h2,h3')
+      ? [dayHeading, englishHeading]
+      : selector === 'p,li,dt,dd,div,span' ? leaves : [],
+  };
+  const originalParser = globalThis.DOMParser;
+  globalThis.DOMParser = class { parseFromString() { return {
+    body: main,
+    querySelector: (selector: string) => selector.includes('main') ? main : null,
+    querySelectorAll: () => [],
+  } as unknown as Document; } } as typeof DOMParser;
+  let extracted: string;
+  try {
+    extracted = cleanMenuText('<html></html>', 'https://factorykamppi.com/lounas/');
+  } finally {
+    globalThis.DOMParser = originalParser;
+  }
+  const parsed = parseMenu(extracted, 'fi', null);
+
+  expect(extracted).toContain('Tom Yam -rapukeitto (M+G+VS)');
+  expect(extracted).not.toContain('Tom Yum shrimp soup');
+  expect(parsed.items.map(item => [item.section, item.name])).toEqual([
+    ['Tiistai 27.10.2026', 'Tom Yam -rapukeitto'],
+    ['Tiistai 27.10.2026', 'Siirappipaahdettuja bataattilohkoja ja tofua'],
+  ]);
+  expect(parsed.items[0]).toMatchObject({
+    dietaryInfo: ['M+G+VS'],
+    diets: ['Marked dairy-free', 'Marked gluten-free', 'Marked contains garlic'],
+    sourceText: 'Tom Yam -rapukeitto (M+G+VS)',
+  });
+  expect(parsed.items[1].diets).toEqual(['Marked vegan', 'Marked gluten-free']);
 });
 
 it('drops Finnish restaurant page status and upload-form text instead of showing it as dishes', () => {
