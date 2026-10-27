@@ -1,6 +1,6 @@
 # Menu model training
 
-Lunumi uses a small English character n-gram classifier to filter likely menu-item lines on device. It is not a chat model and does not infer ingredients, diets, or allergen safety. Finnish and Swedish continue to use explicit local language rules until commercially reusable examples for those languages are approved.
+Lunumi uses a small character n-gram classifier to filter likely menu-item lines on device. It is not a chat model and does not infer ingredients, diets, or allergen safety. The trainer can write separate English, Finnish, and Swedish weights; currently only the English model has approved training data and is shipped. Missing language weights fall back to local rules.
 
 ## Commercially reusable source
 
@@ -13,10 +13,11 @@ Synthetic examples can help exercise formatting variants (prices, separators, li
 ## Local workflow
 
 1. Run `npm run model:prepare`. It downloads the pinned USDA FNDDS JSON archive if needed, extracts it under `data/private-menu-training/`, and prepares English `dish`, `section`, and `other` examples in ignored `labels.jsonl`.
-2. Run `npm run model:train`. It trains the Node.js standard-library character n-gram Naive Bayes model, reports a deterministic 80/20 exact-text holdout evaluation, and writes only model weights to `public/models/menu-line-classifier.json` for the browser app. The evaluation is not restaurant-disjoint and is not a substitute for testing on real menus.
-3. Do not commit `data/private-menu-training/`. The weights include source/license metadata and can be distributed commercially because their training source is CC0; keep the source attribution in the app and published documentation.
+2. For additional languages, collect only explicitly licensed or permission-cleared feeds with `npm run model:collect`; manually review and label candidate text lines as `dish`, `section`, or `other` in the ignored `labels.jsonl`. Each labeled row must retain its language and source fields (`sourceName`, `sourceUrl`, `license`, `licenseUrl`, `permissionBasis`, `approvedForModelRelease`, and `commercialUseApproved`). The trainer rejects rows without commercial and weight-release approval.
+3. Run `npm run model:train`. It trains one standard-library character n-gram Naive Bayes model per language present, reports precision/recall/F1 by label, and writes weights to `public/models/menu-line-classifier.json` for English and `menu-line-classifier-fi.json` / `menu-line-classifier-sv.json` when those datasets exist. It uses a deterministic source-held-out split when at least five source groups are available; otherwise it marks its exact-text split as a weak fallback. The FNDDS baseline reports 90.2% accuracy but only 21.6% precision for its section label, so the classifier must not decide category headings alone; those remain grounded in explicit page structure and rules.
+4. Do not commit `data/private-menu-training/`. The weights include source/license metadata and can be distributed commercially only when every source permits commercial use; keep source attribution in the app and published documentation.
 
-The browser downloads the small English weights only after the user presses **Find lunch menu** and applies them locally as a conservative filter. If weights fail to load, current rules still work. Menu text is not sent to the model-training source, an AI service, or Lunumi servers. Dietary labels still come only from explicit page text. The app always shows the restaurant page used so users can verify current details.
+The browser requests the 235 KB English line-classifier weights during idle time, unless the device reports data saver or a 2G connection, and applies them locally as a conservative filter. Image OCR uses the separate Apache-2.0 Tesseract.js engine with pinned `tessdata_fast` language weights, loaded only when a likely menu image is found because the first engine-and-language download is several megabytes. If a language classifier is unavailable, current rules still work. Menu text is not sent to the model-training source, an AI service, or Lunumi servers. Dietary labels still come only from explicit page text. The app always shows the restaurant page used so users can verify current details.
 
 ## Future data collection
 
