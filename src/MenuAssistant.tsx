@@ -1469,7 +1469,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl, listingLocati
     setBusy(true);
     setModelStatus('checking');
     let active = true;
-    const modelReady = prepareLocalMenuModel(updateModelProgress).then(() => {
+    const modelReady = prepareLocalMenuModel(progress => updateModelProgress(progress)).then(() => {
       if (active) setModelStatus('ready');
       return null;
     }, cause => {
