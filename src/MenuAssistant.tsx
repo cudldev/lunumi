@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v11';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v12';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -75,7 +75,9 @@ const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
 };
 
 const dietaryCodeLine = /^(?:[A-ZÅÄÖ]{1,4}(?:\s*,\s*[A-ZÅÄÖ]{1,4}){1,8})$/i;
-const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b)/i;
+const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b|voimassa\s+\d{1,2}\.\s*\d{1,2}\.?\s*[–-]\s*\d{1,2}\.\s*\d{1,2}\.?$|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\s+\d+\s+tiedostoa\b|kiitos palautteestasi!?$)/i;
+
+const nonMenuStatusLine = /^(?:voimassa\b|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\b|kiitos palautteestasi!?$)/i;
 
 function detectLanguage(value: string): MenuLanguage {
   const sample = value.slice(0, 20_000);
@@ -513,7 +515,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
     if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue;
-    if (nonMenuDetailLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
+    if (nonMenuDetailLine.test(line) || nonMenuStatusLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
       if (/^lounasbuffet\b/i.test(line)) pendingMenuPriceLabel = line;
       continue;
     }
