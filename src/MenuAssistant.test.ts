@@ -193,6 +193,23 @@ it('keeps Finnish lunch dishes and source dietary codes while dropping page meta
   expect(parsed.notes).toContain('Lounasbuffet: 13,70 €');
 });
 
+it('drops Finnish restaurant page status and upload-form text instead of showing it as dishes', () => {
+  const pageText = [
+    'Voimassa 26.10. – 1.11.',
+    'Ei lounasta tälle päivälle',
+    'Mennyt lounas',
+    'Voit liittää enintään kolme tiedostoa (kuva tai PDF, max 10 Mt / tiedosto).',
+    'Kiitos palautteestasi!',
+    'Päivän lounas',
+    'Kermainen lohikeitto',
+  ].join('\n');
+
+  const parsed = parseMenu(pageText, 'fi', null);
+
+  expect(parsed.items.map(item => item.name)).toEqual(['Kermainen lohikeitto']);
+  expect(parsed.items[0].section).toBe('Päivän lounas');
+});
+
 it('extracts only the selected menu tab and its dish details', () => {
   const element = (tagName: string, textContent: string, querySelector: (selector: string) => unknown = () => null, querySelectorAll: (selector: string) => unknown[] = () => []) => ({
     tagName, textContent, querySelector, querySelectorAll, id: '', getAttribute: (_name: string) => null as string | null,
