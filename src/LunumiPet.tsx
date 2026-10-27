@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CircleHelp, Heart, LoaderCircle, MessageCircle, Send, Sparkles, X } from 'lucide-react';
 import type { Place } from './core';
 import { relevantPlaces } from './assistant-context';
-import { chatWithLocalAssistant, prepareLocalMenuModel, type MenuAssistantTurn, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
+import { chatWithLocalAssistant, prepareLocalMenuModel, subscribeLocalMenuModelProgress, type MenuAssistantTurn, type MenuModelPreferences, type MenuModelProgress } from './menu-llm';
 import { isLunumiGreeting, isLunumiRequest, lunumiScopeReply } from './assistant-scope';
 import { sourcesForAnswer } from './assistant-sources';
 
@@ -86,7 +86,13 @@ export default function LunumiPet({ places, preferences }: Props) {
     let active = true;
     setModelState('loading');
     setError('');
-    void prepareLocalMenuModel(value => { if (active) setProgress(value); }).then(() => {
+    const updateProgress = (value: MenuModelProgress) => {
+      if (!active) return;
+      setProgress(value);
+      setModelState(value.status.toLocaleLowerCase().includes('ready') ? 'ready' : 'loading');
+    };
+    const unsubscribeModelProgress = subscribeLocalMenuModelProgress(updateProgress);
+    void prepareLocalMenuModel(updateProgress).then(() => {
       if (active) setModelState('ready');
     }).catch(cause => {
       if (!active) return;
@@ -94,7 +100,7 @@ export default function LunumiPet({ places, preferences }: Props) {
       setError(cause instanceof Error ? cause.message : 'The local AI could not be started.');
     });
     const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 80);
-    return () => { active = false; window.clearTimeout(focusTimer); };
+    return () => { active = false; unsubscribeModelProgress(); window.clearTimeout(focusTimer); };
   }, [open]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [messages, sending]);
@@ -167,8 +173,8 @@ export default function LunumiPet({ places, preferences }: Props) {
     {open && <section className="lunumi-chat" role="dialog" aria-modal="false" aria-label="Chat with Lunumi">
       <header className={`lunumi-chat-header mood-${mood}`}><div className={`lunumi-chat-avatar mood-${mood}${reaction ? ' is-reacting' : ''}`}><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><span aria-hidden="true">{moodIcon}</span></div><div><strong>Chat with Lunumi</strong><span>{reaction ? 'Happy to see you' : moodLabel[mood]}</span></div><button type="button" aria-label="Close chat" onClick={() => setOpen(false)}><X size={19}/></button></header>
       <div className="lunumi-chat-model" role="status" aria-live="polite">
-        {modelState === 'loading' && <><LoaderCircle size={14} className="menu-assistant-spinner"/><span>{progress.status.toLocaleLowerCase().includes('progress') || progress.status.toLocaleLowerCase().includes('download') ? `Downloading ${progress.file || 'the AI model'}${typeof progress.progress === 'number' ? ` · ${Math.round(progress.progress)}%` : ''}` : progress.status}. First use downloads about 570 MB; it is cached on this device.</span></>}
-        {modelState === 'ready' && <span>Local AI is ready. Nearby listings and saved menu excerpts are sent only to the model on this device.</span>}
+        {modelState === 'loading' && <><LoaderCircle size={14} className="menu-assistant-spinner"/><span>{progress.status.toLocaleLowerCase().includes('progress') || progress.status.toLocaleLowerCase().includes('download') ? `Downloading ${progress.file || 'the AI model'}${typeof progress.progress === 'number' ? ` · ${Math.round(progress.progress)}%` : ''}` : progress.status}. {progress.device === 'wasm' ? 'The CPU fallback downloads about 920 MB on first use and runs more slowly; it is cached on this device.' : 'First use downloads about 570 MB; it is cached on this device.'}</span></>}
+        {modelState === 'ready' && <span>{progress.device === 'wasm' ? 'Local AI is ready on the CPU fallback. It may respond more slowly; your data stays on this device.' : 'Local AI is ready. Nearby listings and saved menu excerpts are sent only to the model on this device.'}</span>}
         {modelState === 'error' && <span>{error}</span>}
       </div>
       <div className="lunumi-chat-messages" aria-live="polite">

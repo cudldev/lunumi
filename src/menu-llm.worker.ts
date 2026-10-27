@@ -1,6 +1,6 @@
 type Message = { role: 'system' | 'user'; content: string };
 type ChatTurn = { role: 'user' | 'assistant'; content: string };
-type Progress = { status: string; file?: string; progress?: number };
+type Progress = { status: string; file?: string; progress?: number; device?: 'webgpu' | 'wasm' };
 type WorkerRequest = { type: 'initialize' } | { type: 'analyze'; id: number; restaurantName: string; language: string; sourceText: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } } | { type: 'chat'; id: number; turns: ChatTurn[]; context: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } };
 type WorkerResponse = { type: 'progress'; progress: Progress } | { type: 'ready' } | { type: 'result'; id: number; text: string } | { type: 'error'; id?: number; message: string };
 type PipelineModule = {
@@ -20,6 +20,7 @@ const MODEL_REVISION = '558750086ed49d78cb701ed6fa85af33fd16453f';
 const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0';
 const workerScope = self as unknown as { postMessage: (message: WorkerResponse) => void; onmessage: ((event: MessageEvent<WorkerRequest>) => void) | null };
 let generatorPromise: Promise<TextGenerator> | null = null;
+let generatorDevice: 'webgpu' | 'wasm' = 'webgpu';
 let inferenceQueue: Promise<void> = Promise.resolve();
 
 function runInference<T>(operation: () => Promise<T>): Promise<T> {
@@ -34,39 +35,67 @@ function neutralizeTokenText(value: string): string {
 
 function progressInfo(value: unknown): Progress {
   if (!value || typeof value !== 'object') return { status: 'Preparing the model' };
-  const info = value as { status?: unknown; file?: unknown; progress?: unknown };
+  const info = value as { status?: unknown; file?: unknown; progress?: unknown; device?: unknown };
   return {
     status: typeof info.status === 'string' ? info.status : 'Preparing the model',
     ...(typeof info.file === 'string' ? { file: info.file.split('/').pop() } : {}),
     ...(typeof info.progress === 'number' && Number.isFinite(info.progress) ? { progress: info.progress } : {}),
+    ...(info.device === 'webgpu' || info.device === 'wasm' ? { device: info.device } : {}),
   };
+}
+
+function isWebGpuFailure(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /webgpu|gpu|adapter|device lost|ortRun|groupqueryattention|external instance|compute pipeline/i.test(message);
+}
+
+function reportProgress(status: string, device = generatorDevice): void {
+  workerScope.postMessage({ type: 'progress', progress: { status, device } });
 }
 
 function getGenerator(): Promise<TextGenerator> {
   if (!generatorPromise) {
-    generatorPromise = (async () => {
-      const gpu = (navigator as Navigator & { gpu?: { requestAdapter: () => Promise<unknown> } }).gpu;
-      if (!gpu) throw new Error('The local AI assistant requires a browser with WebGPU enabled.');
-      workerScope.postMessage({ type: 'progress', progress: { status: 'Checking WebGPU availability' } });
-      const adapter = await gpu.requestAdapter();
-      if (!adapter) throw new Error('This device does not have a compatible WebGPU adapter for the local AI assistant.');
-      workerScope.postMessage({ type: 'progress', progress: { status: 'Loading the local AI runtime' } });
+    const requestedDevice = generatorDevice;
+    const load = async (device: 'webgpu' | 'wasm') => {
+      reportProgress(device === 'webgpu' ? 'Loading the WebGPU model' : 'Loading the local CPU model', device);
       const runtime = await import(/* @vite-ignore */ TRANSFORMERS_URL) as PipelineModule;
       runtime.env.useBrowserCache = true;
       const instance = await runtime.pipeline('text-generation', MODEL_ID, {
-        device: 'webgpu',
-        dtype: 'q4f16',
+        device,
+        dtype: device === 'webgpu' ? 'q4f16' : 'q4',
         revision: MODEL_REVISION,
-        progress_callback: (value: unknown) => workerScope.postMessage({ type: 'progress', progress: progressInfo(value) }),
+        progress_callback: (value: unknown) => workerScope.postMessage({ type: 'progress', progress: { ...progressInfo(value), device } }),
       });
-      workerScope.postMessage({ type: 'progress', progress: { status: 'Starting the WebGPU model' } });
+      reportProgress(device === 'webgpu' ? 'WebGPU model ready' : 'Local CPU model ready', device);
       return instance as TextGenerator;
-    })().catch(error => {
+    };
+    generatorPromise = load(requestedDevice).catch(error => {
+      if (requestedDevice !== 'webgpu' || !isWebGpuFailure(error)) throw error;
+      generatorDevice = 'wasm';
+      reportProgress('WebGPU is unavailable; switching to the local CPU model', 'wasm');
+      return load('wasm');
+    }).catch(error => {
       generatorPromise = null;
       throw error;
     });
   }
   return generatorPromise;
+}
+
+function runWithGenerator<T>(operation: (generator: TextGenerator) => Promise<T>): Promise<T> {
+  return runInference(async () => {
+    let generator = await getGenerator();
+    try {
+      return await operation(generator);
+    } catch (error) {
+      if (generatorDevice !== 'webgpu' || !isWebGpuFailure(error)) throw error;
+      generatorDevice = 'wasm';
+      generatorPromise = null;
+      reportProgress('WebGPU stopped during inference; retrying with the local CPU model', 'wasm');
+      generator = await getGenerator();
+      return operation(generator);
+    }
+  });
 }
 
 workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
@@ -79,7 +108,7 @@ workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
     return;
   }
   if (request.type === 'chat') {
-    void getGenerator().then(generator => runInference(async () => {
+    void runWithGenerator(async generator => {
       const preferences = neutralizeTokenText(JSON.stringify({ likes: request.preferences.likes.slice(0, 8), dislikes: request.preferences.dislikes.slice(0, 8), dietaryNeeds: request.preferences.diet.slice(0, 8), privateNotes: request.preferences.notes.slice(0, 300) }));
       const context = neutralizeTokenText(request.context.slice(0, 14000));
       const chatHistory = request.turns.slice(-8).map(turn => `${turn.role === 'user' ? 'User' : 'Lunumi'}: ${neutralizeTokenText(turn.content.slice(0, 700))}`).join('\n');
@@ -98,10 +127,10 @@ workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
       const text = output[0]?.generated_text;
       if (!text) throw new Error('Lunumi could not generate a reply.');
       return text;
-    })).then(text => workerScope.postMessage({ type: 'result', id: request.id, text })).catch(error => workerScope.postMessage({ type: 'error', id: request.id, message: error instanceof Error ? error.message : 'Lunumi could not answer locally.' }));
+    }).then(text => workerScope.postMessage({ type: 'result', id: request.id, text })).catch(error => workerScope.postMessage({ type: 'error', id: request.id, message: error instanceof Error ? error.message : 'Lunumi could not answer locally.' }));
     return;
   }
-  void getGenerator().then(generator => runInference(async () => {
+  void runWithGenerator(async generator => {
     const messages: Message[] = [
       {
         role: 'system',
@@ -117,5 +146,5 @@ workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
     const text = output[0]?.generated_text;
     if (!text) throw new Error('The local AI model returned no menu summary.');
     return text;
-  })).then(text => workerScope.postMessage({ type: 'result', id: request.id, text })).catch(error => workerScope.postMessage({ type: 'error', id: request.id, message: error instanceof Error ? error.message : 'The local AI model could not read this menu.' }));
+  }).then(text => workerScope.postMessage({ type: 'result', id: request.id, text })).catch(error => workerScope.postMessage({ type: 'error', id: request.id, message: error instanceof Error ? error.message : 'The local AI model could not read this menu.' }));
 };

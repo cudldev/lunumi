@@ -1,4 +1,4 @@
-export type MenuModelProgress = { status: string; file?: string; progress?: number };
+export type MenuModelProgress = { status: string; file?: string; progress?: number; device?: 'webgpu' | 'wasm' };
 export type MenuModelPreferences = { likes: string[]; dislikes: string[]; diet: string[]; notes: string };
 export type MenuAssistantTurn = { role: 'user' | 'assistant'; content: string };
 type WorkerResponse =
@@ -17,6 +17,11 @@ let nextRequestId = 0;
 const pending = new Map<number, PendingRequest>();
 const progressSubscribers = new Set<(progress: MenuModelProgress) => void>();
 let rejectInitialization: ((error: Error) => void) | null = null;
+
+export function subscribeLocalMenuModelProgress(onProgress: (progress: MenuModelProgress) => void): () => void {
+  progressSubscribers.add(onProgress);
+  return () => progressSubscribers.delete(onProgress);
+}
 
 function ensureWorker(): Worker {
   if (worker) return worker;
