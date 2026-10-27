@@ -76,6 +76,7 @@ export default function LunumiPet({ places, preferences }: Props) {
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [thinkingSeconds, setThinkingSeconds] = useState(0);
+  const [streamingReply, setStreamingReply] = useState('');
   const [speech, setSpeech] = useState<{ messageId: number; visibleCharacters: number } | null>(null);
   const [reaction, setReaction] = useState(0);
   const nextMessageId = useRef(0);
@@ -164,14 +165,19 @@ export default function LunumiPet({ places, preferences }: Props) {
     }
     setSending(true);
     setError('');
+    setStreamingReply('');
     const context = chatContext(places, `${recentUserText} ${text}`);
     try {
-      const answer = await chatWithLocalAssistant({ turns: nextMessages, context: context.text, preferences });
+      const answer = await chatWithLocalAssistant({ turns: nextMessages, context: context.text, preferences }, chunk => {
+        if (chunk) setStreamingReply(current => current + chunk);
+      });
       const answerSources = sourcesForAnswer(answer, context.sources);
       const reply: ChatMessage = { id: ++nextMessageId.current, role: 'assistant', content: answer.trim(), sources: answerSources };
       setMessages([...nextMessages, reply]);
-      setSpeech(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? null : { messageId: reply.id, visibleCharacters: 0 });
+      setStreamingReply('');
+      setSpeech(null);
     } catch (cause) {
+      setStreamingReply('');
       setError(cause instanceof Error ? cause.message : 'Lunumi could not answer right now.');
     } finally {
       setSending(false);
@@ -195,7 +201,8 @@ export default function LunumiPet({ places, preferences }: Props) {
             <div className={`lunumi-chat-bubble is-${message.role}`}><span aria-label={message.role === 'assistant' ? message.content : undefined}>{visibleText}</span>{!isSpeaking && message.sources?.length ? <div className="lunumi-chat-sources"><small>Sources</small>{message.sources.map(source => <a key={`${message.id}-${source.url}`} href={source.url} target="_blank" rel="noopener noreferrer">{source.name}</a>)}</div> : null}</div>
           </article>;
         })}
-        {sending && <div className="lunumi-chat-working" role="status"><LoaderCircle size={15} className="menu-assistant-spinner"/>{thinkingSeconds < 12 ? 'Lunumi is thinking on this device…' : `Lunumi is still working locally · ${thinkingSeconds}s`}</div>}
+        {sending && streamingReply && <article className="lunumi-chat-message is-assistant is-streaming" aria-live="polite"><div className="lunumi-chat-speaker is-speaking" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}mascot/lunumi-lunch-pose.png`} alt=""/><i className="lunumi-face-expression expression-speaking"><b/><b/><em/></i></div><div className="lunumi-chat-bubble is-assistant"><span>{streamingReply}</span></div></article>}
+        {sending && <div className="lunumi-chat-working" role="status"><LoaderCircle size={15} className="menu-assistant-spinner"/>{streamingReply ? `Lunumi is replying locally · ${thinkingSeconds}s` : thinkingSeconds < 12 ? 'Lunumi is thinking on this device…' : `Waiting for the local AI · ${thinkingSeconds}s`}</div>}
         <div ref={endRef}/>
       </div>
       {error && modelState !== 'error' && <p className="lunumi-chat-error" role="alert">{error}</p>}

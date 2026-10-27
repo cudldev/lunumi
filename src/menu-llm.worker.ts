@@ -1,11 +1,12 @@
 type Message = { role: 'system' | 'user'; content: string };
 type ChatTurn = { role: 'user' | 'assistant'; content: string };
 type Progress = { status: string; file?: string; progress?: number; device?: 'webgpu' | 'wasm' };
-type WorkerRequest = { type: 'initialize' } | { type: 'analyze'; id: number; restaurantName: string; language: string; sourceText: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } } | { type: 'chat'; id: number; turns: ChatTurn[]; context: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } };
-type WorkerResponse = { type: 'progress'; progress: Progress } | { type: 'ready' } | { type: 'result'; id: number; text: string } | { type: 'error'; id?: number; message: string };
+type WorkerRequest = { type: 'initialize'; device?: 'wasm' } | { type: 'analyze'; id: number; restaurantName: string; language: string; sourceText: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } } | { type: 'chat'; id: number; turns: ChatTurn[]; context: string; preferences: { likes: string[]; dislikes: string[]; diet: string[]; notes: string } };
+type WorkerResponse = { type: 'progress'; progress: Progress } | { type: 'ready' } | { type: 'activity'; id: number; text: string } | { type: 'result'; id: number; text: string } | { type: 'error'; id?: number; message: string };
 type PipelineModule = {
   env: { useBrowserCache: boolean };
   pipeline: (task: string, model: string, options: Record<string, unknown>) => Promise<unknown>;
+  TextStreamer: new (tokenizer: unknown, options: Record<string, unknown>) => unknown;
 };
 type TextGenerator = {
   tokenizer: { apply_chat_template: (messages: Message[], options: Record<string, unknown>) => string };
@@ -20,6 +21,7 @@ const MODEL_REVISION = '558750086ed49d78cb701ed6fa85af33fd16453f';
 const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0';
 const workerScope = self as unknown as { postMessage: (message: WorkerResponse) => void; onmessage: ((event: MessageEvent<WorkerRequest>) => void) | null };
 let generatorPromise: Promise<TextGenerator> | null = null;
+let transformersRuntime: PipelineModule | null = null;
 let generatorDevice: 'webgpu' | 'wasm' = 'webgpu';
 let inferenceQueue: Promise<void> = Promise.resolve();
 
@@ -59,6 +61,7 @@ function getGenerator(): Promise<TextGenerator> {
     const load = async (device: 'webgpu' | 'wasm') => {
       reportProgress(device === 'webgpu' ? 'Loading the WebGPU model' : 'Loading the local CPU model', device);
       const runtime = await import(/* @vite-ignore */ TRANSFORMERS_URL) as PipelineModule;
+      transformersRuntime = runtime;
       runtime.env.useBrowserCache = true;
       const instance = await runtime.pipeline('text-generation', MODEL_ID, {
         device,
@@ -101,6 +104,7 @@ function runWithGenerator<T>(operation: (generator: TextGenerator) => Promise<T>
 workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
   if (request.type === 'initialize') {
+    if (request.device === 'wasm') generatorDevice = 'wasm';
     void getGenerator().then(
       () => workerScope.postMessage({ type: 'ready' }),
       error => workerScope.postMessage({ type: 'error', message: error instanceof Error ? error.message : 'The local AI model could not be loaded.' }),
@@ -123,7 +127,11 @@ workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
         },
       ];
       const prompt = generator.tokenizer.apply_chat_template(messages, { tokenize: false, add_generation_prompt: true, enable_thinking: false });
-      const output = await generator(prompt, { max_new_tokens: 360, do_sample: false, return_full_text: false });
+      const streamer = new transformersRuntime!.TextStreamer(generator.tokenizer, {
+        skip_prompt: true,
+        callback_function: (text: string) => workerScope.postMessage({ type: 'activity', id: request.id, text }),
+      });
+      const output = await generator(prompt, { max_new_tokens: 180, do_sample: false, return_full_text: false, streamer });
       const text = output[0]?.generated_text;
       if (!text) throw new Error('Lunumi could not generate a reply.');
       return text;
@@ -142,7 +150,11 @@ workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
       },
     ];
     const prompt = generator.tokenizer.apply_chat_template(messages, { tokenize: false, add_generation_prompt: true, enable_thinking: false });
-    const output = await generator(prompt, { max_new_tokens: 1400, do_sample: false, return_full_text: false });
+    const streamer = new transformersRuntime!.TextStreamer(generator.tokenizer, {
+      skip_prompt: true,
+      callback_function: () => workerScope.postMessage({ type: 'activity', id: request.id, text: '' }),
+    });
+    const output = await generator(prompt, { max_new_tokens: 1400, do_sample: false, return_full_text: false, streamer });
     const text = output[0]?.generated_text;
     if (!text) throw new Error('The local AI model returned no menu summary.');
     return text;
