@@ -21,6 +21,19 @@ const safeUrl = (value?: string) => {
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
 };
 
+function menuListingLocation(place: Place): { text: string; sourceUrl: string; sourceLabel: string } | undefined {
+  const street = [place.tags['addr:street'], place.tags['addr:housenumber']].filter(Boolean).join(' ');
+  const locality = place.tags['addr:suburb'] || place.tags['addr:neighbourhood'] || '';
+  const text = [street, place.tags['addr:postcode'], locality, place.tags['addr:city']].filter(Boolean)
+    .filter((value, index, all) => all.indexOf(value) === index).join(', ').slice(0, 180);
+  if (!text) return undefined;
+  const osmObject = place.id.match(/^(?:osm:)?(node|way|relation)\/(\d+)$/);
+  const officialSource = place.tags['data:source'] === 'official' ? safeUrl(place.tags['data:source-url']) : null;
+  const sourceUrl = officialSource || (osmObject ? `https://www.openstreetmap.org/${osmObject[1]}/${osmObject[2]}`
+    : `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}#map=18/${place.lat}/${place.lon}`);
+  return { text, sourceUrl, sourceLabel: officialSource ? 'restaurant listing' : 'OpenStreetMap' };
+}
+
 type LivePosition = { lat: number; lon: number; accuracy: number };
 function VisitLiveMap({ place, position }: { place: Pick<Place, 'lat' | 'lon'>; position: LivePosition | null }) {
   const mapElement = useRef<HTMLDivElement>(null);
@@ -211,6 +224,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
     };
   }, [visitIntro, visitMode]);
   const cuisine = (place.tags.cuisine || place.tags.amenity?.replace('_', ' ') || 'Food nearby').split(';').map(x => x.trim()).filter(Boolean);
+  const listingLocation = menuListingLocation(place);
   const hours = openingHoursStatus(place.tags.opening_hours);
   const lunchFeed = safeUrl(place.tags['lunch:feed']), menuFeed = safeUrl(place.tags['menu:feed']);
   const menu = lunchFeed || menuFeed || safeUrl(place.tags['menu:website'] || place.tags['website:menu'] || place.tags['lunch:website'] || place.tags['website:lunch'] || place.tags.menu);
@@ -380,7 +394,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         <p className="reason detail-reason">{sentiment === 'loved' ? 'A place you loved before' : recommendation}</p>
         <h3 className="detail-section-title">Good to know</h3><p className="detail-description">{place.tags.opening_hours ? `Hours: ${place.tags.opening_hours}` : 'Opening hours are not listed.'}</p>
         <h3 className="detail-section-title">Menu & links</h3>{menu || website ? <div className="detail-actions">{menu && <a className="button outline" href={menu} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>{menuLabel}</a>}{website && <a className="button outline" href={website} target="_blank" rel="noopener noreferrer"><Globe2 size={15}/>Website</a>}</div> : <p className="detail-description">No menu link is listed yet. Check the restaurant website or open directions.</p>}
-        <MenuAssistant restaurantName={place.name} sourceUrl={menu || website}/>
+        <MenuAssistant restaurantName={place.name} sourceUrl={menu || website} listingLocation={listingLocation}/>
         <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'visited' ? 'Finish your visit' : status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
         </>}
       </div>

@@ -20,8 +20,8 @@ describe('structured menu extraction', () => {
       { tagName: 'H1', textContent: 'Hinnasto' },
       { tagName: 'H2', textContent: 'Liekillä grillatut' },
       row([cell('Tuote', 'TH'), cell('Ateria', 'TH'), cell('Hampurilainen', 'TH')]),
-      row([cell('Double Ultimate Chili Cheese', 'TD'), cell('16,45 €', 'TD'), cell('12,95 €', 'TD')]),
-      row([cell('WHOPPER®', 'TD'), cell('10,95 €', 'TD'), cell('7,45 €', 'TD')]),
+      row([cell('Classic Beef Burger', 'TD'), cell('16,45 €', 'TD'), cell('12,95 €', 'TD')]),
+      row([cell('Plant-Based Burger', 'TD'), cell('10,95 €', 'TD'), cell('7,45 €', 'TD')]),
     ];
     tableRows = blocks.filter(block => block.tagName === 'TR') as unknown as typeof tableRows;
     const original = globalThis.DOMParser;
@@ -38,13 +38,13 @@ describe('structured menu extraction', () => {
     }
     const parsed = parseMenu(extracted, 'fi', fiMenuClassifier as unknown as MenuClassifier);
 
-    expect(parsed.items.map(item => item.name)).toEqual(['Double Ultimate Chili Cheese', 'WHOPPER®']);
+    expect(parsed.items.map(item => item.name)).toEqual(['Classic Beef Burger', 'Plant-Based Burger']);
     expect(parsed.items.map(item => item.price)).toEqual(['16,45 €', '10,95 €']);
     expect(parsed.items[0].priceOptions).toEqual([
       { label: 'Ateria', value: '16,45 €' },
       { label: 'Hampurilainen', value: '12,95 €' },
     ]);
-    expect(parsed.items[0].sourceText).toBe('Double Ultimate Chili Cheese · 16,45 € · 12,95 €');
+    expect(parsed.items[0].sourceText).toBe('Classic Beef Burger · 16,45 € · 12,95 €');
     expect(parsed.items.every(item => item.section === 'Liekillä grillatut')).toBe(true);
   });
 
@@ -169,8 +169,8 @@ describe('structured menu extraction', () => {
     const menu = {
       '@type': 'Menu',
       hasMenuItem: [
-        { '@type': 'MenuItem', name: 'Mochi donut with strawberry filling - 6.2€', price: '6.2€' },
-        { '@type': 'MenuItem', name: 'Strawbry Mochi', price: '4.8€' },
+        { '@type': 'MenuItem', name: 'Berry tart with cream - 6.2€', price: '6.2€' },
+        { '@type': 'MenuItem', name: 'Raspberry rice cake', price: '4.8€' },
         { '@type': 'MenuItem', name: 'L. G. 4.8€', price: '4.8€' },
         { '@type': 'MenuItem', name: 'Raspberry pastry -', price: '5.9€' },
       ],
@@ -179,11 +179,11 @@ describe('structured menu extraction', () => {
     const parsed = parseMenu(lines.join('\n'), 'en', null);
 
     expect(parsed.items.map(item => [item.name, item.price])).toEqual([
-      ['Mochi donut with strawberry filling', '6.2€'],
-      ['Strawbry Mochi', '4.8€'],
+      ['Berry tart with cream', '6.2€'],
+      ['Raspberry rice cake', '4.8€'],
       ['Raspberry pastry', '5.9€'],
     ]);
-    expect(parsed.items[0].sourceText).toContain('Mochi donut with strawberry filling - 6.2€');
+    expect(parsed.items[0].sourceText).toContain('Berry tart with cream - 6.2€');
     expect(parsed.items[1].dietaryInfo).toEqual(['L. G.']);
   });
 
@@ -191,18 +191,18 @@ describe('structured menu extraction', () => {
     const block = (tagName: string, textContent: string) => ({ tagName, textContent });
     const blocks = [
       block('H1', 'Our Menus'),
-      block('P', 'Mochi Donut'),
-      block('P', 'Mochi Ice Cream'),
-      block('P', 'Matcha Drinks'),
-      block('P', 'Sando'),
+      block('P', 'Pastries'),
+      block('P', 'Frozen Desserts'),
+      block('P', 'Tea Drinks'),
+      block('P', 'Sandwiches'),
       block('P', 'Coffee & Others'),
-      block('H2', 'Matcha'),
-      block('H4', 'Matcha Latte'),
+      block('H2', 'Tea Drinks'),
+      block('H4', 'Spiced Tea Latte'),
       block('P', '5.9€'),
-      block('H2', 'Mochi Ice Cream'),
-      block('H4', 'Strawberry Mochi'),
+      block('H2', 'Frozen Desserts'),
+      block('H4', 'Raspberry Rice Cake'),
       block('P', '4.8€'),
-      block('H1', 'Mochi Donut'),
+      block('H1', 'Pastries'),
       block('H2', 'Coffee & Others'),
       block('H4', 'Filter coffee 3.6€ Double espresso 3.9€ Espresso macchiato 4.3€'),
     ];
@@ -220,17 +220,17 @@ describe('structured menu extraction', () => {
     }
     const parsed = parseMenu(extracted, 'en', null);
 
-    expect(extracted).toContain('menu-section: Matcha');
-    expect(extracted).toContain('menu-section: Mochi Ice Cream');
+    expect(extracted).toContain('menu-section: Tea Drinks');
+    expect(extracted).toContain('menu-section: Frozen Desserts');
     expect(extracted).toContain('menu-section: Coffee & Others');
     expect(extracted).not.toContain('menu-section: Our Menus');
-    expect(parsed.items.map(item => item.name)).not.toContain('Mochi Donut');
-    expect(parsed.items.map(item => item.name)).not.toContain('Matcha Drinks');
-    expect(parsed.items.map(item => item.name)).not.toContain('Sando');
+    expect(parsed.items.map(item => item.name)).not.toContain('Pastries');
+    expect(parsed.items.map(item => item.name)).not.toContain('Tea Drinks');
+    expect(parsed.items.map(item => item.name)).not.toContain('Sandwiches');
     expect(parsed.items.map(item => item.name)).not.toContain('Coffee & Others');
     expect(parsed.items.map(item => [item.section, item.name])).toEqual([
-      ['Matcha', 'Matcha Latte'],
-      ['Mochi Ice Cream', 'Strawberry Mochi'],
+      ['Tea Drinks', 'Spiced Tea Latte'],
+      ['Frozen Desserts', 'Raspberry Rice Cake'],
       ['Coffee & Others', 'Filter coffee'],
       ['Coffee & Others', 'Double espresso'],
       ['Coffee & Others', 'Espresso macchiato'],
@@ -244,13 +244,13 @@ describe('structured menu extraction', () => {
       block('H2', 'Restaurant location'),
       block('H3', 'Lounas maanantaista perjantaihin klo 10–14'),
       block('H4', 'Lounaslista'),
-      block('H5', 'Tiistai 27.10.Laajenna'),
+      block('H5', 'Tiistai 27.10.Expand'),
       block('P', 'Paistettua kirjolohta ja perunaa 14,50 €'),
       block('P', 'Ravintola tarjoaa kiireiseen päivään sopivan lounaan.'),
       block('H3', 'À la carte dinner'),
       block('P', 'Valitse omat annoksesi alla olevista vaihtoehdoista.'),
       block('H4', 'Alkuruoat'),
-      block('P', 'Siikacrudo 14 €'),
+      block('P', 'Roasted beet salad 14 €'),
       block('H2', 'Yksityistilaisuudet Albertinkadulla'),
       block('P', 'Tapahtumat suunnitellaan asiakkaan tarpeiden mukaan.'),
       block('H2', 'Tarinamme'),
@@ -275,34 +275,34 @@ describe('structured menu extraction', () => {
     const parsed = parseMenu(extracted, 'fi', null);
     expect(parsed.items.map(item => item.name)).toEqual([
       'Paistettua kirjolohta ja perunaa',
-      'Siikacrudo',
+      'Roasted beet salad',
     ]);
     expect(parsed.items.some(item => /lounaslista|tiistai|tarinamme|arvot|yksityistilaisuudet|ravintola tarjoaa/i.test(item.name))).toBe(false);
   });
 
   it('attaches a dotted dietary-code price line to the preceding item', () => {
-    const parsed = parseMenu('menu-section: Mochi Ice Cream\nStrawbry Mochi\nL. G. 4.8€', 'en', null);
+    const parsed = parseMenu('menu-section: Frozen Treats\nBerry Rice Cake\nL. G. 4.8€', 'en', null);
 
     expect(parsed.items).toHaveLength(1);
     expect(parsed.items[0]).toMatchObject({
-      name: 'Strawbry Mochi',
+      name: 'Berry Rice Cake',
       price: '4.8€',
       dietaryInfo: ['L. G.'],
     });
     expect(parsed.items[0].sourceText).toContain('L. G. 4.8€');
   });
 
-  it('keeps Momochi menu navigation labels out of the item list and attaches the printed dietary code', () => {
+  it('keeps generic menu navigation labels out of the item list and attaches the printed dietary code', () => {
     const block = (tagName: string, textContent: string) => ({ tagName, textContent });
     const blocks = [
       block('H1', 'Our Menus'),
-      block('P', 'Mochi Donut'),
-      block('P', 'Mochi Ice Cream'),
-      block('P', 'Matcha Drinks'),
-      block('P', 'Sando'),
+      block('P', 'Baked Goods'),
+      block('P', 'Frozen Treats'),
+      block('P', 'Tea Drinks'),
+      block('P', 'Sandwiches'),
       block('P', 'Coffee & Others'),
-      block('H2', 'Mochi Ice Cream'),
-      block('H4', 'Strawbry Mochi'),
+      block('H2', 'Frozen Treats'),
+      block('H4', 'Berry Rice Cake'),
       block('P', 'L. G. 4.8€'),
     ];
     const original = globalThis.DOMParser;
@@ -313,7 +313,7 @@ describe('structured menu extraction', () => {
     } as unknown as Document; } } as typeof DOMParser;
     let extracted: string;
     try {
-      extracted = cleanMenuText('<html></html>', 'https://momochi.fi/menu/');
+      extracted = cleanMenuText('<html></html>', 'https://restaurant.example/menu/');
     } finally {
       globalThis.DOMParser = original;
     }
@@ -321,8 +321,8 @@ describe('structured menu extraction', () => {
 
     expect(parsed.items).toHaveLength(1);
     expect(parsed.items[0]).toMatchObject({
-      section: 'Mochi Ice Cream',
-      name: 'Strawbry Mochi',
+      section: 'Frozen Treats',
+      name: 'Berry Rice Cake',
       price: '4.8€',
       dietaryInfo: ['L. G.'],
     });
@@ -332,8 +332,8 @@ describe('structured menu extraction', () => {
   it('keeps restaurant location, opening-hours, address, and story copy out of the menu items', () => {
     const parsed = parseMenu([
       'A good moment is a good meal.',
-      'Nordic Table Ma-Pe 11-14 / La 16-23',
-      'menu-section: Nordic Table',
+      'Example Bistro Ma-Pe 11-14 / La 16-23',
+      'menu-section: Example Bistro',
       'Harbor Road 8',
       '00130 Helsinki',
       '+358 9 123 4567',
@@ -373,23 +373,23 @@ describe('structured menu extraction', () => {
     expect(unrelated.items).toHaveLength(0);
   });
 
-  it('filters page noise from structured menu entries and keeps real priced dishes', () => {
-    const structured = (name: string, section = '') => `menu-schema-item: ${JSON.stringify({
-      name, section, description: '', price: '', diets: [], allergenInfo: [], sourceText: name,
+  it('filters page noise from structured menu entries and keeps a menu item', () => {
+    const structured = (name: string, section = '', price = '') => `menu-schema-item: ${JSON.stringify({
+      name, section, description: '', price, diets: [], allergenInfo: [], sourceText: [name, price].filter(Boolean).join(' · '),
     })}`;
     const page = [
-      structured('Pompier Espa'),
-      structured('Varaa pöytä'),
-      structured('Lahjakortti Pompier Espaan'),
-      structured('Yksityistilaisuudet Albertinkadulla'),
-      structured('Tasa-arvo'),
-      structured('Härkätartar, maustekurkkumajoneesia ja rapeaa sipulia', 'Starters'),
+      structured('Example Bistro'),
+      structured('Reserve a table'),
+      structured('Purchase a gift card'),
+      structured('Private events'),
+      structured('Our values'),
+      structured('Lihapullat ja perunamuusi', 'Pääruoat', '12 €'),
     ].join('\n');
 
     const parsed = parseMenu(page, 'fi', fiMenuClassifier as MenuClassifier);
 
     expect(parsed.items.map(item => item.name)).toEqual([
-      'Härkätartar, maustekurkkumajoneesia ja rapeaa sipulia',
+      'Lihapullat ja perunamuusi',
     ]);
   });
 
@@ -397,35 +397,35 @@ describe('structured menu extraction', () => {
     const structured = (name: string) => `menu-schema-item: ${JSON.stringify({
       name, section: '', description: '', price: '', diets: [], allergenInfo: [], sourceText: name,
     })}`;
-    const page = ['Pompier Espa', 'Pompier Albertinkatu', 'Varaa pöytä', 'Tasa-arvo', 'Starters', 'Mains', 'Desserts', 'Sparkling']
+    const page = ['Example Bistro', 'Example Bistro Downtown', 'Reserve a table', 'Our values', 'Starters', 'Mains', 'Desserts', 'Sparkling']
       .map(structured).join('\n');
 
     expect(parseMenu(page, 'fi', null).items).toEqual([]);
   });
 
   it('removes a trailing separator left before a compact menu price', () => {
-    const parsed = parseMenu('Mochi donut with strawberry filling - 4.8€', 'en', null);
+    const parsed = parseMenu('Berry tart with cream - 4.8€', 'en', null);
 
     expect(parsed.items).toHaveLength(1);
     expect(parsed.items[0]).toMatchObject({
-      name: 'Mochi donut with strawberry filling',
+      name: 'Berry tart with cream',
       price: '4.8€',
     });
   });
 
   it('rejects generic restaurant home-page copy as menu results while accepting menu evidence', () => {
     const homePage = [
-      'DONUT', 'MOCHI', 'MATCHA', 'COFFEE', 'Love you so Mochi', 'Baking The Difference',
-      'Mochi Donut', 'Mochi Ice Cream', 'Welcome toMOMOCHI',
-      'There is nothing better than a friend unless it is a friend with mochi.',
+      'BAKERY', 'PASTRIES', 'TEA', 'COFFEE', 'A little treat makes the day', 'Baking The Difference',
+      'Fresh pastries', 'Frozen desserts', 'Welcome to Example Bistro',
+      'A good meal is better when shared with friends.',
       'Experience Us Everywhere', 'Catering', 'Online order', 'Workshops',
-      'Made-to-Order Solutions', 'Forum Store', 'Mannerheimintie 20, 00100 Helsinki',
-      '050 554 3300', 'Mon-Fri. 11-20Sat. 11-19Sun. 12-18',
+      'Made-to-Order Solutions', 'Example Street 12, 00100 Helsinki',
+      '+358 9 123 4567', 'Mon-Fri. 11-20 Sat. 11-19 Sun. 12-18',
     ].join('\n');
     const homepageItems = parseMenu(homePage, 'unknown', null).items;
 
     expect(homepageItems.length).toBeGreaterThan(0);
-    expect(hasMenuEvidence(homePage, 'https://momochi.fi/', homepageItems)).toBe(false);
+    expect(hasMenuEvidence(homePage, 'https://restaurant.example/', homepageItems)).toBe(false);
 
     const promotionOnly = [{
       section: 'Limited-time offer', name: 'Sandwich promotion', description: '', price: '', diets: [],
@@ -437,7 +437,7 @@ describe('structured menu extraction', () => {
     const menuItems = parseMenu(menuText, 'en', null).items;
     expect(hasMenuEvidence(menuText, 'https://restaurant.example/', menuItems)).toBe(true);
     expect(hasMenuEvidence('Roasted vegetable bowl', 'https://restaurant.example/menu', menuItems)).toBe(true);
-    expect(hasMenuEvidence('WHOPPER 10,95 €', 'https://restaurant.example/hinnasto/', menuItems)).toBe(true);
+    expect(hasMenuEvidence('House burger 10,95 €', 'https://restaurant.example/prices/', menuItems)).toBe(true);
   });
 
   it('reads Schema.org menu items, section, image, price, explicit diet, and allergen metadata', () => {

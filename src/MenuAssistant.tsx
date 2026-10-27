@@ -13,6 +13,7 @@ const MENU_CACHE_KEY = 'lunumi:menu-cache:v32';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
+const MENU_CROSS_LANGUAGE_DISH_THRESHOLD = 0.98;
 const menuReaderUrl = import.meta.env.VITE_MENU_READER_URL?.trim();
 type CachedMenuSource = { sourceUrl: string; resolvedSourceUrl: string; contentType: string; text: string; fetchedAt: number };
 class MenuSourceCacheDatabase extends Dexie {
@@ -45,6 +46,19 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
     headings: /^(?:menu|food|drinks|desserts?|starters?|mains?|cocktails?|sparkling|white|red|ros[eé]|wine|lunch|dinner|allergens?|monday|tuesday|wednesday|thursday|friday)$/i,
   },
 };
+
+const lineLanguageMarkers: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+  fi: /\b(?:päivän|lounas|ruokalista|annos|tarjoillaan|kanssa|sisältää|keitto|perunat?)\b/giu,
+  sv: /\b(?:dagens|lunchmeny|serveras|med|innehåller|soppa|potatis)\b/giu,
+  en: /\b(?:with|served|daily|includes|contains|soup|potatoes)\b/giu,
+};
+
+function foreignLineHasStrongerLanguageEvidence(text: string, primary: Exclude<MenuLanguage, 'unknown'>, secondary: string): boolean {
+  if (!['fi', 'sv', 'en'].includes(secondary) || secondary === primary) return false;
+  const count = (pattern: RegExp) => [...text.matchAll(new RegExp(pattern.source, pattern.flags))].length;
+  return count(lineLanguageMarkers[secondary as Exclude<MenuLanguage, 'unknown'>])
+    > count(lineLanguageMarkers[primary]);
+}
 
 const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
   fi: /^(?:alkuruoat|pääruoat?|pääruoaksi|pääruoan kaveriksi|jälkiruoat?|jälkiruoaksi|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|lastenruoat|jälkiruoat ja juomat)$/i,
@@ -901,7 +915,8 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     return !(classifierOptions.secondaryClassifiers ?? []).some(secondary => {
       if (secondary.language === classifier.language) return false;
       const secondaryPrediction = classifyMenuLine(candidate, secondary);
-      return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+      if (!foreignLineHasStrongerLanguageEvidence(candidate, language, secondary.language)) return false;
+      return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_CROSS_LANGUAGE_DISH_THRESHOLD;
     });
   };
   let section = '';
@@ -945,7 +960,10 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
           .some(model => {
             if (!model) return false;
             const prediction = classifyMenuLine(name, model);
-            return prediction?.label === 'dish' && prediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+            if (classifier && model.language !== classifier.language
+              && !foreignLineHasStrongerLanguageEvidence(name, classifier.language as Exclude<MenuLanguage, 'unknown'>, model.language)) return false;
+            const threshold = model.language === classifier?.language ? MENU_OTHER_FILTER_THRESHOLD : MENU_CROSS_LANGUAGE_DISH_THRESHOLD;
+            return prediction?.label === 'dish' && prediction.confidence >= threshold;
           });
         // Schema.org MenuItem markup is sometimes applied to page labels or
         // navigation. A schema type alone is not enough evidence to show it as
@@ -1077,7 +1095,8 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
         const recognizedAsForeignDish = (classifierOptions.secondaryClassifiers ?? []).some(secondary => {
           if (secondary.language === classifier.language) return false;
           const secondaryPrediction = classifyMenuLine(name, secondary);
-          return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+          if (!foreignLineHasStrongerLanguageEvidence(name, classifier.language as Exclude<MenuLanguage, 'unknown'>, secondary.language)) return false;
+          return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_CROSS_LANGUAGE_DISH_THRESHOLD;
         });
         const keepUnresolvedPricedLine = classifierOptions.mixedLanguage && Boolean(price)
           && classifierOptions.missingSecondaryClassifier;
@@ -1284,9 +1303,9 @@ async function loadMenuSource(sourceUrl: string, signal: AbortSignal): Promise<C
   }
 }
 
-type Props = { restaurantName: string; sourceUrl?: string | null };
+type Props = { restaurantName: string; sourceUrl?: string | null; listingLocation?: { text: string; sourceUrl: string; sourceLabel: string } };
 
-export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
+export default function MenuAssistant({ restaurantName, sourceUrl, listingLocation }: Props) {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [notes, setNotes] = useState<string[]>([]);
   const [restaurantProfile, setRestaurantProfile] = useState<RestaurantProfile | undefined>();
@@ -1464,9 +1483,8 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
 
   return <section className="menu-assistant" aria-label={`Local menu assistant for ${restaurantName}`}>
     <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? <><LoaderCircle size={13} className="menu-assistant-spinner"/> Loading items…</> : items.length ? `${items.length} items${cachedAt ? ' · saved on this device' : ''}` : 'Items from the restaurant’s own page'}</span></div></div>
-    {restaurantProfile && <aside className="menu-assistant-overview"><strong>About {restaurantProfile.name || restaurantName}</strong>{restaurantProfile.description && <p>{restaurantProfile.description}</p>}{restaurantProfile.cuisine?.length ? <p>Cuisine listed: {restaurantProfile.cuisine.join(', ')}</p> : null}{restaurantProfile.location && <p>Location: {restaurantProfile.location}</p>}<span>From the restaurant website · <a href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer">check source</a></span></aside>}
+    {(restaurantProfile || listingLocation || menuSummary) && <aside className="menu-assistant-overview"><strong>About {restaurantProfile?.name || restaurantName}</strong>{restaurantProfile?.description && <p>{restaurantProfile.description}</p>}{restaurantProfile?.cuisine?.length ? <p>Cuisine listed: {restaurantProfile.cuisine.join(', ')}</p> : null}{restaurantProfile && <span>Restaurant details · <a href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer">website source</a></span>}{menuSummary && <p>Menu: {menuSummary}</p>}{(listingLocation?.text || restaurantProfile?.location) && <p>Location: {listingLocation?.text || restaurantProfile?.location}</p>}{listingLocation ? <span>Location · <a href={listingLocation.sourceUrl} target="_blank" rel="noopener noreferrer">{listingLocation.sourceLabel}</a></span> : restaurantProfile?.location ? <span>Location · <a href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer">restaurant website</a></span> : null}</aside>}
     {items.length > 0 ? <>
-      {menuSummary && <aside className="menu-assistant-overview"><strong>Menu overview</strong><p>{menuSummary}</p></aside>}
       {notes.length > 0 && <aside className="menu-assistant-menu-notes"><strong>Menu information</strong>{notes.map((note, index) => <p key={`${note}-${index}`}>{note}</p>)}</aside>}
       <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}>
         {item.imageUrl && <img className="menu-assistant-item-image" src={item.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />}
@@ -1481,7 +1499,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
       {ocrUsed && <p className="menu-assistant-note">Text was recognized from the linked menu image on this device; OCR can make mistakes. Check the source image.</p>}
       {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
-      {modelsUsed.includes('en') && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a> and <a href="https://github.com/cudldev/lunumi" target="_blank" rel="noopener noreferrer">Lunumi-authored synthetic CC0 examples</a>.</p>}
+      {modelsUsed.includes('en') && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>, historical <a href="https://data.cityofnewyork.us/Health/MenuStat/qgc5-ecnb" target="_blank" rel="noopener noreferrer">NYC DOHMH MenuStat data</a>, and <a href="https://github.com/cudldev/lunumi" target="_blank" rel="noopener noreferrer">Lunumi-authored synthetic CC0 examples</a>. NYC data is provided as-is and is not guaranteed to be complete or accurate.</p>}
       {modelsUsed.some(model => model === 'fi' || model === 'sv') && <p className="menu-assistant-note">Finnish and Swedish line filters use Fineli food names (CC BY 4.0), synthetic menu-line combinations, and CC0 page-noise examples. <a href="https://fineli.fi/fineli/fi/avoin-data" target="_blank" rel="noopener noreferrer">Fineli open data</a> is provided by THL.</p>}
     </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
     {(verifiedSourceUrl || sourceUrl) && <a className="menu-assistant-source" href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
