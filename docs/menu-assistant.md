@@ -38,3 +38,4 @@ The GitHub Pages workflow builds the live directory from the `main` branch of `c
 
 
 The focused UI element is 1 AXWebArea raw.githubusercontent.com/cudldev/lunumi/staging/docs/menu-assistant.md
+- The verified restaurant directory is cached with a network-first service-worker rule. When online, the app waits for the latest Pages response; when offline, it can fall back to the cached directory. The cache version changes when needed to avoid older directory data.
