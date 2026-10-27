@@ -32,3 +32,7 @@ Browser cross-origin restrictions, PDF/image menus, and JavaScript-rendered page
 - Restaurant placement: src/MenuAssistant.tsx and src/PlaceCard.tsx; global placement: src/App.tsx.
 
 The current assistant does not load the former Qwen model or menu line classifiers. Their experimental sources and training tools remain in the repository.
+
+## Separate conversation test
+
+The optional `chat-test/` page tests on-device AI conversation without menu tools or source fetching. See [chatbot-test.md](chatbot-test.md); it does not change this menu assistant’s source or label handling.
