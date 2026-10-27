@@ -116,6 +116,48 @@ describe('structured menu extraction', () => {
     expect(parsed.items.map(item => item.price)).toEqual(['5.9€', '4.8€', '3.6€', '3.9€', '4.3€']);
   });
 
+  it('extracts dishes from a mixed lunch-and-dinner homepage without listing restaurant copy', () => {
+    const block = (tagName: string, textContent: string) => ({ tagName, textContent });
+    const blocks = [
+      block('H2', 'Restaurant location'),
+      block('H3', 'Lounas maanantaista perjantaihin klo 10–14'),
+      block('H4', 'Lounaslista'),
+      block('H5', 'Tiistai 27.10.Laajenna'),
+      block('P', 'Paistettua kirjolohta ja perunaa 14,50 €'),
+      block('P', 'Ravintola tarjoaa kiireiseen päivään sopivan lounaan.'),
+      block('H3', 'À la carte dinner'),
+      block('P', 'Valitse omat annoksesi alla olevista vaihtoehdoista.'),
+      block('H4', 'Alkuruoat'),
+      block('P', 'Siikacrudo 14 €'),
+      block('H2', 'Yksityistilaisuudet Albertinkadulla'),
+      block('P', 'Tapahtumat suunnitellaan asiakkaan tarpeiden mukaan.'),
+      block('H2', 'Tarinamme'),
+      block('P', 'Hyvä ruoka tuo ihmiset yhteen.'),
+      block('H2', 'Ravintolan arvot'),
+      block('H3', 'Yhdenvertaisuus'),
+      block('P', 'Kaikki ovat tervetulleita yhteiseen pöytään.'),
+    ];
+    const original = globalThis.DOMParser;
+    globalThis.DOMParser = class { parseFromString() { return {
+      body: { textContent: '', querySelectorAll: () => blocks },
+      querySelectorAll: () => [],
+      querySelector: () => null,
+    } as unknown as Document; } } as typeof DOMParser;
+    let extracted: string;
+    try {
+      extracted = cleanMenuText('<html></html>', 'https://restaurant.example/');
+    } finally {
+      globalThis.DOMParser = original;
+    }
+
+    const parsed = parseMenu(extracted, 'fi', null);
+    expect(parsed.items.map(item => item.name)).toEqual([
+      'Paistettua kirjolohta ja perunaa',
+      'Siikacrudo',
+    ]);
+    expect(parsed.items.some(item => /lounaslista|tiistai|tarinamme|arvot|yksityistilaisuudet|ravintola tarjoaa/i.test(item.name))).toBe(false);
+  });
+
   it('attaches a dotted dietary-code price line to the preceding item', () => {
     const parsed = parseMenu('menu-section: Mochi Ice Cream\nStrawbry Mochi\nL. G. 4.8€', 'en', null);
 

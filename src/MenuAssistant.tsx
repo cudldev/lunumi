@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v25';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v26';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -75,6 +75,7 @@ const ingredientLines: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
 };
 
 const dietaryCodeLine = /^(?:[A-ZÅÄÖ]{1,4}(?:\s*,\s*[A-ZÅÄÖ]{1,4}){1,8})$/i;
+const nonMenuSectionHeading = /^(?:about(?: us| our restaurant)?|our story|our values|values|our locations|contact(?: us)?|opening hours|private events?\b.*|book(?: a table)?|gift cards?\b.*|shop|.*\b(?:arvot|values|värderingar|valeurs)\b.*|tasa-arvo|nautiskelu|avoimuus|vastuullisuus|tarinamme|yhteystiedot|aukioloajat|yksityistilais\w*\b.*|varaa pöytä|lahjakortit?\b.*|kauppaan|vår historia|våra värderingar|kontakt|öppettider|privata evenemang\b.*|boka bord|presentkort|notre histoire|nos valeurs|contactez-nous|horaires|événements privés\b.*|réserver une table|cartes cadeaux)$/i;
 const nonMenuDetailLine = /^(?:ravintoarvot?\b|hiilijalanjälki\b|lue lisää ruokavaliomerkinnöistä\b|miltä maistui\b|huomioi, että raaka-aineet\b|ravintolapäällikkö\b|lounasbuffet\b|lounas\s*[–-]\s*viikko\s+\d+\b|(?:lounas\s+)?(?:maanantai|tiistai|keskiviikko|torstai|perjantai)\s+(?:ma|ti|ke|to|pe)\b|(?:ma|ti|ke|to|pe|la|su)\s*[–-]\s*(?:ma|ti|ke|to|pe|la|su)(?:\s+\d|$)|\d{1,2}\.\s*[–-]\s*\d{1,2}\.\d{1,2}\.\d{4}$|\d{1,2}[.,]\s*\d{1,2}[.,]\s*\d{4}\b|voimassa\s+\d{1,2}\.\s*\d{1,2}\.?\s*[–-]\s*\d{1,2}\.\s*\d{1,2}\.?$|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\s+\d+\s+tiedostoa\b|kiitos palautteestasi!?$)/i;
 
 const nonMenuStatusLine = /^(?:voimassa\b|ei lounasta\s+(?:tälle|tana)\s+päivälle|mennyt lounas|voit liittää enintään\b|kiitos palautteestasi!?$)/i;
@@ -371,16 +372,19 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
   const blockNodes = [...document.body.querySelectorAll('h1,h2,h3,h4,h5,p,li,dt,dd,[itemprop="name"],[itemprop="description"]')];
   const blockText = (node: Element) => node.textContent?.replace(/\s+/g, ' ').trim() || '';
   const menuTitleIndex = blockNodes.findIndex(node => /^H[1-3]$/.test(node.tagName)
-    && /(?:^|\b)(?:menus?|lunch|meny|ruokalista|tuotteet)(?:\b|$)/i.test(blockText(node)));
+    && /(?:^|\b)(?:menus?|lunch|lounas\w*|meny|ruokalista|tuotteet|a\s+la\s+carte)(?:\b|$)/i.test(blockText(node)));
   const firstSectionIndex = menuTitleIndex < 0 ? -1 : blockNodes.findIndex((node, index) => index > menuTitleIndex
     && /^H[1-3]$/.test(node.tagName));
+  const sectionRegionHasMenuPrices = firstSectionIndex > menuTitleIndex
+    && blockNodes.slice(menuTitleIndex + 1, firstSectionIndex).some(node => /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+)/.test(blockText(node)));
   const compactPriceToken = /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?)/g;
   const blocks = blockNodes.flatMap((node, index) => {
     const text = blockText(node);
     if (text.length <= 1) return [];
     // Menu pages often put a table-of-contents list below the page title. Skip
     // those links/labels and keep the actual semantic section headings instead.
-    if (index === menuTitleIndex || (firstSectionIndex > menuTitleIndex && index > menuTitleIndex && index < firstSectionIndex)) return [];
+    if (index === menuTitleIndex || (firstSectionIndex > menuTitleIndex && !sectionRegionHasMenuPrices && index > menuTitleIndex && index < firstSectionIndex)) return [];
+    if (/^H[1-2]$/.test(node.tagName)) return [`menu-section: ${text}`];
     if (menuTitleIndex >= 0 && index > menuTitleIndex && /^H[1-3]$/.test(node.tagName)) return [`menu-section: ${text}`];
     if (/^H[4-6]$/.test(node.tagName)) {
       const prices = [...text.matchAll(compactPriceToken)];
@@ -763,13 +767,29 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   const isSectionPrefix = (line: string) => line === line.toLocaleUpperCase() && (language === 'unknown' ? Object.values(sectionHeadings).some(headings => headings.test(line)) : sectionHeadings[activeLanguage].test(line)); const isSection = (line: string) => (language === 'unknown'
     ? Object.values(sectionHeadings).some(headings => headings.test(line))
     : sectionHeadings[activeLanguage].test(line)) || modules.some(module => module.headings.test(line));
+  const isMenuTitleHeading = (line: string) => /\b(?:lounaslista|ruokalista|lunch menu|dinner menu|menu|meny|à la carte|a la carte)\b/i.test(line)
+    || /\blounas\b.*\b(?:maanantaista|perjantaihin|kello)\b/i.test(line);
+  const isWeekdayHeading = (line: string) => /^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|måndag|tisdag|onsdag|torsdag|fredag|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}(?:[./]\d{1,2})?(?:[./]\d{2,4})?(?:\s*\.?\s*(?:laajenna|expand|show|more))?$/i.test(line);
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
   let section = '';
+  let skippingNonMenuSection = false;
   let pendingImageUrl: string | undefined;
   let pendingMenuPriceLabel = '';
   for (const originalLine of lines) { let line = originalLine;
     if (inlineLegendLines.has(originalLine)) continue;
-    if (line.startsWith('menu-section:')) { section = line.slice('menu-section:'.length).trim(); continue; }
+    if (line.startsWith('menu-section:')) {
+      const heading = line.slice('menu-section:'.length).trim();
+      if (nonMenuSectionHeading.test(heading)) {
+        section = '';
+        skippingNonMenuSection = true;
+      } else if (skippingNonMenuSection && (isSection(heading) || isMenuTitleHeading(heading) || isWeekdayHeading(heading))) {
+        section = heading;
+        skippingNonMenuSection = false;
+      } else if (!skippingNonMenuSection) {
+        section = heading;
+      }
+      continue;
+    }
     if (line.startsWith('menu-diet-legend:')) continue;
     const structured = line.match(/^menu-schema-item:\s*(\{.*\})$/i);
     if (structured) {
@@ -798,6 +818,20 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const image = line.match(/^menu-image:\s*(https:\/\/\S+)$/i);
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
+    if (nonMenuSectionHeading.test(line)) {
+      section = '';
+      skippingNonMenuSection = true;
+      continue;
+    }
+    if (skippingNonMenuSection) {
+      if (isSection(line) || isMenuTitleHeading(line) || isWeekdayHeading(line)) {
+        section = line;
+        skippingNonMenuSection = false;
+        continue;
+      }
+      continue;
+    }
+    if (isMenuTitleHeading(line) || isWeekdayHeading(line)) { section = line; continue; }
     if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue; if (isSection(line)) { section = line; continue; }
     if (/^(?:maanantai|tiistai|keskiviikko|torstai|perjantai|monday|tuesday|wednesday|thursday|friday)\s+\d{1,2}[./]\d{1,2}[./]\d{4}$/i.test(line)
       || nonMenuDetailLine.test(line) || nonMenuStatusLine.test(line) || /^\+?\d[\d\s().-]{7,}$/.test(line) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(line)) {
@@ -876,6 +910,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
       .replace(/\s+\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)\s*$/, '')
       .replace(/\s*[-–—|·:]\s*$/, '')
       .trim();
+    if (!price && !lineDietCodes.length && /[.!?]$/.test(name) && name.split(/\s+/).length >= 4) continue;
     if (name.length < 3 || name.length > 220) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
     if (language !== 'unknown' && classifier) {
