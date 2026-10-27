@@ -206,10 +206,11 @@ it('extracts daily dishes from weekday menu blocks and expands only source-liste
   });
   const leaves = ['L', 'Laktoositon', 'G', 'Gluteeniton', 'VE', 'Vegaaninen', 'M', 'Maidoton', 'VS', 'Sis. valkosipulia']
     .map(text => node(text, 'SPAN'));
+  const longDish = 'Draculan verenpunaiset pariloituja kotimaisia naudan ulkofile lehtipihvejä punaviini-BBQ-glaseerauksella (M+G), noidan salaperäistä maustevoita (L+G+VS) ja rapeita lohkoperunoita (L+G+VS)';
   const dayHeading = node('Tiistai 27.10.2026', 'H3');
   const ordinal = node('3', 'H3');
-  const menuBlock = node('Tom Yam -rapukeitto (M+G+VS)\nSiirappipaahdettuja bataattilohkoja ja tofua (VE+G)', 'P');
-  menuBlock.childNodes = [textNode('Tom Yam -rapukeitto (M+G+VS)'), node('', 'BR'), textNode('Siirappipaahdettuja bataattilohkoja ja tofua (VE+G)')];
+  const menuBlock = node(`Tom Yam -rapukeitto (M+G+VS)\nSiirappipaahdettuja bataattilohkoja ja tofua (VE+G)\n${longDish}`, 'P');
+  menuBlock.childNodes = [textNode('Tom Yam -rapukeitto (M+G+VS)'), node('', 'BR'), textNode('Siirappipaahdettuja bataattilohkoja ja tofua (VE+G)'), node('', 'BR'), textNode(longDish)];
   const englishHeading = node('Tuesday 27.10.2026', 'H3');
   const englishOrdinal = node('3', 'H3');
   const englishBlock = node('Tom Yum shrimp soup (M+G+VS)', 'P');
@@ -244,6 +245,7 @@ it('extracts daily dishes from weekday menu blocks and expands only source-liste
   expect(parsed.items.map(item => [item.section, item.name])).toEqual([
     ['Tiistai 27.10.2026', 'Tom Yam -rapukeitto'],
     ['Tiistai 27.10.2026', 'Siirappipaahdettuja bataattilohkoja ja tofua'],
+    ['Tiistai 27.10.2026', 'Draculan verenpunaiset pariloituja kotimaisia naudan ulkofile lehtipihvejä punaviini-BBQ-glaseerauksella, noidan salaperäistä maustevoita ja rapeita lohkoperunoita'],
   ]);
   expect(parsed.items[0]).toMatchObject({
     dietaryInfo: ['M+G+VS'],
@@ -251,6 +253,8 @@ it('extracts daily dishes from weekday menu blocks and expands only source-liste
     sourceText: 'Tom Yam -rapukeitto (M+G+VS)',
   });
   expect(parsed.items[1].diets).toEqual(['Marked vegan', 'Marked gluten-free']);
+  expect(parsed.items[2].sourceText).toBe(longDish);
+  expect(parsed.items[2].dietaryInfo).toEqual(['M+G', 'L+G+VS']);
 });
 
 it('drops Finnish restaurant page status and upload-form text instead of showing it as dishes', () => {

@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v16';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v17';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -697,11 +697,12 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     }
     if (line.length > 220 || /^https?:\/\//i.test(line)) continue;
     const lineDietCodes = inlineCodes(line);
-    const menuLine = line.replace(/\(([^()]*)\)/g, (whole, value: string) => inlineCodes(`(${value})`).length ? '' : whole).replace(/\s+/g, ' ').trim();
+    const menuLine = line.replace(/\(([^()]*)\)/g, (whole, value: string) => inlineCodes(`(${value})`).length ? '' : whole)
+      .replace(/\s+([,.;:!?])/g, '$1').replace(/\s+/g, ' ').trim();
     const price = line.match(pricePattern);
     const parts = menuLine.split(/\s+[·|—–]\s+|\s{2,}/);
     const name = (parts[0] || menuLine).replace(/\s+(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?.*$/, '').trim();
-    if (name.length < 3 || name.length > 90) continue;
+    if (name.length < 3 || name.length > 220) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
     if (language !== 'unknown' && classifier) {
       const prediction = classifyMenuLine(name, classifier);
@@ -724,7 +725,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     ])];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
-    found.push({ section, name, description, price: priceText, diets, dietaryInfo: lineDietCodes, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: originalLine, imageUrl: pendingImageUrl });
+    found.push({ section, name, description, price: priceText, diets, dietaryInfo: [...new Set(lineDietCodes)], allergenInfo: hasAllergenInfo ? [line] : [], sourceText: originalLine, imageUrl: pendingImageUrl });
     pendingImageUrl = undefined;
     if (found.length >= 100) break;
   }
@@ -754,7 +755,7 @@ function validCachedMenu(value: unknown): value is CachedMenu {
     && (entry.language === undefined || ['fi', 'sv', 'en', 'unknown'].includes(entry.language))
     && Array.isArray(entry.items) && entry.items.length <= 100
     && Array.isArray(entry.notes) && entry.notes.length <= 30 && entry.notes.every(note => typeof note === 'string' && note.length <= 220)
-    && entry.items.every(item => Boolean(item) && typeof item.name === 'string' && item.name.length <= 90
+    && entry.items.every(item => Boolean(item) && typeof item.name === 'string' && item.name.length <= 220
       && typeof item.section === 'string' && item.section.length <= 80
       && typeof item.description === 'string' && item.description.length <= 240
       && typeof item.price === 'string' && item.price.length <= 30
