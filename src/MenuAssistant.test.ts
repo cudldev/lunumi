@@ -212,9 +212,10 @@ it('extracts only the selected menu tab and its dish details', () => {
   const hiddenPanel = element('SECTION', '', () => null, () => []);
   Object.defineProperty(hiddenPanel, 'id', { value: 'panel-Monday' });
   hiddenPanel.getAttribute = name => name === 'aria-hidden' ? 'true' : null;
+  const unrelatedSelectedTab = { getAttribute: (name: string) => name === 'aria-controls' ? 'cookie-consent' : name === 'aria-selected' ? 'true' : null };
   const selectedTab = { getAttribute: (name: string) => name === 'aria-controls' ? 'panel-Friday' : name === 'aria-selected' ? 'true' : null };
   const document = {
-    querySelectorAll: (selector: string) => selector.includes('[role="tabpanel"]') ? [hiddenPanel, visiblePanel] : selector.includes('[role="tab"]') ? [selectedTab] : [],
+    querySelectorAll: (selector: string) => selector.includes('[role="tabpanel"]') ? [hiddenPanel, visiblePanel] : selector.includes('[role="tab"]') ? [unrelatedSelectedTab, selectedTab] : [],
   } as unknown as Document;
 
   const parsed = parseMenu(tabbedMenuLines(document).join('\n'), 'en', null);
