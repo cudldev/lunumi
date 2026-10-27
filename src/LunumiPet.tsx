@@ -92,7 +92,7 @@ export default function LunumiPet({ places, preferences }: Props) {
       setModelState(value.status.toLocaleLowerCase().includes('ready') ? 'ready' : 'loading');
     };
     const unsubscribeModelProgress = subscribeLocalMenuModelProgress(updateProgress);
-    void prepareLocalMenuModel(updateProgress).then(() => {
+    void prepareLocalMenuModel(value => updateProgress(value)).then(() => {
       if (active) setModelState('ready');
     }).catch(cause => {
       if (!active) return;
