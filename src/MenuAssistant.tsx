@@ -424,7 +424,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     .filter(([, pattern]) => pattern.test(line))
     .flatMap(([key]) => languageModules[key as Exclude<MenuLanguage, 'unknown'>].dietSignals
       .filter(([pattern]) => pattern.test(line)).map(([, label]) => label));
-  const isSection = (line: string) => (language === 'unknown'
+  const isSectionPrefix = (line: string) => language === 'unknown' ? Object.values(sectionHeadings).some(headings => headings.test(line)) : sectionHeadings[activeLanguage].test(line); const isSection = (line: string) => (language === 'unknown'
     ? Object.values(sectionHeadings).some(headings => headings.test(line))
     : sectionHeadings[activeLanguage].test(line)) || modules.some(module => module.headings.test(line));
   const isAllergenNotice = (line: string) => (language === 'unknown' ? Object.values(allergenNotices) : [allergenNotices[language]]).some(pattern => pattern.test(line));
@@ -457,7 +457,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     const image = line.match(/^menu-image:\s*(https:\/\/\S+)$/i);
     if (image) { pendingImageUrl = image[1]; continue; }
     if (line.length < 3) continue;
-    if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSection(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue;
+    if (isSection(line)) { section = line; continue; } for (let end = line.indexOf(" "); end > 0; end = line.indexOf(" ", end + 1)) { const prefix = line.slice(0, end); if (isSectionPrefix(prefix)) { section = prefix; line = line.slice(end + 1).trim(); break; } } if (line.length < 3) continue;
     const lineDiets = standaloneDiets(line);
     if (lineDiets.length) {
       const last = found[found.length - 1];
