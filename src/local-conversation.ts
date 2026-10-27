@@ -20,6 +20,7 @@ export class LocalConversation {
   private publish(state: ModelSnapshot) { this.state = state; for (const listener of this.listeners) listener(state); }
   retain() { this.pins++; return () => { this.pins = Math.max(0, this.pins - 1); this.releaseIdle(); }; }
   releaseIdle() { if (!this.cancel && !this.pins) this.stop(); }
+  preferCPU() { this.stop(); this.cpuOnly = true; }
   stop() {
     if (this.cancel) { this.cancel(); return; }
     this.worker?.terminate(); this.worker = null;
@@ -61,7 +62,7 @@ export class LocalConversation {
         worker.onmessage = (message: MessageEvent<AIEvent>) => {
           const event = message.data;
           if (event.type === 'fallback') {
-            if (modelSize === 'compact') { fail(new Error('Graphics loading failed. AI was stopped to avoid another memory allocation on this device. You can continue without AI.')); return; }
+            if (modelSize === 'compact') { fail(new Error('Graphics loading failed. AI was stopped to avoid another memory allocation on this device. Try CPU (slower), or continue without AI.' + (event.cause ? '\nGraphics details: ' + event.cause : ''))); return; }
             if (this.cpuOnly) { fail(new Error('The model could not run on the CPU.')); return; }
             worker.onmessage = null; worker.onerror = null; worker.onmessageerror = null; worker.terminate(); this.cpuOnly = true;
             this.publish({ phase: 'loading', status: event.text, stage: 'load' });

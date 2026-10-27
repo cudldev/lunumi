@@ -99,3 +99,17 @@ it('leaves a recovery marker during active work and clears it on cancellation', 
   controller.abort(); await expect(pending).rejects.toThrow('cancelled');
   expect(data.has('lunumi-ai-work-pending')).toBe(false);
 });
+
+it('retries compact loading on CPU only after an explicit request', async () => {
+  vi.stubGlobal('navigator', {userAgent:'Android SamsungBrowser/27'});
+  const gpu = fakeWorker(), cpu = fakeWorker(), create = vi.fn().mockReturnValueOnce(gpu).mockReturnValueOnce(cpu), client = new LocalConversation(create);
+  const first = client.prepare(new AbortController().signal);
+  gpu.onmessage!(new MessageEvent('message', {data:{type:'fallback',text:'Graphics failed'}}));
+  await expect(first).rejects.toThrow('another memory allocation');
+  expect(create).toHaveBeenCalledTimes(1);
+  client.preferCPU();
+  const retry = client.prepare(new AbortController().signal);
+  expect(cpu.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'wasm',modelSize:'compact'});
+  cpu.onmessage!(new MessageEvent('message', {data:{type:'done',text:'ready'}}));
+  await retry; expect(client.snapshot.phase).toBe('ready'); client.stop();
+});
