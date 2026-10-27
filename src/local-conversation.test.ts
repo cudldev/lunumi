@@ -101,7 +101,7 @@ it('leaves a recovery marker during active work and clears it on cancellation', 
 });
 
 it('retries compact loading on CPU only after an explicit request', async () => {
-  vi.stubGlobal('navigator', {userAgent:'Android SamsungBrowser/27'});
+  vi.stubGlobal('navigator', {userAgent:'Android Chrome'});
   const gpu = fakeWorker(), cpu = fakeWorker(), create = vi.fn().mockReturnValueOnce(gpu).mockReturnValueOnce(cpu), client = new LocalConversation(create);
   const first = client.prepare(new AbortController().signal);
   gpu.onmessage!(new MessageEvent('message', {data:{type:'fallback',text:'Graphics failed'}}));
@@ -112,4 +112,12 @@ it('retries compact loading on CPU only after an explicit request', async () => 
   expect(cpu.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'wasm',modelSize:'compact'});
   cpu.onmessage!(new MessageEvent('message', {data:{type:'done',text:'ready'}}));
   await retry; expect(client.snapshot.phase).toBe('ready'); client.stop();
+});
+
+it('bypasses graphics on Samsung Internet before any model allocation', async () => {
+  vi.stubGlobal('navigator', {userAgent:'Android SamsungBrowser/27'});
+  const worker=fakeWorker(), client=new LocalConversation(()=>worker), controller=new AbortController();
+  const pending=client.prepare(controller.signal);
+  expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'wasm',modelSize:'compact'});
+  controller.abort(); await expect(pending).rejects.toThrow('cancelled');
 });
