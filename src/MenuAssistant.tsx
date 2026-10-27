@@ -7,7 +7,7 @@ type MenuItem = { section: string; name: string; description: string; price: str
 type ParsedMenu = { items: MenuItem[]; notes: string[] };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
 type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v15';
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v16';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
@@ -303,7 +303,11 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
       while (sibling && !dayHeading(sibling)) {
         if (!/^H[1-6]$/.test(sibling.tagName)) {
           const readable = (node: Element) => (node.textContent || '').replace(/\s+/g, ' ').trim();
-          const semanticRows = [...sibling.querySelectorAll('p,li,dt,dd,[itemprop="name"]')]
+          const rowSelector = 'p,li,dt,dd,[itemprop="name"]';
+          const semanticRows = [
+            ...(sibling.matches(rowSelector) ? [sibling] : []),
+            ...sibling.querySelectorAll(rowSelector),
+          ]
             .filter(node => {
               const text = readable(node);
               return text.length > 2 && text.length <= 220 && !node.closest('a,button,form,[role="navigation"]');
@@ -317,9 +321,30 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
           const leafBlocks = [...sibling.querySelectorAll('p,li,dt,dd,div,span')]
             .filter(node => node.children.length === 0 && !node.closest('a,button,form,[role="navigation"]'));
           const candidates = semanticRows.length ? semanticRows : directRows.length ? directRows : leafBlocks.length ? leafBlocks : [sibling];
+          const readableLines = (node: Element): string[] => {
+            const result: string[] = [];
+            let line = '';
+            const flush = () => {
+              const text = line.replace(/\s+/g, ' ').trim();
+              if (text) result.push(text);
+              line = '';
+            };
+            const visit = (child: Node) => {
+              if (child.nodeType === 3) { line += child.textContent || ''; return; }
+              if (child.nodeType !== 1) return;
+              const element = child as Element;
+              if (/^(?:A|BUTTON|FORM|NAV|SCRIPT|STYLE|SVG)$/.test(element.tagName)) return;
+              if (element.tagName === 'BR') { flush(); return; }
+              for (const descendant of child.childNodes) visit(descendant);
+            };
+            for (const child of node.childNodes) visit(child);
+            flush();
+            return result.length ? result : [readable(node)];
+          };
           for (const candidate of candidates) {
-            const text = readable(candidate);
-            if (text.length > 2 && text.length <= 220 && !dayLines.includes(text)) dayLines.push(text);
+            for (const text of readableLines(candidate)) {
+              if (text.length > 2 && text.length <= 220 && !dayLines.includes(text)) dayLines.push(text);
+            }
           }
         }
         sibling = sibling.nextElementSibling;
