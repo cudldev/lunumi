@@ -110,6 +110,20 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
   }
   if (!split) throw new Error(`${language}: could not create a deterministic holdout with every label represented in train and validation.`);
   const { train, validation } = split;
+  const groupedSplitBySource = sources.map(source => {
+    const identitiesFor = examples => new Set(examples
+      .filter(example => sourceKey(example) === source)
+      .map(groupKey)
+      .filter(Boolean));
+    const trainGroups = identitiesFor(train);
+    const validationGroups = identitiesFor(validation);
+    return {
+      source,
+      trainingGroups: trainGroups.size,
+      validationGroups: validationGroups.size,
+      overlap: [...validationGroups].filter(identity => trainGroups.has(identity)).length,
+    };
+  });
 
   const fitted = fit(train, classes);
   const classMetrics = Object.fromEntries(classes.map(label => [label, { truePositive: 0, falsePositive: 0, falseNegative: 0, support: 0 }]));
@@ -135,6 +149,7 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
     split: `deterministic approximately 80/20 ${splitKind}${splitKind === 'exact-text-held-out' ? ' only' : ''}`,
     trainingExamples: train.length,
     validationExamples: validation.length,
+    groupedSplitBySource,
     accuracy: correct / validation.length,
     runtimeOtherFilter: {
       threshold: runtimeFilterThreshold,
@@ -165,6 +180,9 @@ for (const language of [...new Set(all.map(example => example.language))].sort()
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(model)}\n`);
   console.log(`${language}: trained ${train.length}, held out ${validation.length}, accuracy ${(evaluation.accuracy * 100).toFixed(1)}% (${evaluation.split}).`);
+  for (const groups of groupedSplitBySource) {
+    console.log(`  ${groups.source}: ${groups.trainingGroups} training groups, ${groups.validationGroups} held-out groups, ${groups.overlap} overlap.`);
+  }
   for (const [label, metrics] of Object.entries(evaluation.byLabel)) {
     console.log(`  ${label}: precision ${(metrics.precision * 100).toFixed(1)}%, recall ${(metrics.recall * 100).toFixed(1)}%, n=${metrics.support}`);
   }

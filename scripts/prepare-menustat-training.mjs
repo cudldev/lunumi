@@ -46,8 +46,8 @@ const source = {
   approvedForModelRelease: true,
   commercialUseApproved: true,
   reuseRequirements: [
-    'Before distributing an application using NYC Open Data, notify the City and include the City disclaimer required by the portal terms.',
-    'Credit NYC DOHMH MenuStat and preserve source and date metadata with released weights.',
+    'Credit NYC DOHMH MenuStat / NYC Open Data when distributing derived model weights or applications.',
+    'Describe the data as historical and provided as-is; NYC Open Data does not warrant completeness or accuracy.',
   ],
 };
 

@@ -3,14 +3,17 @@ import Dexie, { type Table } from 'dexie';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { classifyMenuLine, loadMenuClassifier, MENU_OTHER_FILTER_THRESHOLD, type MenuClassifier } from './menu-classifier';
 
-type MenuItem = { section: string; name: string; description: string; price: string; diets: string[]; dietaryInfo?: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
-type ParsedMenu = { items: MenuItem[]; notes: string[] };
+type MenuPriceOption = { label: string; value: string };
+type MenuItem = { section: string; name: string; description: string; price: string; priceOptions?: MenuPriceOption[]; diets: string[]; dietaryInfo?: string[]; allergenInfo: string[]; ingredients?: string[]; sourceText: string; imageUrl?: string };
+type RestaurantProfile = { name?: string; description?: string; cuisine?: string[]; location?: string };
+type ParsedMenu = { items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile };
 type MenuLanguage = 'fi' | 'sv' | 'en' | 'unknown';
-type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
-const MENU_CACHE_KEY = 'lunumi:menu-cache:v31';
+type CachedMenu = { sourceUrl: string; resolvedSourceUrl?: string; cachedAt: string; items: MenuItem[]; notes: string[]; restaurantProfile?: RestaurantProfile; language?: MenuLanguage; modelsUsed?: Array<Exclude<MenuLanguage, 'unknown'>> };
+const MENU_CACHE_KEY = 'lunumi:menu-cache:v32';
 const MENU_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MENU_CACHE_MAX_ENTRIES = 20;
 const MENU_SOURCE_CACHE_STALE_MS = 7 * MENU_CACHE_TTL_MS;
+const MENU_CROSS_LANGUAGE_DISH_THRESHOLD = 0.98;
 const menuReaderUrl = import.meta.env.VITE_MENU_READER_URL?.trim();
 type CachedMenuSource = { sourceUrl: string; resolvedSourceUrl: string; contentType: string; text: string; fetchedAt: number };
 class MenuSourceCacheDatabase extends Dexie {
@@ -43,6 +46,19 @@ const languageModules: Record<Exclude<MenuLanguage, 'unknown'>, LanguageModule> 
     headings: /^(?:menu|food|drinks|desserts?|starters?|mains?|cocktails?|sparkling|white|red|ros[eé]|wine|lunch|dinner|allergens?|monday|tuesday|wednesday|thursday|friday)$/i,
   },
 };
+
+const lineLanguageMarkers: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
+  fi: /\b(?:päivän|lounas|ruokalista|annos|tarjoillaan|kanssa|sisältää|keitto|perunat?)\b/giu,
+  sv: /\b(?:dagens|lunchmeny|serveras|med|innehåller|soppa|potatis)\b/giu,
+  en: /\b(?:with|served|daily|includes|contains|soup|potatoes)\b/giu,
+};
+
+function foreignLineHasStrongerLanguageEvidence(text: string, primary: Exclude<MenuLanguage, 'unknown'>, secondary: string): boolean {
+  if (!['fi', 'sv', 'en'].includes(secondary) || secondary === primary) return false;
+  const count = (pattern: RegExp) => [...text.matchAll(new RegExp(pattern.source, pattern.flags))].length;
+  return count(lineLanguageMarkers[secondary as Exclude<MenuLanguage, 'unknown'>])
+    > count(lineLanguageMarkers[primary]);
+}
 
 const sectionHeadings: Record<Exclude<MenuLanguage, 'unknown'>, RegExp> = {
   fi: /^(?:alkuruoat|pääruoat?|pääruoaksi|pääruoan kaveriksi|jälkiruoat?|jälkiruoaksi|juomat|hampurilaiset|kasvistuotteet|salaatit|keitot|lisukkeet|lounas|päivän lounas|kampanjat|tortillat|ranskalaiset(?: & aterian lisukkeet)?|sormisyötävät|kastikkeet|pehmyt-jäätelöt|pirtelöt|maanantai|tiistai|keskiviikko|torstai|perjantai|ateriat|hampurilaisateriat|kanatuotteet|lastenateriat|lastenruoat|jälkiruoat ja juomat)$/i,
@@ -291,11 +307,13 @@ export function accordionMenuLines(document: Document): string[] {
 export function cleanMenuText(value: string, sourceUrl?: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
+  const restaurantProfile = extractRestaurantProfile(document);
+  const profileLine = restaurantProfile ? `menu-restaurant-profile: ${JSON.stringify(restaurantProfile)}` : '';
   const structuredItems = schemaMenuLines(document, sourceUrl);
   const tabbedItems = tabbedMenuLines(document);
-  if (tabbedItems.length) return [...structuredItems, ...tabbedItems].join('\n');
+  if (tabbedItems.length) return [profileLine, ...structuredItems, ...tabbedItems].filter(Boolean).join('\n');
   const accordionItems = accordionMenuLines(document);
-  if (accordionItems.length) return [...structuredItems, ...accordionItems].join('\n');
+  if (accordionItems.length) return [profileLine, ...structuredItems, ...accordionItems].filter(Boolean).join('\n');
   document.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(node => node.remove());
   const productSections = [...document.querySelectorAll('.category')].map(category => {
     const heading = category.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '';
@@ -313,7 +331,7 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
     const notices = [...category.querySelectorAll('p')].map(note => note.textContent?.replace(/\s+/g, ' ').trim() || '').filter(Boolean);
     return [heading, ...products, ...notices].filter(Boolean).join('\n');
   }).filter(Boolean);
-  if (productSections.length) return [...structuredItems, ...productSections].join('\n');
+  if (productSections.length) return [profileLine, ...structuredItems, ...productSections].filter(Boolean).join('\n');
 
   // Many lunch sites put each daily menu in ordinary divs after a weekday heading.
   // Extract those groups before generic page text so navigation and form copy cannot
@@ -407,7 +425,7 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
       }
     }
     if (dayLines.some(line => !line.startsWith('menu-section:'))) {
-      return [...structuredItems, ...dayLines].join('\n');
+      return [profileLine, ...structuredItems, ...dayLines].filter(Boolean).join('\n');
     }
   }
 
@@ -426,10 +444,35 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
     const text = blockText(node);
     if (text.length <= 1) return [];
     if (node.tagName === 'TR') {
-      const cells = [...node.querySelectorAll('th,td')].map(cell => blockText(cell)).filter(Boolean);
+      const cells = [...node.querySelectorAll('th,td')].map(cell => blockText(cell));
       if (!cells.length || cells.every(cell => /^(?:tuote|product|item|price|hinta|ateria|meal|hamburilainen|burger)$/i.test(cell))) return [];
       const isHeader = node.querySelector('th') !== null;
       if (isHeader) return [];
+      const table = node.closest('table');
+      const headerRow = table ? [...table.querySelectorAll('tr')].find(row => row.querySelector('th')) : undefined;
+      const headers = headerRow ? [...headerRow.querySelectorAll('th,td')].map(cell => blockText(cell)) : [];
+      const productHeader = /^(?:tuote|product|item|name|dish|ruoka|annos|nimike)$/i;
+      if (cells.length > 1 && cells.length === headers.length && productHeader.test(headers[0] || '') && cells[0]?.trim()) {
+        const priceOptions = cells.slice(1).flatMap((value, cellIndex) => {
+          const label = headers[cellIndex + 1]?.trim() || '';
+          const priceLike = /(?:\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)|(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?)/.test(value);
+          const optionHeader = /price|hinta|ater|meal|burger|hamburger|wrap|size|koko|^[SLM]$|^\d+$/i.test(label);
+          return value && !/^(?:[-–—]|n\/?a)$/i.test(value) && (optionHeader || (priceLike && !/description|ingredient|allergen|detail/i.test(label)))
+            ? [{ label: label.slice(0, 40), value: value.slice(0, 60) }]
+            : [];
+        });
+        const details = cells.slice(1).flatMap((value, cellIndex) => {
+          if (!value || /^(?:[-–—]|n\/?a)$/i.test(value)) return [];
+          const label = headers[cellIndex + 1]?.trim() || '';
+          return priceOptions.some(option => option.label === label && option.value === value) ? [] : [`${label}: ${value}`];
+        });
+        const item = {
+          name: cells[0].trim(), section: '', description: details.join(' · ').slice(0, 240),
+          price: priceOptions[0]?.value || '', priceOptions,
+          diets: [], dietaryInfo: [], allergenInfo: [], sourceText: cells.join(' · ').slice(0, 500),
+        };
+        return [`menu-schema-item: ${JSON.stringify(item)}`];
+      }
       return [cells.join(' · ')];
     }
     // Menu pages often put a table-of-contents list below the page title. Skip
@@ -453,7 +496,39 @@ export function cleanMenuText(value: string, sourceUrl?: string): string {
     }
     return [text];
   });
-  return [...structuredItems, ...(blocks.length ? blocks : [document.body.textContent?.replace(/\s+/g, ' ').trim() || ''])].filter(Boolean).join('\n');
+  return [profileLine, ...structuredItems, ...(blocks.length ? blocks : [document.body.textContent?.replace(/\s+/g, ' ').trim() || ''])].filter(Boolean).join('\n');
+}
+
+function extractRestaurantProfile(document: Document): RestaurantProfile | undefined {
+  const clean = (value: unknown, limit = 240) => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, limit) : '';
+  const list = (value: unknown): unknown[] => Array.isArray(value) ? value : value == null ? [] : [value];
+  const candidates: Record<string, unknown>[] = [];
+  const visit = (value: unknown, depth = 0) => {
+    if (depth > 8 || !value || typeof value !== 'object') return;
+    if (Array.isArray(value)) { value.forEach(child => visit(child, depth + 1)); return; }
+    const object = value as Record<string, unknown>;
+    const types = list(object['@type']).filter((type): type is string => typeof type === 'string');
+    if (types.some(type => /restaurant|foodestablishment/i.test(type))) candidates.push(object);
+    Object.values(object).forEach(child => { if (child && typeof child === 'object') visit(child, depth + 1); });
+  };
+  for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
+    try { visit(JSON.parse(script.textContent || '')); } catch { /* Ignore invalid structured metadata. */ }
+  }
+  const preferred = candidates.find(candidate => clean(candidate.description) || candidate.servesCuisine || candidate.address) || candidates[0] || {};
+  const meta = (selector: string) => document.querySelector(selector)?.getAttribute('content') || '';
+  const address = preferred.address && typeof preferred.address === 'object' ? preferred.address as Record<string, unknown> : {};
+  const addressCountry = typeof address.addressCountry === 'string' ? address.addressCountry
+    : address.addressCountry && typeof address.addressCountry === 'object' ? clean((address.addressCountry as Record<string, unknown>).name, 60) : '';
+  const location = [clean(address.streetAddress, 100), clean(address.postalCode, 20), clean(address.addressLocality, 80), clean(address.addressRegion, 80), clean(addressCountry, 60)]
+    .filter(Boolean).filter((part, index, all) => all.indexOf(part) === index).join(', ').slice(0, 180);
+  const cuisine = list(preferred.servesCuisine).map(value => clean(value, 50)).filter(Boolean).slice(0, 5);
+  const profile: RestaurantProfile = {
+    name: clean(preferred.name, 100) || clean(meta('meta[property="og:site_name"]'), 100) || clean(document.title, 100),
+    description: clean(preferred.description) || clean(meta('meta[property="og:description"]')) || clean(meta('meta[name="description"]')),
+    cuisine,
+    location,
+  };
+  return Object.values(profile).some(value => Array.isArray(value) ? value.length > 0 : Boolean(value)) ? profile : undefined;
 }
 
 function feedText(value: string, contentType: string, sourceUrl?: string): string {
@@ -759,6 +834,19 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   const lines = cleanMenuText(value).split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const found: MenuItem[] = [];
   const notes: string[] = [];
+  let restaurantProfile: RestaurantProfile | undefined;
+  const profileLine = lines.find(line => line.startsWith('menu-restaurant-profile:'));
+  if (profileLine) {
+    try {
+      const profile = JSON.parse(profileLine.slice('menu-restaurant-profile:'.length).trim()) as RestaurantProfile;
+      restaurantProfile = {
+        name: typeof profile.name === 'string' ? profile.name.slice(0, 100) : undefined,
+        description: typeof profile.description === 'string' ? profile.description.slice(0, 240) : undefined,
+        cuisine: Array.isArray(profile.cuisine) ? profile.cuisine.filter((entry): entry is string => typeof entry === 'string').slice(0, 5) : [],
+        location: typeof profile.location === 'string' ? profile.location.slice(0, 180) : undefined,
+      };
+    } catch { /* Ignore malformed website profile metadata. */ }
+  }
   const seen = new Set<string>();
   const dietaryLegend = new Map<string, string>();
   const legendLabels: Array<[RegExp, string]> = [
@@ -827,7 +915,8 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     return !(classifierOptions.secondaryClassifiers ?? []).some(secondary => {
       if (secondary.language === classifier.language) return false;
       const secondaryPrediction = classifyMenuLine(candidate, secondary);
-      return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+      if (!foreignLineHasStrongerLanguageEvidence(candidate, language, secondary.language)) return false;
+      return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_CROSS_LANGUAGE_DISH_THRESHOLD;
     });
   };
   let section = '';
@@ -835,6 +924,7 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
   let pendingImageUrl: string | undefined;
   let pendingMenuPriceLabel = '';
   for (const originalLine of lines) { let line = originalLine;
+    if (line.startsWith('menu-restaurant-profile:')) continue;
     if (inlineLegendLines.has(originalLine)) continue;
     if (line.startsWith('menu-section:')) {
       const heading = line.slice('menu-section:'.length).trim();
@@ -856,18 +946,24 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
         const item = JSON.parse(structured[1]) as Partial<MenuItem>;
         const name = typeof item.name === 'string' ? item.name.trim() : '';
         const itemSection = typeof item.section === 'string' ? item.section.trim() : '';
-        const hasItemDetails = Boolean(item.price || item.description || item.imageUrl
+        const priceOptions = Array.isArray(item.priceOptions) ? item.priceOptions.filter(option => option
+          && typeof option.label === 'string' && typeof option.value === 'string')
+          .map(option => ({ label: option.label.slice(0, 40), value: option.value.slice(0, 60) })).slice(0, 8) : [];
+        const hasItemDetails = Boolean(item.price || priceOptions.length || item.description || item.imageUrl
           || item.ingredients?.length || item.diets?.length || item.dietaryInfo?.length || item.allergenInfo?.length);
         if (nonMenuSectionHeading.test(name) || nonMenuSectionHeading.test(itemSection)
           || nonMenuDetailLine.test(name) || nonMenuStatusLine.test(name)
           || (isSection(name) && !hasItemDetails)
           || (/[.!?]$/.test(name) && name.split(/\s+/).length >= 4 && !item.price)) continue;
-        if (isStrongOtherPrediction(name)) continue;
+        if (isStrongOtherPrediction(name) && !(priceOptions.length && (itemSection || section))) continue;
         const confidentlyClassifiedAsDish = [classifier, ...(classifierOptions.secondaryClassifiers ?? [])]
           .some(model => {
             if (!model) return false;
             const prediction = classifyMenuLine(name, model);
-            return prediction?.label === 'dish' && prediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+            if (classifier && model.language !== classifier.language
+              && !foreignLineHasStrongerLanguageEvidence(name, classifier.language as Exclude<MenuLanguage, 'unknown'>, model.language)) return false;
+            const threshold = model.language === classifier?.language ? MENU_OTHER_FILTER_THRESHOLD : MENU_CROSS_LANGUAGE_DISH_THRESHOLD;
+            return prediction?.label === 'dish' && prediction.confidence >= threshold;
           });
         // Schema.org MenuItem markup is sometimes applied to page labels or
         // navigation. A schema type alone is not enough evidence to show it as
@@ -876,10 +972,11 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
         if (name.length >= 3 && name.length <= 120 && !seen.has(name.toLocaleLowerCase())) {
           seen.add(name.toLocaleLowerCase());
           found.push({
-            section: itemSection,
+            section: itemSection || section,
             name,
             description: typeof item.description === 'string' ? item.description.slice(0, 240) : '',
-            price: typeof item.price === 'string' ? item.price : '',
+            price: typeof item.price === 'string' ? item.price : priceOptions[0]?.value || '',
+            ...(priceOptions.length ? { priceOptions } : {}),
             diets: Array.isArray(item.diets) ? item.diets.filter((diet): diet is string => typeof diet === 'string') : [],
             dietaryInfo: Array.isArray(item.dietaryInfo) ? item.dietaryInfo.filter((info): info is string => typeof info === 'string') : [],
             ingredients: Array.isArray(item.ingredients) ? item.ingredients.filter((ingredient): ingredient is string => typeof ingredient === 'string').slice(0, 20) : [],
@@ -998,7 +1095,8 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
         const recognizedAsForeignDish = (classifierOptions.secondaryClassifiers ?? []).some(secondary => {
           if (secondary.language === classifier.language) return false;
           const secondaryPrediction = classifyMenuLine(name, secondary);
-          return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_OTHER_FILTER_THRESHOLD;
+          if (!foreignLineHasStrongerLanguageEvidence(name, classifier.language as Exclude<MenuLanguage, 'unknown'>, secondary.language)) return false;
+          return secondaryPrediction?.label === 'dish' && secondaryPrediction.confidence >= MENU_CROSS_LANGUAGE_DISH_THRESHOLD;
         });
         const keepUnresolvedPricedLine = classifierOptions.mixedLanguage && Boolean(price)
           && classifierOptions.missingSecondaryClassifier;
@@ -1029,7 +1127,16 @@ export function parseMenu(value: string, language: MenuLanguage, classifier: Men
     pendingImageUrl = undefined;
     if (found.length >= 100) break;
   }
-  return { items: found, notes };
+  return { items: found, notes, ...(restaurantProfile ? { restaurantProfile } : {}) };
+}
+
+export function summarizeMenuItems(items: MenuItem[]): string {
+  if (!items.length) return '';
+  const sections = new Map<string, number>();
+  for (const item of items) if (item.section.trim()) sections.set(item.section, (sections.get(item.section) || 0) + 1);
+  const categories = [...sections].sort((a, b) => b[1] - a[1]).slice(0, 5)
+    .map(([name, count]) => `${name} (${count})`);
+  return `${items.length} menu items${categories.length ? ` across ${categories.join(', ')}` : ''}.`;
 }
 
 export function hasMenuEvidence(sourceText: string, sourceUrl: string, items: MenuItem[]): boolean {
@@ -1064,6 +1171,11 @@ function validCachedMenu(value: unknown): value is CachedMenu {
   return typeof entry.sourceUrl === 'string' && entry.sourceUrl.length <= 2048
     && (entry.resolvedSourceUrl === undefined || (typeof entry.resolvedSourceUrl === 'string' && entry.resolvedSourceUrl.length <= 2048))
     && typeof entry.cachedAt === 'string' && Number.isFinite(Date.parse(entry.cachedAt))
+    && (entry.restaurantProfile === undefined || (Boolean(entry.restaurantProfile) && typeof entry.restaurantProfile === 'object'
+      && (entry.restaurantProfile.name === undefined || (typeof entry.restaurantProfile.name === 'string' && entry.restaurantProfile.name.length <= 100))
+      && (entry.restaurantProfile.description === undefined || (typeof entry.restaurantProfile.description === 'string' && entry.restaurantProfile.description.length <= 240))
+      && (entry.restaurantProfile.location === undefined || (typeof entry.restaurantProfile.location === 'string' && entry.restaurantProfile.location.length <= 180))
+      && (entry.restaurantProfile.cuisine === undefined || (Array.isArray(entry.restaurantProfile.cuisine) && entry.restaurantProfile.cuisine.length <= 5 && entry.restaurantProfile.cuisine.every(entry => typeof entry === 'string' && entry.length <= 50)))))
     && (entry.language === undefined || ['fi', 'sv', 'en', 'unknown'].includes(entry.language))
     && (entry.modelsUsed === undefined || (Array.isArray(entry.modelsUsed) && entry.modelsUsed.every(model => ['fi', 'sv', 'en'].includes(model))))
     && Array.isArray(entry.items) && entry.items.length <= 100
@@ -1072,6 +1184,9 @@ function validCachedMenu(value: unknown): value is CachedMenu {
       && typeof item.section === 'string' && item.section.length <= 80
       && typeof item.description === 'string' && item.description.length <= 240
       && typeof item.price === 'string' && item.price.length <= 30
+      && (item.priceOptions === undefined || (Array.isArray(item.priceOptions) && item.priceOptions.length <= 8
+        && item.priceOptions.every(option => Boolean(option) && typeof option.label === 'string' && option.label.length <= 40
+          && typeof option.value === 'string' && option.value.length <= 60)))
       && typeof item.sourceText === 'string' && item.sourceText.length <= 500
       && (item.dietaryInfo === undefined || (Array.isArray(item.dietaryInfo) && item.dietaryInfo.length <= 10 && item.dietaryInfo.every(info => typeof info === 'string' && info.length <= 80)))
       && (item.ingredients === undefined || (Array.isArray(item.ingredients) && item.ingredients.length <= 20 && item.ingredients.every(ingredient => typeof ingredient === 'string' && ingredient.length <= 240)))
@@ -1188,11 +1303,12 @@ async function loadMenuSource(sourceUrl: string, signal: AbortSignal): Promise<C
   }
 }
 
-type Props = { restaurantName: string; sourceUrl?: string | null };
+type Props = { restaurantName: string; sourceUrl?: string | null; listingLocation?: { text: string; sourceUrl: string; sourceLabel: string } };
 
-export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
+export default function MenuAssistant({ restaurantName, sourceUrl, listingLocation }: Props) {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [notes, setNotes] = useState<string[]>([]);
+  const [restaurantProfile, setRestaurantProfile] = useState<RestaurantProfile | undefined>();
   const [busy, setBusy] = useState(Boolean(sourceUrl));
   const [error, setError] = useState('');
   const [cachedAt, setCachedAt] = useState<string | null>(null);
@@ -1200,6 +1316,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
   const [modelsUsed, setModelsUsed] = useState<Array<Exclude<MenuLanguage, 'unknown'>>>([]);
   const [ocrUsed, setOcrUsed] = useState(false);
   const [verifiedSourceUrl, setVerifiedSourceUrl] = useState<string | null>(null);
+  const menuSummary = summarizeMenuItems(items);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1207,6 +1324,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     let timedOut = false;
     setItems([]);
     setNotes([]);
+    setRestaurantProfile(undefined);
     setError('');
     setCachedAt(null);
     setLanguage('unknown');
@@ -1224,6 +1342,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
     if (cached) {
       setItems(cached.items);
       setNotes(cached.notes);
+      setRestaurantProfile(cached.restaurantProfile);
       setCachedAt(cached.cachedAt);
       setLanguage(cached.language ?? 'unknown');
       setModelsUsed(cached.modelsUsed ?? []);
@@ -1330,6 +1449,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
         if (!controller.signal.aborted) {
           setItems(extracted.items);
           setNotes(extracted.notes);
+          setRestaurantProfile(extracted.restaurantProfile);
           setLanguage(detectedLanguage);
           setModelsUsed(interpreted.modelsUsed);
           setOcrUsed(didUseOcr);
@@ -1363,11 +1483,12 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
 
   return <section className="menu-assistant" aria-label={`Local menu assistant for ${restaurantName}`}>
     <div className="menu-assistant-heading"><div><strong>Menu</strong><span>{busy ? <><LoaderCircle size={13} className="menu-assistant-spinner"/> Loading items…</> : items.length ? `${items.length} items${cachedAt ? ' · saved on this device' : ''}` : 'Items from the restaurant’s own page'}</span></div></div>
+    {(restaurantProfile || listingLocation || menuSummary) && <aside className="menu-assistant-overview"><strong>About {restaurantProfile?.name || restaurantName}</strong>{restaurantProfile?.description && <p>{restaurantProfile.description}</p>}{restaurantProfile?.cuisine?.length ? <p>Cuisine listed: {restaurantProfile.cuisine.join(', ')}</p> : null}{restaurantProfile && <span>Restaurant details · <a href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer">website source</a></span>}{menuSummary && <p>Menu: {menuSummary}</p>}{(listingLocation?.text || restaurantProfile?.location) && <p>Location: {listingLocation?.text || restaurantProfile?.location}</p>}{listingLocation ? <span>Location · <a href={listingLocation.sourceUrl} target="_blank" rel="noopener noreferrer">{listingLocation.sourceLabel}</a></span> : restaurantProfile?.location ? <span>Location · <a href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer">restaurant website</a></span> : null}</aside>}
     {items.length > 0 ? <>
       {notes.length > 0 && <aside className="menu-assistant-menu-notes"><strong>Menu information</strong>{notes.map((note, index) => <p key={`${note}-${index}`}>{note}</p>)}</aside>}
       <ul className="menu-assistant-results" aria-live="polite">{items.map((item, index) => <li key={`${item.name}-${index}`}>
         {item.imageUrl && <img className="menu-assistant-item-image" src={item.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />}
-        <div>{item.section && <span className="menu-assistant-section">{item.section}</span>}<strong>{item.name}</strong>{item.description && <span>{item.description}</span>}{item.ingredients?.length ? <span>Ingredients: {item.ingredients.join(', ')}</span> : null}{item.price && <span>{item.price}</span>}
+        <div>{item.section && <span className="menu-assistant-section">{item.section}</span>}<strong>{item.name}</strong>{item.description && <span>{item.description}</span>}{item.ingredients?.length ? <span>Ingredients: {item.ingredients.join(', ')}</span> : null}{item.priceOptions?.length ? item.priceOptions.map(option => <span className="menu-assistant-price-option" key={`${option.label}-${option.value}`}>{option.label}: {option.value}</span>) : item.price && <span>{item.price}</span>}
           {item.allergenInfo.map((note, noteIndex) => <span className="menu-assistant-allergen" key={`${note}-${noteIndex}`}>{note}</span>)}{item.dietaryInfo?.map((info, infoIndex) => <span className="menu-assistant-allergen" key={`dietary-info-${infoIndex}`}>Dietary codes as listed: {info}</span>)}
           <details className="menu-assistant-evidence"><summary>Source text</summary><span>{item.sourceText}</span></details>
         </div>
@@ -1378,7 +1499,7 @@ export default function MenuAssistant({ restaurantName, sourceUrl }: Props) {
       <p className="menu-assistant-note">Menu text is read and interpreted on this device. Missing ingredients and allergens are unknown; verify with the restaurant, especially for allergies.</p>
       {ocrUsed && <p className="menu-assistant-note">Text was recognized from the linked menu image on this device; OCR can make mistakes. Check the source image.</p>}
       {language !== 'unknown' && <p className="menu-assistant-note">Detected language: {languageModules[language].name}.</p>}
-      {modelsUsed.includes('en') && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a> and <a href="https://github.com/cudldev/lunumi" target="_blank" rel="noopener noreferrer">Lunumi-authored synthetic CC0 examples</a>.</p>}
+      {modelsUsed.includes('en') && <p className="menu-assistant-note">English line filter uses a small local model trained from <a href="https://fdc.nal.usda.gov/download-datasets/" target="_blank" rel="noopener noreferrer">USDA FoodData Central public-domain data (CC0)</a>, historical <a href="https://data.cityofnewyork.us/Health/MenuStat/qgc5-ecnb" target="_blank" rel="noopener noreferrer">NYC DOHMH MenuStat data</a>, and <a href="https://github.com/cudldev/lunumi" target="_blank" rel="noopener noreferrer">Lunumi-authored synthetic CC0 examples</a>. NYC data is provided as-is and is not guaranteed to be complete or accurate.</p>}
       {modelsUsed.some(model => model === 'fi' || model === 'sv') && <p className="menu-assistant-note">Finnish and Swedish line filters use Fineli food names (CC BY 4.0), synthetic menu-line combinations, and CC0 page-noise examples. <a href="https://fineli.fi/fineli/fi/avoin-data" target="_blank" rel="noopener noreferrer">Fineli open data</a> is provided by THL.</p>}
     </> : !busy && <div className="menu-assistant-empty" role="status"><strong>Menu not available</strong><span>{error || 'No menu items could be read from this restaurant page.'}</span></div>}
     {(verifiedSourceUrl || sourceUrl) && <a className="menu-assistant-source" href={verifiedSourceUrl || sourceUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>View source and verify menu</a>}
