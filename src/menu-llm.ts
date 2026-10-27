@@ -40,6 +40,10 @@ function refreshPendingTimeouts(): void {
   for (const request of pending.values()) armRequestTimeout(request);
 }
 
+function isWebGpuFailure(error: Error): boolean {
+  return /webgpu|gpu|adapter|device lost|ortRun|groupqueryattention|external instance|compute pipeline/i.test(error.message);
+}
+
 function stopWorker(error: Error): void {
   const currentWorker = worker;
   worker = null;
@@ -106,6 +110,10 @@ function ensureWorker(): Worker {
     }
     const error = new Error(message.message);
     if (message.id !== undefined) {
+      if (currentDevice === 'webgpu' && !forceCpuWorker && isWebGpuFailure(error)) {
+        retryPendingRequestsOnCpu();
+        return;
+      }
       const request = pending.get(message.id);
       if (request) window.clearTimeout(request.timeout);
       request?.reject(error);
