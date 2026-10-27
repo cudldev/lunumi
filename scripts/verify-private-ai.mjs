@@ -1,10 +1,11 @@
 import { env, pipeline } from '@huggingface/transformers';
-import { MODEL_ID, MODEL_REVISION } from '../src/conversation-config.ts';
+import { MODEL_CONFIGS } from '../src/conversation-config.ts';
 import { buildConversation } from '../src/ai-context.ts';
 import { runAgent } from '../src/browser-agent.ts';
 import { constrainedRestaurantQuery, recommendPlaces } from '../src/recommendations.ts';
 env.cacheDir = './.ai-smoke-cache'; env.allowLocalModels = false;
-const model = await pipeline('text-generation', MODEL_ID, { revision: MODEL_REVISION, dtype: 'q4', device: 'cpu' });
+const config = MODEL_CONFIGS[process.argv.includes('--compact') ? 'compact' : 'standard'];
+const model = await pipeline('text-generation', config.id, { revision: config.revision, dtype: 'q4', device: 'cpu' });
 const generate = async messages => (await model(messages, { max_new_tokens: 100, do_sample: false, repetition_penalty: 1.1 }))[0].generated_text.at(-1).content;
 const turns = [];
 for (const question of ['Hi, my name is Alex.', 'What is my name?']) {
