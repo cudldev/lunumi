@@ -9,3 +9,5 @@ Official, unmodified ONNX Runtime packages from [Web CI run 40642053504](https:/
 - Upstream MIT license is preserved in LICENSE. Never replace only the WASM binary.
 
 Staging only: retain the 273 MB q4f16 mobile weights and local GPU diagnostics. A successful desktop test does not establish Fold compatibility.
+
+The native-provider trial still lost the Fold Adreno device during readiness. The next staging trial aliases the runtime import to the official all bundle (JSEP WebGPU) and ships its matching jsep assets. GPU selection, model export, and package archives stay unchanged.

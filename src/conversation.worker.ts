@@ -1,7 +1,7 @@
 import { env, pipeline, TextStreamer, type TextGenerationPipeline } from '@huggingface/transformers';
 import type { PromptMessage } from './ai-context';
 import type { ModelStage } from './model-state';
-import { MODEL_CONFIGS, ORT_RUNTIME_PATH, ORT_RUNTIME_VERSION, type ModelSize } from './conversation-config';
+import { MODEL_CONFIGS, ORT_RUNTIME_PATH, ORT_RUNTIME_VERSION, ORT_RUNTIME_BACKEND, type ModelSize } from './conversation-config';
 import { requireGpuAdapter } from './gpu-support';
 import { GpuDiagnostics } from './gpu-diagnostics';
 export type AIEvent = { type: 'fallback'; text: string; cause?: string } | { type: 'status'; text: string; stage?: ModelStage; progress?: number } | { type: 'token'; text: string } | { type: 'done'; text: string } | { type: 'error'; text: string };
@@ -12,12 +12,12 @@ let diagnostics: GpuDiagnostics | null = null;
 
 async function loadModel(size: ModelSize = 'standard'): Promise<TextGenerationPipeline> {
   if (generator) return generator;
-  diagnostics = new GpuDiagnostics(size, MODEL_CONFIGS[size].dtype, ORT_RUNTIME_VERSION);
+  diagnostics = new GpuDiagnostics(size, MODEL_CONFIGS[size].dtype, ORT_RUNTIME_VERSION + '/' + ORT_RUNTIME_BACKEND);
   await requireGpuAdapter((navigator as unknown as { gpu?: Parameters<typeof requireGpuAdapter>[0] }).gpu);
   env.allowLocalModels = false; env.useBrowserCache = true;
   const wasm = env.backends.onnx.wasm!; wasm.numThreads = 1;
   const base = new URL(import.meta.env.BASE_URL + ORT_RUNTIME_PATH, self.location.origin).href;
-  wasm.wasmPaths = { mjs: base + 'ort-wasm-simd-threaded.asyncify.mjs', wasm: base + 'ort-wasm-simd-threaded.asyncify.wasm' };
+  wasm.wasmPaths = { mjs: base + 'ort-wasm-simd-threaded.jsep.mjs', wasm: base + 'ort-wasm-simd-threaded.jsep.wasm' };
   scope.postMessage({ type: 'status', text: 'Checking cached AI files…', stage: 'files' });
   let lastFile = '', lastPercent = -1;
   const progress_callback = (event: { status: string; file?: string; progress?: number }) => {

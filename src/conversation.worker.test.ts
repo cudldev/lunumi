@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-const {pipeline,webgpu}=vi.hoisted(()=>({pipeline:vi.fn(),webgpu:{} as {device?:unknown}}));
-vi.mock('@huggingface/transformers',()=>({env:{backends:{onnx:{wasm:{},webgpu}}},pipeline,TextStreamer:class {}}));
+const {pipeline,webgpu,wasm}=vi.hoisted(()=>({pipeline:vi.fn(),webgpu:{} as {device?:unknown},wasm:{} as {wasmPaths?:{mjs:string;wasm:string}}}));
+vi.mock('@huggingface/transformers',()=>({env:{backends:{onnx:{wasm,webgpu}}},pipeline,TextStreamer:class {}}));
 beforeEach(()=>{vi.resetModules();pipeline.mockReset();delete webgpu.device});
 afterEach(()=>vi.unstubAllGlobals());
 it.each([['compact','q4f16'],['standard','q4f16']] as const)('loads the %s profile on GPU using its explicit %s export',async(modelSize,dtype)=>{
@@ -10,6 +10,7 @@ it.each([['compact','q4f16'],['standard','q4f16']] as const)('loads the %s profi
   await import('./conversation.worker');
   await scope.onmessage!(new MessageEvent('message',{data:{messages:[],mode:'prepare',device:'webgpu',modelSize}}));
   expect(pipeline).toHaveBeenCalledWith('text-generation',expect.any(String),expect.objectContaining({device:'webgpu',dtype}));
+  expect(wasm.wasmPaths).toEqual({mjs:expect.stringContaining('-jsep/ort-wasm-simd-threaded.jsep.mjs'),wasm:expect.stringContaining('-jsep/ort-wasm-simd-threaded.jsep.wasm')});
   expect(model).toHaveBeenCalledWith(expect.any(Array),expect.objectContaining({max_new_tokens:1}));
   expect(scope.postMessage).toHaveBeenCalledWith({type:'done',text:'ready'});
 });
@@ -26,6 +27,7 @@ it('includes the actual device loss in a failed readiness check',async()=>{
   await scope.onmessage!(new MessageEvent('message',{data:{messages:[],mode:'prepare',device:'webgpu',modelSize:'compact'}}));
   expect(scope.postMessage).toHaveBeenCalledWith({type:'error',text:expect.stringContaining('deviceLost=unknown: Instance reference lost')});
   expect(scope.postMessage).toHaveBeenCalledWith({type:'error',text:expect.stringContaining('stage=readiness')});
+  expect(scope.postMessage).toHaveBeenCalledWith({type:'error',text:expect.stringContaining('/jsep; stage=readiness')});
   expect(scope.postMessage).not.toHaveBeenCalledWith({type:'done',text:'ready'});
   expect(pipeline).toHaveBeenCalledOnce();
 });
