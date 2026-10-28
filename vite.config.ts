@@ -10,7 +10,7 @@ const productionPath = base === '/lunumi/';
 const require = createRequire(import.meta.url);
 const onnxRuntimeDist = dirname(require.resolve('onnxruntime-web/webgpu'));
 const onnxRuntimeVersion = JSON.parse(readFileSync(join(onnxRuntimeDist, '..', 'package.json'), 'utf8')).version;
-const onnxRuntimeAssetPath = `onnxruntime/ort-${onnxRuntimeVersion}/`;
+const onnxRuntimeAssetPath = `onnxruntime/ort-${onnxRuntimeVersion}-jsep/`;
 
 function bundleOnnxRuntimeAssets() {
   return {
@@ -18,7 +18,7 @@ function bundleOnnxRuntimeAssets() {
     configureServer(server: ViteDevServer) {
       server.middlewares.use((request, response, next) => {
         const pathname = (request.url || '').split('?')[0];
-        for (const file of ['ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']) {
+        for (const file of ['ort-wasm-simd-threaded.jsep.mjs', 'ort-wasm-simd-threaded.jsep.wasm']) {
           const asset = onnxRuntimeAssetPath + file;
           if (pathname !== base + asset && pathname !== '/' + asset) continue;
           response.setHeader('Content-Type', file.endsWith('.wasm') ? 'application/wasm' : 'text/javascript');
@@ -35,11 +35,11 @@ function bundleOnnxRuntimeAssets() {
         // emits as a second copy. We set wasmPaths explicitly in the worker, so
         // that fallback asset is never requested.
         for (const fileName of Object.keys(bundle)) {
-          if (/^assets\/ort-wasm-simd-threaded\.asyncify-[^/]+\.(mjs|wasm)$/.test(fileName)) {
+          if (/^assets\/ort-wasm-simd-threaded\.jsep-[^/]+\.(mjs|wasm)$/.test(fileName)) {
             delete bundle[fileName];
           }
         }
-        for (const file of ['ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']) {
+        for (const file of ['ort-wasm-simd-threaded.jsep.mjs', 'ort-wasm-simd-threaded.jsep.wasm']) {
           this.emitFile({ type: 'asset', fileName: onnxRuntimeAssetPath + file, source: readFileSync(join(onnxRuntimeDist, file)) });
         }
       },
@@ -49,6 +49,7 @@ function bundleOnnxRuntimeAssets() {
 
 export default defineConfig({
   base,
+  resolve: { alias: [{ find: /^onnxruntime-web\/webgpu$/, replacement: join(onnxRuntimeDist, 'ort.all.bundle.min.mjs') }] },
   worker: { format: 'es' },
   plugins: [
     react(),
