@@ -14,7 +14,7 @@ describe('AI worker lifecycle', () => {
     expect(await first).toBe('Hello!'); expect(events).toHaveBeenCalledWith({ type: 'token', text: 'Hello' });
     const second = client.answer(messages, new AbortController().signal, events);
     worker.onmessage!(new MessageEvent('message', { data: { type: 'done', text: 'Again' } }));
-    await second; expect(create).toHaveBeenCalledTimes(1); expect(worker.postMessage).toHaveBeenCalledWith({ messages, mode: 'chat', device: 'auto', modelSize: 'standard' });
+    await second; expect(create).toHaveBeenCalledTimes(1); expect(worker.postMessage).toHaveBeenCalledWith({ messages, mode: 'chat', device: 'webgpu', modelSize: 'standard' });
     client.stop(); expect(worker.terminate).toHaveBeenCalled();
   });
   it('terminates on cancellation and allows a fresh retry', async () => {
@@ -40,23 +40,18 @@ describe('AI worker lifecycle', () => {
   });
 });
 
-it('retries a failed GPU initializer in a fresh CPU worker using cached weights', async () => {
-  const gpu = fakeWorker(), cpu = fakeWorker(), create = vi.fn().mockReturnValueOnce(gpu).mockReturnValueOnce(cpu);
-  const client = new LocalConversation(create), events = vi.fn();
-  const pending = client.answer(messages, new AbortController().signal, events, 'plan');
-  gpu.onmessage!(new MessageEvent('message', { data: { type: 'fallback', text: 'Retrying on CPU' } }));
-  expect(gpu.terminate).toHaveBeenCalled();
-  expect(cpu.postMessage).toHaveBeenCalledWith({ messages, mode: 'plan', device: 'wasm', modelSize: 'standard' });
-  cpu.onmessage!(new MessageEvent('message', { data: { type: 'done', text: '{"tool":"finish"}' } }));
-  expect(await pending).toBe('{"tool":"finish"}');
-  expect(events).toHaveBeenCalledWith({ type: 'status', text: 'Retrying on CPU' });
-  client.stop();
+it('fails GPU initialization without creating a CPU worker', async () => {
+  const gpu=fakeWorker(), create=vi.fn(()=>gpu), client=new LocalConversation(create);
+  const pending=client.prepare(new AbortController().signal);
+  gpu.onmessage!(new MessageEvent('message',{data:{type:'fallback',text:'Old fallback event',cause:'GPU device lost'}}));
+  await expect(pending).rejects.toThrow('GPU device lost');
+  expect(create).toHaveBeenCalledTimes(1); expect(gpu.terminate).toHaveBeenCalledOnce();
 });
 
 it('keeps the app locked at 100% until inference completes, and retains the ready worker', async () => {
   const worker = fakeWorker(), client = new LocalConversation(() => worker), release = client.retain();
   const pending = client.prepare(new AbortController().signal);
-  expect(worker.postMessage).toHaveBeenCalledWith({ messages: [], mode: 'prepare', device: 'auto', modelSize: 'standard' });
+  expect(worker.postMessage).toHaveBeenCalledWith({ messages: [], mode: 'prepare', device: 'webgpu', modelSize: 'standard' });
   worker.onmessage!(new MessageEvent('message', { data: { type: 'status', text: 'Downloaded', stage: 'download', progress: 100 } }));
   expect(client.snapshot.phase).toBe('loading');
   worker.onmessage!(new MessageEvent('message', { data: { type: 'status', text: 'Checking inference', stage: 'checking' } }));
@@ -84,9 +79,9 @@ it('sends compact weights to mobile workers and avoids an automatic second memor
   vi.stubGlobal('navigator', {userAgent:'iPhone Safari'});
   const worker = fakeWorker(), create = vi.fn(() => worker), client = new LocalConversation(create);
   const pending = client.prepare(new AbortController().signal);
-  expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'wasm',modelSize:'compact'});
+  expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'webgpu',modelSize:'compact'});
   worker.onmessage!(new MessageEvent('message', {data:{type:'fallback',text:'GPU failed'}}));
-  await expect(pending).rejects.toThrow('another memory allocation');
+  await expect(pending).rejects.toThrow('CPU fallback is disabled');
   expect(create).toHaveBeenCalledTimes(1); expect(client.snapshot.phase).toBe('error');
 });
 
@@ -100,25 +95,23 @@ it('leaves a recovery marker during active work and clears it on cancellation', 
   expect(data.has('lunumi-ai-work-pending')).toBe(false);
 });
 
-it('retries compact loading on CPU only after an explicit request', async () => {
-  vi.stubGlobal('navigator', {userAgent:'Android Chrome'});
-  const gpu = fakeWorker(), cpu = fakeWorker(), create = vi.fn().mockReturnValueOnce(gpu).mockReturnValueOnce(cpu), client = new LocalConversation(create);
-  const first = client.prepare(new AbortController().signal);
-  gpu.onmessage!(new MessageEvent('message', {data:{type:'fallback',text:'Graphics failed'}}));
-  await expect(first).rejects.toThrow('another memory allocation');
-  expect(create).toHaveBeenCalledTimes(1);
-  client.preferCPU();
-  const retry = client.prepare(new AbortController().signal);
-  expect(cpu.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'wasm',modelSize:'compact'});
-  cpu.onmessage!(new MessageEvent('message', {data:{type:'done',text:'ready'}}));
-  await retry; expect(client.snapshot.phase).toBe('ready'); client.stop();
+it('retries compact GPU loading explicitly without changing backend', async () => {
+  vi.stubGlobal('navigator',{userAgent:'Android Chrome'});
+  const firstWorker=fakeWorker(), retryWorker=fakeWorker(), create=vi.fn().mockReturnValueOnce(firstWorker).mockReturnValueOnce(retryWorker), client=new LocalConversation(create);
+  const first=client.prepare(new AbortController().signal);
+  firstWorker.onmessage!(new MessageEvent('message',{data:{type:'error',text:'GPU lost'}}));
+  await expect(first).rejects.toThrow('GPU lost');
+  const retry=client.prepare(new AbortController().signal);
+  expect(retryWorker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'webgpu',modelSize:'compact'});
+  retryWorker.onmessage!(new MessageEvent('message',{data:{type:'done',text:'ready'}}));
+  await retry; client.stop();
 });
 
-it('bypasses graphics on Samsung Internet before any model allocation', async () => {
+it('requires WebGPU on Samsung Internet before any model allocation', async () => {
   vi.stubGlobal('navigator', {userAgent:'Android SamsungBrowser/27'});
   const worker=fakeWorker(), client=new LocalConversation(()=>worker), controller=new AbortController();
   const pending=client.prepare(controller.signal);
-  expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'wasm',modelSize:'compact'});
+  expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'webgpu',modelSize:'compact'});
   controller.abort(); await expect(pending).rejects.toThrow('cancelled');
 });
 

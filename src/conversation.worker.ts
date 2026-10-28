@@ -2,13 +2,15 @@ import { env, pipeline, TextStreamer, type TextGenerationPipeline } from '@huggi
 import type { PromptMessage } from './ai-context';
 import type { ModelStage } from './model-state';
 import { MODEL_CONFIGS, type ModelSize } from './conversation-config';
+import { requireGpuAdapter } from './gpu-support';
 export type AIEvent = { type: 'fallback'; text: string; cause?: string } | { type: 'status'; text: string; stage?: ModelStage; progress?: number } | { type: 'token'; text: string } | { type: 'done'; text: string } | { type: 'error'; text: string };
-type Request = { messages: PromptMessage[]; mode: 'chat' | 'plan' | 'prepare'; device?: 'auto' | 'wasm'; modelSize?: ModelSize };
+type Request = { messages: PromptMessage[]; mode: 'chat' | 'plan' | 'prepare'; device: 'webgpu'; modelSize?: ModelSize };
 const scope = self as unknown as { postMessage: (event: AIEvent) => void; onmessage: ((event: MessageEvent<Request>) => void) | null };
-let generator: TextGenerationPipeline | null = null, running = false, usingGPU = false;
+let generator: TextGenerationPipeline | null = null, running = false;
 
-async function loadModel(cpuOnly = false, size: ModelSize = 'standard'): Promise<TextGenerationPipeline> {
+async function loadModel(size: ModelSize = 'standard'): Promise<TextGenerationPipeline> {
   if (generator) return generator;
+  await requireGpuAdapter((navigator as unknown as { gpu?: Parameters<typeof requireGpuAdapter>[0] }).gpu);
   env.allowLocalModels = false; env.useBrowserCache = true;
   const wasm = env.backends.onnx.wasm!; wasm.numThreads = 1;
   const base = new URL(import.meta.env.BASE_URL + 'onnxruntime/transformers-4.3.2/', self.location.origin).href;
@@ -24,19 +26,16 @@ async function loadModel(cpuOnly = false, size: ModelSize = 'standard'): Promise
       scope.postMessage({ type: 'status', text: 'Downloading the private AI model…', stage: 'download', progress: percent });
     } else if (event.status === 'done' && modelFile) scope.postMessage({ type: 'status', text: 'AI files available. Loading the model into memory…', stage: 'load' });
   };
-  const gpu = (navigator as unknown as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
-  try { usingGPU = !cpuOnly && Boolean(await gpu?.requestAdapter()); } catch { usingGPU = false; }
   const config = MODEL_CONFIGS[size];
-  generator = await pipeline('text-generation', config.id, { revision: config.revision, dtype: 'q4', device: usingGPU ? 'webgpu' : 'wasm', progress_callback });
+  generator = await pipeline('text-generation', config.id, { revision: config.revision, dtype: 'q4f16', device: 'webgpu', progress_callback });
   return generator;
 }
 
 scope.onmessage = async event => {
   if (running) { scope.postMessage({ type: 'error', text: 'AI is already answering.' }); return; }
   running = true;
-  let producedText = false;
   try {
-    const model = await loadModel(event.data.device === 'wasm', event.data.modelSize);
+    const model = await loadModel(event.data.modelSize);
     if (event.data.mode === 'prepare') {
       scope.postMessage({ type: 'status', text: 'Running the model readiness check…', stage: 'checking' });
       // A completed download is not sufficient: compile/run actual inference before app entry.
@@ -46,7 +45,7 @@ scope.onmessage = async event => {
     scope.postMessage({ type: 'status', text: event.data.mode === 'plan' ? 'Choosing a restaurant action on this device…' : 'Lunumi is thinking on this device…' });
     let text = '', planningChunks = 0;
     const streamer = new TextStreamer(model.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: (chunk: string) => {
-      text += chunk; producedText ||= Boolean(chunk);
+      text += chunk;
       if (event.data.mode === 'chat') scope.postMessage({ type: 'token', text: chunk });
       else if (++planningChunks % 8 === 1) scope.postMessage({ type: 'status', text: 'Choosing a restaurant action on this device…' });
     } });
@@ -55,7 +54,6 @@ scope.onmessage = async event => {
     scope.postMessage({ type: 'done', text: text.trim() });
   } catch (error) {
     generator = null;
-    if (usingGPU && event.data.device !== 'wasm' && !producedText) scope.postMessage({ type: 'fallback', text: 'Graphics initialization failed. Preparing the AI on the CPU…', cause: error instanceof Error ? error.message.slice(0, 1000) : 'Graphics inference failed.' });
-    else scope.postMessage({ type: 'error', text: error instanceof Error ? error.message : 'The private AI could not run on this device.' });
+    scope.postMessage({ type: 'error', text: error instanceof Error ? error.message : 'WebGPU inference failed on this device.' });
   } finally { running = false; }
 };

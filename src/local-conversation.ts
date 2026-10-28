@@ -1,14 +1,13 @@
 import type { PromptMessage } from './ai-context';
 import type { AIEvent } from './conversation.worker';
 import type { ModelSnapshot } from './model-state';
-import { currentDevicePrefersCPU, currentModelSize } from './conversation-config';
+import { currentModelSize } from './conversation-config';
 import { markAIWork } from './model-recovery';
 
 type WorkerLike = Pick<Worker, 'postMessage' | 'terminate' | 'onmessage' | 'onerror' | 'onmessageerror'>;
 type Mode = 'chat' | 'plan' | 'prepare';
 export class LocalConversation {
   private worker: WorkerLike | null = null;
-  private cpuOnly = currentDevicePrefersCPU();
   private cancel: (() => void) | null = null;
   private pins = 0;
   private state: ModelSnapshot = { phase: 'idle', status: 'Private AI is not prepared yet.' };
@@ -20,7 +19,6 @@ export class LocalConversation {
   private publish(state: ModelSnapshot) { this.state = state; for (const listener of this.listeners) listener(state); }
   retain() { this.pins++; return () => { this.pins = Math.max(0, this.pins - 1); this.releaseIdle(); }; }
   releaseIdle() { if (!this.cancel && !this.pins) this.stop(); }
-  preferCPU() { this.stop(); this.cpuOnly = true; }
   stop() {
     if (this.cancel) { this.cancel(); return; }
     this.worker?.terminate(); this.worker = null;
@@ -62,13 +60,7 @@ export class LocalConversation {
         worker.onmessage = (message: MessageEvent<AIEvent>) => {
           const event = message.data;
           if (event.type === 'fallback') {
-            if (modelSize === 'compact') { fail(new Error('Graphics loading failed. AI was stopped to avoid another memory allocation on this device. Try CPU (slower), or continue without AI.' + (event.cause ? '\nGraphics details: ' + event.cause : ''))); return; }
-            if (this.cpuOnly) { fail(new Error('The model could not run on the CPU.')); return; }
-            worker.onmessage = null; worker.onerror = null; worker.onmessageerror = null; worker.terminate(); this.cpuOnly = true;
-            this.publish({ phase: 'loading', status: event.text, stage: 'load' });
-            try { worker = this.worker = this.createWorker(); bind(); onEvent({ type: 'status', text: event.text }); worker.postMessage({ messages, mode, device: 'wasm', modelSize }); }
-            catch (error) { fail(error instanceof Error ? error : new Error('CPU fallback could not start.')); }
-            return;
+            fail(new Error('WebGPU inference failed. CPU fallback is disabled.' + (event.cause ? '\nGraphics details: ' + event.cause : ''))); return;
           }
           if (event.type === 'done') { cleanup(); this.publish({ phase: 'ready', status: 'Private AI is ready. Readiness check passed.' }); resolve(event.text); return; }
           if (event.type === 'error') { fail(new Error(event.text)); return; }
@@ -81,7 +73,7 @@ export class LocalConversation {
         worker.onmessageerror = () => fail(new Error('The AI worker returned an unreadable message. Please retry.'));
       };
       bind(); arm(this.state.phase === 'ready' ? 90_000 : 6 * 60_000);
-      try { worker.postMessage({ messages, mode, device: this.cpuOnly ? 'wasm' : 'auto', modelSize }); }
+      try { worker.postMessage({ messages, mode, device: 'webgpu', modelSize }); }
       catch (error) { fail(error instanceof Error ? error : new Error('Could not start private AI.')); }
     });
   }
