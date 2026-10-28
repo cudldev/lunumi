@@ -6,6 +6,6 @@ Official, unmodified ONNX Runtime packages from [Web CI run 40642053504](https:/
 - Version: `1.32.0-dev.20261028-c026a50`; experimental CI build, not a stable release. Pin both packages so JS and WASM stay matched. Files are committed because CI artifacts expire and npm's dev tag predates the fix.
 - SHA-256, common: `48cbea408d157a65a302a1c35068edcf17edd3aeab67845d573ac797a88aceb1`.
 - SHA-256, web: `62bfba09728226ba8c57df427e261340843ccabbd4012ae638f7992479edf7a3`.
-- Upstream MIT license is included in the packages. Never replace only the WASM binary.
+- Upstream MIT license is preserved in LICENSE. Never replace only the WASM binary.
 
 Staging only: retain the 273 MB q4f16 mobile weights and local GPU diagnostics. A successful desktop test does not establish Fold compatibility.
