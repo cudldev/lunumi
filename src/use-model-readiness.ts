@@ -4,7 +4,7 @@ import type { ModelSnapshot } from './model-state';
 import { currentModelConfig, currentModelSize } from './conversation-config';
 import { deferAI, isAIDeferred, wasAIInterrupted } from './model-recovery';
 
-export type ModelReadiness = ModelSnapshot & { ready: boolean; usable: boolean; bypassed: boolean; active: boolean; manual: boolean; interrupted: boolean; download: string; retry: () => void; retryCPU: () => void; pause: () => void; skip: () => void };
+export type ModelReadiness = ModelSnapshot & { ready: boolean; usable: boolean; bypassed: boolean; active: boolean; manual: boolean; interrupted: boolean; download: string; retry: () => void; pause: () => void; skip: () => void };
 export const ModelAccess = createContext<ModelReadiness | null>(null);
 export function useModelReadiness(active: boolean): ModelReadiness {
   const [state, setState] = useState<ModelSnapshot>(browserConversation.snapshot), [attempt, setAttempt] = useState(0);
@@ -22,7 +22,6 @@ export function useModelReadiness(active: boolean): ModelReadiness {
   const ready = state.phase === 'ready';
   return { ...state, ready, usable: ready || bypassed, bypassed, active, manual, interrupted, download: currentModelConfig().download,
     retry: () => { deferAI(false); setBypassed(false); setAttempt(value => value + 1); },
-    retryCPU: () => { browserConversation.preferCPU(); deferAI(false); setBypassed(false); setAttempt(value => value + 1); },
     pause: () => controller.current?.abort(),
     skip: () => { controller.current?.abort(); browserConversation.stop(); deferAI(true); setBypassed(true); },
   };
