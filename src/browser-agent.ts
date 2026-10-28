@@ -49,6 +49,8 @@ const plannerTools = [
 ];
 
 export function needsRestaurantAgent(request: string, records: AgentRecord[], hasContext = false): boolean {
+  // Programming examples may mention menus/items without asking the website to fetch them.
+  if (/\b(?:c#|c\+\+|csharp|python|javascript|typescript)(?![\p{L}\p{N}])|\b(?:for|foreach)\s*loop\b|\b(?:write|show|explain)\s+(?:some\s+)?code\b/iu.test(request)) return false;
   if (records.some(record => record.name.length > 2 && request.toLowerCase().includes(record.name.toLowerCase()))) return true;
   if (/\b(menu|menus|lounas|meny|items?|dishes|prices?|allerg\w*)\b/i.test(request)) return true;
   if (/\b(find|search|recommend|suggest|show|list|looking for|where|which|what)\b/i.test(request) && /\b(restaurants?|cafes?|cafés?|places?|somewhere|nearby|lunch|dinner)\b|\b(?:can|should|to) eat\b/i.test(request)) return true;

@@ -97,7 +97,7 @@ it('keeps discovery grounded when the model declines a natural nearby request', 
 
 it('sends ordinary chat directly to conversation without any hidden planning call', async () => {
   const plan=vi.fn(), execute=vi.fn();
-  for(const text of ['Hello!', 'My name is Alex.', 'What is my name?', 'Recommend a good science fiction book.', 'How are you today?']) {
+  for(const text of ['Hello!', 'My name is Alex.', 'What is my name?', 'Recommend a good science fiction book.', 'How are you today?', 'Show me a C# for loop.', 'Write a C# for loop listing menu items for Test Kitchen.', 'Show code for listing menu items.']) {
     expect(await runAgent({turns:[{role:'user',text}],records,selectedId:'one',previousResults:[{tool:'recommend_restaurants',result:records}],signal:new AbortController().signal,plan,execute,compact:true})).toEqual([]);
   }
   expect(plan).not.toHaveBeenCalled(); expect(execute).not.toHaveBeenCalled();
