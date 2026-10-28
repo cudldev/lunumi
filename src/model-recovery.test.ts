@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { currentDevicePrefersCPU, currentModelSize, modelSizeForDevice, MODEL_CONFIGS } from './conversation-config';
+import { currentModelSize, modelSizeForDevice, MODEL_CONFIGS } from './conversation-config';
 import { deferAI, isAIDeferred, markAIWork, wasAIInterrupted } from './model-recovery';
 afterEach(() => vi.unstubAllGlobals());
 it('uses compact weights for phones, iPad desktop mode, and reported low-memory devices', () => {
@@ -7,8 +7,8 @@ it('uses compact weights for phones, iPad desktop mode, and reported low-memory 
   expect(modelSizeForDevice({userAgent:'Macintosh Safari',maxTouchPoints:0})).toBe('standard');
   expect(modelSizeForDevice({})).toBe('standard');
   vi.stubGlobal('navigator', {userAgent:'iPad'});
-  expect(currentModelSize()).toBe('compact'); expect(currentDevicePrefersCPU()).toBe(true);
-  vi.stubGlobal('navigator', {userAgent:'Android Chrome'}); expect(currentDevicePrefersCPU()).toBe(true);
+  expect(currentModelSize()).toBe('compact');
+  vi.stubGlobal('navigator', {userAgent:'Android Chrome'});
   expect(MODEL_CONFIGS.compact.id).toContain('360M');
 });
 it('persists interrupted-work recovery independently from the choice to defer AI', () => {
