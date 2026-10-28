@@ -143,11 +143,14 @@ export default function ChatAssistant({ places: providedPlaces, initialPlace, fl
       });
       agentMemory.current = [...agentMemory.current, ...toolResults].slice(-4);
       const successful = toolResults.some(result => result && typeof result === 'object' && 'result' in result);
-      if (toolResults.length && !successful) { reply({ text: 'I could not verify the requested restaurant information. Use the source links or select a restaurant and retry.' }); return; }
+      if (toolResults.length && !successful) {
+        const selection = toolResults.find(result => result && typeof result === 'object' && 'candidates' in result) as { error: string; candidates: string[] } | undefined;
+        reply({ text: selection?.error || 'I could not verify the requested restaurant information. Use the source links or select a restaurant and retry.', places: selection ? places.filter(place => selection.candidates.includes(place.id)) : undefined }); return;
+      }
       // Tool replies already render verified records and menu facts. Avoid re-inventing them in generated prose.
       if (successful) return;
       // Ordinary conversation gets a short prompt; restaurant facts enter through verified tool outputs.
-      const answer = await ai.current.answer(buildConversation(turns, /\b(it|that|this|menu|dish|price|there|restaurant|they|their|choice)\b/i.test(text) ? JSON.stringify(agentMemory.current) : '[]'), controller.signal, event => {
+      const answer = await ai.current.answer(buildConversation(turns, /\b(menu|dish|price|restaurant|meal)\b/i.test(text) ? JSON.stringify(agentMemory.current) : '[]'), controller.signal, event => {
         if (event.type === 'status') setActivity(event.text);
         if (event.type === 'token') { partial += event.text; display(partial); }
       });
