@@ -2985,6 +2985,7 @@
         "country": "FI"
       },
       "website": "https://www.fazer.fi/fazer-cafe/kahvilat/fazer-cafe-citycenter/",
+      "menuUrl": "https://citycenter.fi/liikkeet/fazer-cafe/",
       "lat": 60.1698032,
       "lon": 24.9417984,
       "sourceRecords": [
@@ -3013,6 +3014,13 @@
           "license": "ODbL-1.0",
           "attribution": "© OpenStreetMap contributors",
           "note": "Coordinates only; business details are sourced separately."
+        },
+        {
+          "source": "Citycenter official lunch listing",
+          "url": "https://citycenter.fi/liikkeet/fazer-cafe/",
+          "fields": ["menuUrl"],
+          "checkedAt": "2026-10-27",
+          "note": "Citycenter publishes the current daily lunch list for this café."
         }
       ],
       "checkedAt": "2026-10-26",
