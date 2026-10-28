@@ -70,3 +70,8 @@ describe('internet menu reader', () => {
     await expect(fetchMenuSource('https://example.test', new AbortController().signal, 'https://reader.example/v1/menu')).rejects.toThrow('Invalid menu-reader response');
   });
 });
+
+  it('rejects unrelated text even when a URL is explicitly tagged as a menu feed', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Welcome\nMenu\nOur story\nHandcrafted with love\nGift cards 50€', { headers: { 'content-type': 'text/plain' } })));
+    await expect(readRestaurantMenu(place, new AbortController().signal)).rejects.toThrow('couldn’t read a menu');
+  });

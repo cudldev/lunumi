@@ -1,6 +1,6 @@
 # Browser AI and menu agent
 
-**Ask Lunumi** combines a conversational LLM with browser tools. It appears on the main screens and inside restaurant details. Ordinary messages go to the model; quick menu buttons retrieve sources directly.
+**Ask Lunumi** combines a conversational LLM with browser tools. It appears on the main screens; restaurant details have a dedicated dish browser. Ordinary messages go to the model; quick menu buttons retrieve sources directly.
 
 ## Model and agent
 
@@ -18,15 +18,19 @@ Onboarding forms remain usable during preparation and save independently. AI onl
 
 Mobile/low-memory devices do not automatically load a model. A local pending-work flag also pauses automatic loading after an interrupted startup or generation, including an ordinary reload during active work; it cannot establish the cause of a crash. Completed/failed/cancelled work clears the flag. This prevents automatic retry loops when a browser kills the whole tab without delivering a worker error. Storage restrictions can prevent recovery flags from persisting. Even the compact model may exceed a phone's memory limit, and its language/tool decisions are less reliable. Returning desktop visits normally check cached files and inference unless loading was deferred or interrupted. Cache eviction can require another download.
 
+## Dish browser
+
+Restaurant details show **Explore the menu** outside chat. **Browse menu** loads listed sources on request. Dish cards group names, inline descriptions, available prices and explicit dietary labels by category, with search and category/diet filters. Original menu links and expandable source excerpts remain visible. Loading can be cancelled, retried or refreshed. Closing restaurant details clears its dish browser. No dish photos are invented or borrowed from unrelated venue images.
+
 ## Internet menus and extraction
 
-Listed lunch feeds precede menu feeds, specific menu URLs, and restaurant websites. Website discovery tries up to four same-site menu links before accepting the original page. Each search allows five page requests, 20 seconds total, and at most 500,000 source characters per response. Redirects preserve the final source link. The source order is best effort; this is not a general web search engine.
+Listed lunch feeds precede menu feeds, specific menu URLs, and restaurant websites. Website discovery tries up to four same-site menu links, ignoring fragment-only/self-links; a readable original menu remains a fallback if discovered links fail. Each search allows five page requests, 20 seconds total, and at most 500,000 source characters per response. Redirects preserve the final source link. The source order is best effort; this is not a general web search engine.
 
 When VITE_MENU_READER_URL is configured, the browser posts only the public restaurant URL to the existing allowlisted menu-reader Worker. The Worker fetches public HTTPS sources without restaurant cookies or authorization and stores no page content. Without that setting, direct browser CORS requests are used. The deployment workflow already provides the staging/production variables. For local development use the configured /v1/menu endpoint and localhost:5173, an approved Worker origin.
 
-HTML, RSS, Atom, JSON Feed, and plain text are parsed locally with Finnish, Swedish, and English rules. Entries retain sections, names, descriptions, simple currency prices, source excerpts, explicit dietary labels, and allergen notes. Known menu navigation and gift-card rows are excluded; long priced continuation descriptions can attach to a preceding unpriced dish, with the original text retained. Negated dietary phrases are not promoted to positive labels. Source-defined dietary codes can be interpreted; unexplained codes and missing details remain unknown. Standalone allergen notes apply to the menu, not every dish. The app never infers ingredients, dietary suitability, or allergy safety. Labels describe source claims, not verified safety.
+HTML, RSS, Atom, JSON Feed, and plain text are parsed locally with Finnish, Swedish, and English rules. Entries retain sections, names, descriptions, simple currency prices, source excerpts, explicit dietary labels, and allergen notes. Navigation, forms, hidden regions and common marketing/contact/gift-card text are removed. Each item needs price evidence or a food-like name in a recognized section/next to a price; mentioning “menu” alone is insufficient. Contact/event headings end menu context. Separate price/code rows attach only to an adjacent accepted dish; long priced continuation descriptions can attach to a preceding unpriced dish, with the original text retained. Negated and conditional dietary phrases are not promoted to positive labels. Source-defined dietary codes can be interpreted; unexplained codes and missing details remain unknown. Standalone allergen notes apply to the menu, not every dish. The app never infers ingredients, dietary suitability, or allergy safety. Labels describe source claims, not verified safety.
 
-PDF/image menus, JavaScript-only pages, unsupported layouts, blocked sources, and unlisted menu hosts may remain unreadable. Failed searches show source links. The agent can explain the available extracted entries but must not invent missing dishes or claim today's availability without source evidence. Menu dates, prices, and completeness should be verified with the restaurant.
+PDF/image menus, JavaScript-only pages, unsupported layouts, blocked sources, and unlisted menu hosts may remain unreadable. Failed searches show source links. Conservative extraction can miss creative unpriced names, unfamiliar food terms and separate description rows; unrelated priced text can still slip through. The agent can explain the available extracted entries but must not invent missing dishes or claim today's availability without source evidence. Menu dates, prices, and completeness should be verified with the restaurant.
 
 ## Privacy and controls
 
