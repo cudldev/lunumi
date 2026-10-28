@@ -16,6 +16,8 @@ Lunumi’s mascot is a friendly, food-loving chibi character with a soft, cheerf
 
 ## Face and expression
 
+The website displays the original mascot artwork without talking animation or CSS face/mouth overlays.
+
 - Use a pale, softly shaded face with large, dark oval eyes.
 - Each eye has one small lash; both lashes face the same direction.
 - Add gentle peach blush and a small open pink smile.
