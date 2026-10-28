@@ -4,8 +4,8 @@ export const ORT_RUNTIME_VERSION = '1.31.1';
 export const ORT_RUNTIME_PATH = `onnxruntime/ort-${ORT_RUNTIME_VERSION}/`;
 export type ModelSize = 'compact' | 'standard';
 export const MODEL_CONFIGS = {
-  standard: { id: MODEL_ID, revision: MODEL_REVISION, download: '1.1 GB' },
-  compact: { id: 'HuggingFaceTB/SmolLM2-360M-Instruct', revision: 'a10cc1512eabd3dde888204e902eca88bddb4951', download: '273 MB' },
+  standard: { id: MODEL_ID, revision: MODEL_REVISION, download: '1.1 GB', dtype: 'q4f16' },
+  compact: { id: 'HuggingFaceTB/SmolLM2-360M-Instruct', revision: 'a10cc1512eabd3dde888204e902eca88bddb4951', download: '725 MB', dtype: 'fp16' },
 } as const;
 type DeviceHints = { userAgent?: string; maxTouchPoints?: number; deviceMemory?: number };
 export function modelSizeForDevice(device: DeviceHints): ModelSize {
