@@ -46,6 +46,7 @@ export class LocalConversation {
     const modelSize = currentModelSize();
     return new Promise((resolve, reject) => {
       let timer: ReturnType<typeof setTimeout>;
+      let downloadProgress = -1;
       const cleanup = () => { markAIWork(false); clearTimeout(timer); signal.removeEventListener('abort', abort); this.cancel = null; worker.onmessage = null; worker.onerror = null; worker.onmessageerror = null; };
       const fail = (error: Error, paused = false) => {
         cleanup(); worker.terminate(); if (this.worker === worker) this.worker = null;
@@ -64,6 +65,9 @@ export class LocalConversation {
           }
           if (event.type === 'done') { cleanup(); this.publish({ phase: 'ready', status: 'Private AI is ready. Readiness check passed.' }); resolve(event.text); return; }
           if (event.type === 'error') { fail(new Error(event.text)); return; }
+          if (event.type === 'status' && event.stage === 'download' && this.state.phase !== 'ready' && typeof event.progress === 'number' && event.progress > downloadProgress) {
+            downloadProgress = event.progress; arm(6 * 60_000);
+          }
           if (event.type === 'status' && !event.stage && mode !== 'prepare') arm(90_000);
           if (event.type === 'status' && (this.state.phase !== 'ready' || mode === 'prepare')) this.publish({ phase: 'loading', status: event.text, stage: event.stage, progress: event.progress });
           if (event.type === 'token') { arm(90_000); if (mode !== 'prepare' && this.state.phase !== 'ready') this.publish({ phase: 'ready', status: 'Private AI is ready.' }); }
