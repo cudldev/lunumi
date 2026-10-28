@@ -73,7 +73,7 @@ export async function runAgent(input: {
   const results: unknown[] = [], used = new Set<string>();
   const request = [...input.turns].reverse().find(turn => turn.role === 'user')?.text || '';
   input.signal.throwIfAborted();
-  // Ordinary conversation uses the same direct streaming path as chat-test, with no hidden model call.
+  // Ordinary conversation streams directly, with no hidden planning call.
   if (!needsRestaurantAgent(request, input.records, Boolean(input.selectedId || input.previousResults?.length))) return results;
   const named = input.records.filter(record => request.toLowerCase().includes(record.name.toLowerCase()));
   const ordinal = request.toLowerCase().match(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|1st|2nd|3rd)\b/);
