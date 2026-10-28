@@ -9,7 +9,7 @@ export const MODEL_CONFIGS = {
 } as const;
 type DeviceHints = { userAgent?: string; maxTouchPoints?: number; deviceMemory?: number };
 export function modelSizeForDevice(device: DeviceHints): ModelSize {
-  return /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(device.userAgent || '') || (/Macintosh/i.test(device.userAgent || '') && (device.maxTouchPoints || 0) > 1) || (typeof device.deviceMemory === 'number' && device.deviceMemory <= 4) ? 'compact' : 'standard';
+  return /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(device.userAgent || '') || (/Macintosh|Linux/i.test(device.userAgent || '') && (device.maxTouchPoints || 0) > 1) || (typeof device.deviceMemory === 'number' && device.deviceMemory <= 4) ? 'compact' : 'standard';
 }
 export function currentModelSize(): ModelSize { return modelSizeForDevice(typeof navigator === 'undefined' ? {} : navigator as DeviceHints); }
 export function currentModelConfig() { return MODEL_CONFIGS[currentModelSize()]; }
