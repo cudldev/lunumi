@@ -239,4 +239,3 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
   }
   return { items: found, notes };
 }
-

@@ -1,4 +1,4 @@
-# Staging WebGPU runtime trial
+# Pinned WebGPU runtime
 
 Official, unmodified ONNX Runtime packages from [Web CI run 40642053504](https://github.com/microsoft/onnxruntime/actions/runs/40642053504), artifact `NPM_packages` (12800726471).
 
@@ -8,6 +8,6 @@ Official, unmodified ONNX Runtime packages from [Web CI run 40642053504](https:/
 - SHA-256, web: `62bfba09728226ba8c57df427e261340843ccabbd4012ae638f7992479edf7a3`.
 - Upstream MIT license is preserved in LICENSE. Never replace only the WASM binary.
 
-Staging only: retain the 273 MB q4f16 mobile weights and local GPU diagnostics. A successful desktop test does not establish Fold compatibility.
+Staging and live retain the 273 MB q4f16 mobile weights and local GPU diagnostics. A successful desktop test does not establish Fold compatibility.
 
-The native-provider trial still lost the Fold Adreno device during readiness. The next staging trial aliases the runtime import to the official all bundle (JSEP WebGPU) and ships its matching jsep assets. GPU selection, model export, and package archives stay unchanged.
+The native-provider trial still lost the Fold Adreno device during readiness. The working configuration aliases the runtime import to the official all bundle (JSEP WebGPU) and ships its matching jsep assets. GPU selection, model export, and package archives stay unchanged.
