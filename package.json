@@ -9,13 +9,24 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "npm run menu-reader:hosts && vitest run",
+    "menu-reader:hosts": "node scripts/build-menu-reader-hosts.mjs",
+    "menu-reader:dev": "npm run menu-reader:hosts && npx --yes wrangler@4.134.0 dev --config menu-reader-worker/wrangler.jsonc",
+    "menu-reader:deploy": "npx --yes wrangler@4.134.0 deploy --config menu-reader-worker/wrangler.jsonc",
     "model:collect": "node scripts/collect-menu-training.mjs",
+    "model:label": "node scripts/label-menu-training.mjs",
     "model:prepare": "node scripts/prepare-fndds-training.mjs",
+    "model:prepare:fineli": "node scripts/prepare-fineli-training.mjs",
+    "model:prepare:menustat": "node scripts/prepare-menustat-training.mjs",
+    "model:prepare:crous": "node scripts/prepare-crous-training.mjs",
+    "model:prepare:crous:instruct": "node scripts/prepare-crous-instruct.mjs",
+    "model:train:assistant": "python training/menu-assistant/train.py",
+    "model:eval:assistant": "python training/menu-assistant/evaluate.py",
+    "model:train:crous": "node training/menu-extractor/train.mjs data/private-menu-training/crous-labels.jsonl public/models",
+    "model:train:fineli": "node training/menu-extractor/train.mjs data/private-menu-training/fineli-labels.jsonl public/models",
     "model:train": "node training/menu-extractor/train.mjs",
     "data:helsinki": "node scripts/build-osm-food-data.mjs",
     "data:discover-feeds": "node scripts/discover-lunch-feeds.mjs",
-    "data:apply-link-overrides": "node scripts/apply-restaurant-link-overrides.mjs",
-    "menu-reader:hosts": "node scripts/build-menu-reader-hosts.mjs"
+    "data:apply-link-overrides": "node scripts/apply-restaurant-link-overrides.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",
@@ -25,7 +36,10 @@
     "maplibre-gl": "^5.24.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^6.0.7"
+    "tesseract.js": "^7.0.0",
+    "vite": "^6.0.7",
+    "onnxruntime-web": "file:vendor/onnxruntime/onnxruntime-web-1.32.0-dev.20261028-c026a50.tgz",
+    "onnxruntime-common": "file:vendor/onnxruntime/onnxruntime-common-1.32.0-dev.20261028-c026a50.tgz"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
@@ -36,6 +50,6 @@
     "vitest": "^2.1.8"
   },
   "overrides": {
-    "onnxruntime-web": "1.31.1"
+    "onnxruntime-web": "$onnxruntime-web"
   }
 }

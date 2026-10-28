@@ -8,22 +8,51 @@ export type MenuClassifier = {
   logLikelihood: Record<string, number[]>;
 };
 
-let classifierRequest: Promise<MenuClassifier> | null = null;
+export const MENU_OTHER_FILTER_THRESHOLD = 0.9;
 
-export function loadMenuClassifier(): Promise<MenuClassifier> {
-  if (!classifierRequest) {
-    classifierRequest = fetch(`${import.meta.env.BASE_URL}models/menu-line-classifier.json`, { cache: 'force-cache' })
+const classifierRequests: Partial<Record<'fi' | 'sv' | 'en' | 'fr', Promise<MenuClassifier>>> = {};
+
+export function loadMenuClassifier(language: 'fi' | 'sv' | 'en' | 'fr'): Promise<MenuClassifier> {
+  if (!classifierRequests[language]) {
+    const file = language === 'en' ? 'menu-line-classifier.json' : `menu-line-classifier-${language}.json`;
+    classifierRequests[language] = fetch(`${import.meta.env.BASE_URL}models/${file}`, { cache: 'force-cache' })
       .then(async response => {
         if (!response.ok) throw new Error(`Menu model unavailable (${response.status}).`);
         const model = await response.json() as MenuClassifier;
-        if (model.schema !== 1 || model.algorithm !== 'character-ngram-multinomial-naive-bayes' || model.language !== 'en') {
+        if (model.schema !== 1 || model.algorithm !== 'character-ngram-multinomial-naive-bayes' || model.language !== language) {
           throw new Error('Unsupported menu model.');
         }
         return model;
       })
-      .catch(error => { classifierRequest = null; throw error; });
+      .catch(error => { delete classifierRequests[language]; throw error; });
   }
-  return classifierRequest;
+  return classifierRequests[language]!;
+}
+
+export function scheduleMenuClassifierWarmup(): () => void {
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (connection?.saveData || connection?.effectiveType === 'slow-2g' || connection?.effectiveType === '2g') return () => {};
+
+  let cancelled = false;
+  const load = () => {
+    if (!cancelled) void loadMenuClassifier('en').catch(() => {});
+  };
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+  if (idleWindow.requestIdleCallback) {
+    const handle = idleWindow.requestIdleCallback(load, { timeout: 4000 });
+    return () => {
+      cancelled = true;
+      idleWindow.cancelIdleCallback?.(handle);
+    };
+  }
+  const handle = window.setTimeout(load, 1500);
+  return () => {
+    cancelled = true;
+    window.clearTimeout(handle);
+  };
 }
 
 function features(text: string, buckets: number): Map<number, number> {
@@ -43,7 +72,7 @@ function features(text: string, buckets: number): Map<number, number> {
 }
 
 export function classifyMenuLine(text: string, model: MenuClassifier): { label: string; confidence: number } | null {
-  if (model.language !== 'en' || !model.classes.length || text.length < 2) return null;
+  if (!['fi', 'sv', 'en', 'fr'].includes(model.language) || !model.classes.length || text.length < 2) return null;
   const vector = features(text, model.featureBuckets);
   const scores = Object.fromEntries(model.classes.map(label => {
     let score = model.logPrior[label] ?? 0;

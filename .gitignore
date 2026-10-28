@@ -9,8 +9,8 @@ vite.config.js
 vite.config.d.ts
 data/lunch-feed-candidates.json
 restaurant-data-repo/
+menu-reader-worker/allowed-hosts.mjs
 data/menu-training-sources.local.json
 data/private-menu-training/
 
-menu-reader-worker/allowed-hosts.mjs
 .ai-smoke-cache/

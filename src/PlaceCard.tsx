@@ -21,6 +21,7 @@ const safeUrl = (value?: string) => {
   try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value.trim()) ? value.trim() : `https://${value.trim()}`); return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null; } catch { return null; }
 };
 
+
 type LivePosition = { lat: number; lon: number; accuracy: number };
 function VisitLiveMap({ place, position }: { place: Pick<Place, 'lat' | 'lon'>; position: LivePosition | null }) {
   const mapElement = useRef<HTMLDivElement>(null);

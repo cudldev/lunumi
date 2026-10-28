@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { validateCommercialLicense } from './menu-training-annotation.mjs';
+import { parseFeed, parseMenuPage } from './menu-training-source.mjs';
 
 const root = process.cwd();
 const sourcePath = path.resolve(process.argv[2] ?? 'data/menu-training-sources.local.json');
@@ -19,18 +21,22 @@ function validateSource(source, index) {
   let url;
   try { url = new URL(source.url); } catch { throw new Error(`Source ${index + 1} has an invalid URL.`); }
   if (url.protocol !== 'https:' || url.username || url.password || url.port || /(?:^|\.)(localhost|local|internal|test|invalid|example)$/i.test(url.hostname)) {
-    throw new Error(`Source ${index + 1} must use a public HTTPS feed URL.`);
+    throw new Error(`Source ${index + 1} must use a public HTTPS URL.`);
   }
-  if (!['fi', 'sv', 'en'].includes(source.language)) throw new Error(`Source ${index + 1} language must be fi, sv, or en.`);
+  const type = source.type ?? 'feed';
+  if (!['feed', 'page'].includes(type)) throw new Error(`Source ${index + 1} type must be feed or page.`);
+  if (!['fi', 'sv', 'en', 'fr'].includes(source.language)) throw new Error(`Source ${index + 1} language must be fi, sv, en, or fr.`);
   if (source.approvedForModelRelease !== true) throw new Error(`Source ${index + 1} is not approved for training and releasing model weights.`);
   if (source.commercialUseApproved !== true) throw new Error(`Source ${index + 1} is not approved for future commercial use.`);
   if (!source.license || !source.licenseUrl || !source.rightsReviewedAt || !source.rightsEvidenceUrl) {
     throw new Error(`Source ${index + 1} needs its license, license URL, review date, and evidence URL.`);
   }
-  if (!['explicit-license', 'written-permission'].includes(source.permissionBasis)) {
-    throw new Error(`Source ${index + 1} must use an explicit license or written permission; public availability alone is not enough.`);
+  if (!['explicit-license', 'written-permission', 'open-data-terms'].includes(source.permissionBasis)) {
+    throw new Error(`Source ${index + 1} must have an explicit license, written permission, or official open-data reuse terms; public availability alone is not enough.`);
   }
-  return { ...source, url: url.toString() };
+  try { validateCommercialLicense(source); }
+  catch (error) { throw new Error(`Source ${index + 1}: ${error.message}`); }
+  return { ...source, type, url: url.toString() };
 }
 
 async function readBounded(response) {
@@ -56,52 +62,7 @@ async function readBounded(response) {
   return new TextDecoder('utf-8', { fatal: false }).decode(bytes);
 }
 
-function decode(value) {
-  return value
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([\da-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
-    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&apos;|&#39;/gi, "'")
-    .replace(/\s+/g, ' ').trim();
-}
-
-function xmlValue(block, name) {
-  const expression = new RegExp(`<((?:[\\w.-]+:)?${name})\\b[^>]*>([\\s\\S]*?)<\\/(?:[\\w.-]+:)?${name}\\s*>`, 'i');
-  return decode(block.match(expression)?.[2] ?? '');
-}
-
-function parseFeed(body, contentType) {
-  if (/json/i.test(contentType) || /^\s*\{/.test(body)) {
-    const data = JSON.parse(body);
-    if (!Array.isArray(data.items)) throw new Error('JSON source is not a JSON Feed with an items array.');
-    return data.items.map(item => ({
-      id: String(item.id ?? item.url ?? ''),
-      title: String(item.title ?? ''),
-      publishedAt: String(item.date_published ?? item.date_modified ?? ''),
-      text: [item.title, item.content_text, item.content_html, item.summary]
-        .filter(value => typeof value === 'string').map(decode).filter(Boolean).join('\n'),
-    }));
-  }
-  if (!/xml|rss|atom/i.test(contentType) && !/<(?:rss|feed|channel)\b/i.test(body)) {
-    throw new Error(`Unsupported feed content type: ${contentType || 'unknown'}.`);
-  }
-  const blocks = [...body.matchAll(/<(?:[\w.-]+:)?(?:item|entry)\b[^>]*>([\s\S]*?)<\/(?:[\w.-]+:)?(?:item|entry)\s*>/gi)].map(match => match[1]);
-  return blocks.map(block => {
-    const title = xmlValue(block, 'title');
-    const description = xmlValue(block, 'description') || xmlValue(block, 'summary');
-    const content = xmlValue(block, 'encoded') || xmlValue(block, 'content');
-    return {
-      id: xmlValue(block, 'guid') || xmlValue(block, 'id'),
-      title,
-      publishedAt: xmlValue(block, 'pubDate') || xmlValue(block, 'updated'),
-      text: [title, description, content].filter(Boolean).join('\n'),
-    };
-  });
-}
-
-async function fetchFeed(source) {
+async function fetchSource(source) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -109,14 +70,17 @@ async function fetchFeed(source) {
       signal: controller.signal,
       redirect: 'error',
       headers: {
-        Accept: 'application/feed+json, application/json, application/atom+xml, application/rss+xml, application/xml, text/xml;q=0.9',
+        Accept: source.type === 'page'
+          ? 'text/html, application/xhtml+xml;q=0.9'
+          : 'application/feed+json, application/json, application/atom+xml, application/rss+xml, application/xml, text/xml;q=0.9',
         'User-Agent': 'LunumiMenuTrainingCollector/1.0 (+https://github.com/cudldev/lunumi)',
       },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const contentType = response.headers.get('content-type') ?? '';
     const body = await readBounded(response);
-    return parseFeed(body, contentType).filter(item => item.text.length >= 8);
+    const entries = source.type === 'page' ? parseMenuPage(body, contentType) : parseFeed(body, contentType);
+    return entries.filter(item => item.text.length >= 8);
   } catch (error) {
     throw new Error(`${source.url}: ${error?.name === 'AbortError' ? `timed out after ${timeoutMs} ms` : error?.message ?? String(error)}`);
   } finally { clearTimeout(timer); }
@@ -140,7 +104,7 @@ let lastFetchAt = 0;
 for (const [index, source] of sources.entries()) {
   const wait = Math.max(0, delayMs - (Date.now() - lastFetchAt));
   if (lastFetchAt && wait) await new Promise(resolve => setTimeout(resolve, wait));
-  const items = await fetchFeed(source);
+  const items = await fetchSource(source);
   lastFetchAt = Date.now();
   for (const item of items) {
     const normalizedText = item.text.replace(/\s+/g, ' ').trim();
@@ -153,6 +117,8 @@ for (const [index, source] of sources.entries()) {
       license: source.license,
       licenseUrl: source.licenseUrl,
       permissionBasis: source.permissionBasis,
+      rightsReviewedAt: source.rightsReviewedAt,
+      sourceRightsEvidenceUrl: source.rightsEvidenceUrl,
       approvedForModelRelease: true,
       commercialUseApproved: true,
       language: source.language,
