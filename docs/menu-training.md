@@ -1,6 +1,6 @@
 # Menu model training
 
-Lunumi uses a small English character n-gram classifier to filter likely menu-item lines on device. It is not a chat model and does not infer ingredients, diets, or allergen safety. Finnish and Swedish continue to use explicit local language rules until commercially reusable examples for those languages are approved.
+This guide describes historical classifier-training artifacts. The shipped assistant uses the shared SmolLM2 GPU worker and source-backed parser documented in menu-assistant.md. The app does not load the old menu classifiers.
 
 ## Commercially reusable source
 

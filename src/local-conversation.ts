@@ -64,6 +64,7 @@ export class LocalConversation {
           }
           if (event.type === 'done') { cleanup(); this.publish({ phase: 'ready', status: 'Private AI is ready. Readiness check passed.' }); resolve(event.text); return; }
           if (event.type === 'error') { fail(new Error(event.text)); return; }
+          if (event.type === 'status' && !event.stage && mode !== 'prepare') arm(90_000);
           if (event.type === 'status' && (this.state.phase !== 'ready' || mode === 'prepare')) this.publish({ phase: 'loading', status: event.text, stage: event.stage, progress: event.progress });
           if (event.type === 'token') { arm(90_000); if (mode !== 'prepare' && this.state.phase !== 'ready') this.publish({ phase: 'ready', status: 'Private AI is ready.' }); }
           onEvent(event);
@@ -71,7 +72,7 @@ export class LocalConversation {
         worker.onerror = () => fail(new Error('The AI worker could not start. Reload or retry in a supported browser.'));
         worker.onmessageerror = () => fail(new Error('The AI worker returned an unreadable message. Please retry.'));
       };
-      bind(); arm(6 * 60_000);
+      bind(); arm(this.state.phase === 'ready' ? 90_000 : 6 * 60_000);
       try { worker.postMessage({ messages, mode, device: 'webgpu', modelSize }); }
       catch (error) { fail(error instanceof Error ? error : new Error('Could not start private AI.')); }
     });

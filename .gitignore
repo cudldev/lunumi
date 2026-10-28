@@ -11,3 +11,6 @@ data/lunch-feed-candidates.json
 restaurant-data-repo/
 data/menu-training-sources.local.json
 data/private-menu-training/
+
+menu-reader-worker/allowed-hosts.mjs
+.ai-smoke-cache/

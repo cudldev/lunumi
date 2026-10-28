@@ -380,7 +380,7 @@ export default function PlaceCard({ place, favorite, status, sentiment, recommen
         <p className="reason detail-reason">{sentiment === 'loved' ? 'A place you loved before' : recommendation}</p>
         <h3 className="detail-section-title">Good to know</h3><p className="detail-description">{place.tags.opening_hours ? `Hours: ${place.tags.opening_hours}` : 'Opening hours are not listed.'}</p>
         <h3 className="detail-section-title">Menu & links</h3>{menu || website ? <div className="detail-actions">{menu && <a className="button outline" href={menu} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>{menuLabel}</a>}{website && <a className="button outline" href={website} target="_blank" rel="noopener noreferrer"><Globe2 size={15}/>Website</a>}</div> : <p className="detail-description">No menu link is listed yet. Check the restaurant website or open directions.</p>}
-        <MenuAssistant restaurantName={place.name} sourceUrl={menu || website}/>
+        <MenuAssistant place={place}/>
         <button className="button visit-start" onClick={startVisit}><Sparkles size={17}/>{status === 'visited' ? 'Finish your visit' : status === 'target' ? 'Continue your visit' : 'Start a visit'}<span>→</span></button>
         </>}
       </div>
