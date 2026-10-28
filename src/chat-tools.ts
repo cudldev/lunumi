@@ -70,6 +70,7 @@ export async function fetchMenuSource(url: string, signal: AbortSignal, readerUr
 
 export async function readRestaurantMenu(place: Place, signal: AbortSignal): Promise<ParsedMenu & { source: MenuSource }> {
   const queue = menuSources(place), tried = new Set<string>();
+  let fallback: (ParsedMenu & { source: MenuSource }) | undefined;
   while (queue.length && tried.size < 5) {
     signal.throwIfAborted();
     const source = queue.shift()!;
@@ -82,12 +83,16 @@ export async function readRestaurantMenu(place: Place, signal: AbortSignal): Pro
       const discovered = source.discover ? discoverMenuLinks(body, finalUrl).filter(url => !tried.has(url)) : [];
       if (discovered.length) {
         queue.unshift(...discovered.map(url => ({ url, label: 'Discovered menu page' })));
-        continue;
       }
       const text = feedText(body, type), parsed = parseMenu(text, detectLanguage(text));
-      const menuEvidence = /(?:€|\$|£)|\b(menu|lunch|lounas|ruokalista|meny|starters|mains|burgers|salads|pääruoat|salaatit)\b/i.test(text);
-      if (parsed.items.length && (menuEvidence || !source.discover)) return { ...parsed, source: { ...source, url: finalUrl } };
+      if (parsed.items.length) {
+        const result = { ...parsed, source: { ...source, url: finalUrl } };
+        if (!discovered.length) return result;
+        fallback ??= result;
+      }
     } catch { signal.throwIfAborted(); }
   }
+  signal.throwIfAborted();
+  if (fallback) return fallback;
   throw new Error('I couldn’t read a menu from this restaurant. Its site may block browser access or use a PDF, image, or JavaScript menu. Try the source links.');
 }
