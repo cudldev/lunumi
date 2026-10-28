@@ -9,6 +9,8 @@ const base = process.env.VITE_BASE_PATH ?? '/lunumi/';
 const productionPath = base === '/lunumi/';
 const require = createRequire(import.meta.url);
 const onnxRuntimeDist = dirname(require.resolve('onnxruntime-web/webgpu'));
+const onnxRuntimeVersion = JSON.parse(readFileSync(join(onnxRuntimeDist, '..', 'package.json'), 'utf8')).version;
+const onnxRuntimeAssetPath = `onnxruntime/ort-${onnxRuntimeVersion}/`;
 
 function bundleOnnxRuntimeAssets() {
   return {
@@ -17,7 +19,7 @@ function bundleOnnxRuntimeAssets() {
       server.middlewares.use((request, response, next) => {
         const pathname = (request.url || '').split('?')[0];
         for (const file of ['ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']) {
-          const asset = 'onnxruntime/transformers-4.3.2/' + file;
+          const asset = onnxRuntimeAssetPath + file;
           if (pathname !== base + asset && pathname !== '/' + asset) continue;
           response.setHeader('Content-Type', file.endsWith('.wasm') ? 'application/wasm' : 'text/javascript');
           response.setHeader('Cache-Control', 'no-cache');
@@ -38,7 +40,7 @@ function bundleOnnxRuntimeAssets() {
           }
         }
         for (const file of ['ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']) {
-          this.emitFile({ type: 'asset', fileName: `onnxruntime/transformers-4.3.2/${file}`, source: readFileSync(join(onnxRuntimeDist, file)) });
+          this.emitFile({ type: 'asset', fileName: onnxRuntimeAssetPath + file, source: readFileSync(join(onnxRuntimeDist, file)) });
         }
       },
     },
@@ -48,7 +50,6 @@ function bundleOnnxRuntimeAssets() {
 export default defineConfig({
   base,
   worker: { format: 'es' },
-  build: { rollupOptions: { input: { app: 'index.html', chatTest: 'chat-test/index.html' } } },
   plugins: [
     react(),
     bundleOnnxRuntimeAssets(),
@@ -97,6 +98,7 @@ export default defineConfig({
           },
         }],
         navigateFallbackDenylist: [
+          /\/chat-test(?:\/|$)/,
           ...(productionPath ? [/^\/lunumi\/staging(?:\/|$)/] : []),
           /\/visit-animation-preview\.html$/,
         ],

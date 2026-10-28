@@ -5,7 +5,7 @@ import { runAgent } from '../src/browser-agent.ts';
 import { constrainedRestaurantQuery, recommendPlaces } from '../src/recommendations.ts';
 env.cacheDir = './.ai-smoke-cache'; env.allowLocalModels = false;
 const config = MODEL_CONFIGS[process.argv.includes('--compact') ? 'compact' : 'standard'];
-const model = await pipeline('text-generation', config.id, { revision: config.revision, dtype: 'q4', device: 'cpu' });
+const model = await pipeline('text-generation', config.id, { revision: config.revision, dtype: 'q4f16', device: 'webgpu' });
 const generate = async messages => (await model(messages, { max_new_tokens: 100, do_sample: false, repetition_penalty: 1.1 }))[0].generated_text.at(-1).content;
 const turns = [];
 for (const question of ['Hi, my name is Alex.', 'What is my name?']) {
