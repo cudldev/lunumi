@@ -1,7 +1,36 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseAction, runAgent } from './browser-agent';
+import { parseAction, planningPrompt, runAgent } from './browser-agent';
 const records = [{ id: 'one', name: 'Test Kitchen', cuisine: 'italian', distanceMetres: 100 }];
 const turns = [{ role: 'user' as const, text: 'Find somewhere Italian, then open its card.' }];
+const mixedTopics = [{ role: 'user' as const, text: 'Hi' }, { role: 'assistant' as const, text: 'Hello!' }, { role: 'user' as const, text: 'Show me a C# for loop' }, { role: 'assistant' as const, text: 'for (int i = 0; i < 5; i++) { Console.WriteLine(i); }' }, { role: 'user' as const, text: 'Can you show me the Hesburger menu?' }];
+
+it.each([true, false])('retrieves Hesburger after coding chat with compact=%s', async compact => {
+  const execute = vi.fn().mockResolvedValue({ entries: [{ name: 'Verified item' }] });
+  const plan = vi.fn().mockResolvedValue('<tool_call>[]</tool_call>');
+  const result = await runAgent({ turns: mixedTopics, records: [...records, { id: 'hes', name: 'Hesburger Helsinki Kamppi', distanceMetres: 200 }], selectedId: 'one', compact, signal: new AbortController().signal, plan, execute });
+  expect(execute).toHaveBeenCalledWith({ tool: 'read_menu', id: 'hes' });
+  expect(result).toEqual([{ tool: 'read_menu', result: { entries: [{ name: 'Verified item' }] } }]);
+});
+
+it('asks for the branch instead of choosing an old restaurant or generating a menu', async () => {
+  const plan = vi.fn(), execute = vi.fn();
+  const result = await runAgent({ turns: mixedTopics, records: [...records, { id: 'hes1', name: 'Hesburger Kamppi', distanceMetres: 200 }, { id: 'hes2', name: 'Hesburger Kallio', distanceMetres: 300 }], selectedId: 'one', compact: true, signal: new AbortController().signal, plan, execute });
+  expect(result).toEqual([expect.objectContaining({ tool: 'read_menu', candidates: ['hes1', 'hes2'], error: expect.stringContaining('branch') })]);
+  expect(plan).not.toHaveBeenCalled(); expect(execute).not.toHaveBeenCalled();
+});
+
+it('does not fall back to conversation or a previous menu for an unlisted restaurant', async () => {
+  const plan = vi.fn(), execute = vi.fn();
+  const result = await runAgent({ turns: mixedTopics, records, selectedId: 'one', previousResults: [{ tool: 'read_menu', result: { restaurant: 'Test Kitchen' } }], signal: new AbortController().signal, plan, execute });
+  expect(result).toEqual([expect.objectContaining({ tool: 'read_menu', candidates: [], error: expect.stringContaining('could not match') })]);
+  expect(plan).not.toHaveBeenCalled(); expect(execute).not.toHaveBeenCalled();
+});
+
+it('plans the latest restaurant request without unrelated coding replies', () => {
+  const prompt = planningPrompt(mixedTopics, records, undefined, [], [], false);
+  expect(prompt.slice(1)).toEqual([{ role: 'user', content: mixedTopics.at(-1)!.text }]);
+  expect(JSON.stringify(prompt)).not.toContain('Console.WriteLine');
+});
 
 describe('browser AI agent', () => {
   it('validates structured actions and rejects unsupported tools', () => {
@@ -68,7 +97,7 @@ it('keeps discovery grounded when the model declines a natural nearby request', 
 
 it('sends ordinary chat directly to conversation without any hidden planning call', async () => {
   const plan=vi.fn(), execute=vi.fn();
-  for(const text of ['Hello!', 'My name is Alex.', 'What is my name?', 'Recommend a good science fiction book.', 'How are you today?']) {
+  for(const text of ['Hello!', 'My name is Alex.', 'What is my name?', 'Recommend a good science fiction book.', 'How are you today?', 'Show me a C# for loop.', 'Write a C# for loop listing menu items for Test Kitchen.', 'Show code for listing menu items.']) {
     expect(await runAgent({turns:[{role:'user',text}],records,selectedId:'one',previousResults:[{tool:'recommend_restaurants',result:records}],signal:new AbortController().signal,plan,execute,compact:true})).toEqual([]);
   }
   expect(plan).not.toHaveBeenCalled(); expect(execute).not.toHaveBeenCalled();
