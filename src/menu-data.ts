@@ -78,7 +78,8 @@ export function detectLanguage(value: string): MenuLanguage {
 function cleanMenuText(value: string): string {
   if (!value.includes('<')) return value;
   const document = new DOMParser().parseFromString(value, 'text/html');
-  document.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(node => node.remove());
+  document.querySelectorAll('script,style,noscript,svg,nav,footer,header,aside,form,button,input,select,textarea,[hidden],[aria-hidden="true"],[role="navigation"],[role="dialog"],[role="contentinfo"],.cookie-banner,#cookie-banner,[style*="display:none"],[style*="display: none"]').forEach(node => node.remove());
+  document.querySelectorAll('span,td,th').forEach(node => node.append(' '));
   document.querySelectorAll('br').forEach(node => node.replaceWith('\n'));
   document.querySelectorAll('p,div,li,tr,h1,h2,h3,h4,section,article').forEach(node => node.append('\n'));
   return document.body.textContent || '';
@@ -92,9 +93,18 @@ export function feedText(value: string, contentType: string): string {
       return items.map(item => {
         if (!item || typeof item !== 'object') return '';
         const fields = item as Record<string, unknown>;
-        return ['title', 'name', 'description', 'summary', 'content_text', 'content_html', 'price']
-          .map(key => fields[key]).filter((part): part is string | number => typeof part === 'string' || typeof part === 'number')
-          .map(String).join(' · ');
+        const title = fields.name ?? fields.title;
+        const content = fields.content_text ?? fields.content_html ?? fields.description ?? fields.summary;
+        if (typeof fields.name === 'string' && (typeof fields.price === 'string' || typeof fields.price === 'number')) {
+          const details = typeof content === 'string' ? cleanMenuText(content).replace(/\s+/g, ' ').trim() : '';
+          // Keep an explicit product's description with its name; a numeric feed
+          // price is shown without inventing a currency the source did not give.
+          const price = typeof fields.price === 'number' ? fields.price.toFixed(2) : fields.price;
+          return `${fields.name}${details ? ` · ${details}` : ''}\n${price}`;
+        }
+        return [title, content, fields.price]
+          .filter((part): part is string | number => typeof part === 'string' || typeof part === 'number')
+          .map(part => cleanMenuText(String(part))).join('\n');
       }).filter(Boolean).join('\n');
     } catch { /* fall through to HTML/text extraction */ }
   }
@@ -105,7 +115,7 @@ export function feedText(value: string, contentType: string): string {
       const values = ['title', 'description', 'summary', 'content', 'encoded', 'price']
         .map(tag => entry.getElementsByTagName(tag).item(0)?.textContent?.trim())
         .filter((part): part is string => Boolean(part));
-      return values.join(' · ');
+      return values.map(cleanMenuText).join('\n');
     }).join('\n');
   }
   return cleanMenuText(value);
@@ -119,10 +129,14 @@ export function discoverMenuLinks(html: string, pageUrl: string): string[] {
   return [...doc.querySelectorAll('a[href]')]
     .map(anchor => {
       const href = anchor.getAttribute('href') || '';
+      if (!href.trim() || href.trim().startsWith('#')) return null;
       const label = `${anchor.textContent || ''} ${href}`.replace(/\s+/g, ' ').trim();
       let url: URL;
       try { url = new URL(href, page); } catch { return null; }
       if (url.protocol !== 'https:' || !(url.hostname === page.hostname || url.hostname.endsWith(`.${page.hostname}`)) || !menuClues.test(label)) return null;
+      url.hash = '';
+      const current = new URL(page); current.hash = '';
+      if (url.href === current.href) return null;
       const score = /lounas|lunch|ruokalista|dagens/i.test(label) ? 2 : 1;
       return { url: url.toString(), score };
     })
@@ -149,6 +163,13 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
   const modules = language === 'unknown' ? Object.values(languageModules) : [languageModules[language]];
   const activeLanguage = language === 'unknown' ? 'en' : language;
   let section = '';
+  let attachable: MenuItem | undefined;
+  // Positive dish evidence, rather than treating every short website line as food.
+  // Creative unpriced names may be missed; a source link is preferable to invented entries.
+  const foodName = /(?:\b(?:soup|salad|pizza|pasta|risotto|burger|sandwich|steak|chicken|salmon|curry|tacos?|burrata|margherita|lasagn[ae]|falafel|coffee|latte|espresso|tea|mochi|cake|ice cream|sushi|ramen|noodles|tofu|halloumi|tiramisu|bun)\b|keitto|salaatti|hampurilai|kasvisruoka|kanafile|lohi|pihvi|kahvi|jäätelö|leipä|soppa|sallad|kyckling|lax|biff|smörgås|kaffe|glass)/i;
+  const nonMenuHeading = /^(?:about(?: us)?|our story|contact(?: us)?|opening hours|reservations?|events?|gift cards?|careers?|news|newsletter|yhteystiedot|aukioloajat|varaukset|tapahtumat|lahjakortit|meistä|kontakt|öppettider|evenemang|presentkort)\b/i;
+  const boilerplate = /(?:https?:\/\/|www\.|\S+@\S+|©|\b(?:cookies?|privacy|subscribe|newsletter|copyright|all rights reserved|book a table|reserve a table|gift cards?|delivery fee|minimum order|opening hours|follow us|sign in|log in|accept all|reject all|read more|learn more|view menu|download menu|eväste\w*|tietosuoja\w*|tilaa uutiskirje|varaa pöytä|lahjakort\w*|aukiolo\w*|lue lisää|boka bord|presentkort)\b)/i;
+  const narrative = /^(?:we\b|our\b|welcome\b|enjoy\b|discover\b|handcrafted with\b|made with love\b|try our\b|please\b|ask\b|all prices\b|prices include\b|served (?:daily|from|between)\b|meillä\b|tervetuloa\b|tarjoamme\b|kysy\b|kaikki hinnat\b|välkommen\b|vi erbjuder\b)/i;
   const isAllergenLine = (line: string) => (language === 'unknown' ? Object.values(allergenClues) : [allergenClues[language]]).some(pattern => pattern.test(line));
   const pricePattern = /(?:^|\s)(?:€|\$|£)\s?\d+(?:[.,]\d{1,2})?|\b\d+(?:[.,]\d{1,2})?\s?(?:€|\$|£)/;
   const priceOnlyPattern = /^(?:(?:[A-Z]{1,4}\.\s*|[A-Z]{1,2}\s+){1,4})?(?:(?:€|\$|£)\s*)?\d+(?:[.,]\d{1,2})?\s*(?:€|\$|£)?$/i;
@@ -165,18 +186,19 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
       if (label) dietCodes.set(match[1].toLocaleUpperCase(), label);
     }
   }
-  for (const sourceLine of lines) {
+  for (const [index, sourceLine] of lines.entries()) {
     let line = sourceLine;
-    if (/^(?:skip to content|our menus|gift cards?|home|about(?: us)?|contact(?: us)?|privacy(?: policy)?|cookies?|accept all|reject all|book(?: a table)?|reservations?|sign in|subscribe|follow us|copyright.*|all rights reserved.*)$/i.test(line)) continue;
-    if (line.length < 3 || line.length > 220 || /^https?:\/\//i.test(line)) continue;
-    if (isSection(line)) { section = line; continue; }
+    if (nonMenuHeading.test(line)) { section = ''; attachable = undefined; continue; }
+    if (boilerplate.test(line) || narrative.test(line) || /^(?:home|etusivu|hem|menu|meny|ruokalista|book|reservations?)$/i.test(line)) { attachable = undefined; continue; }
+    if ((line.length < 3 && !priceOnlyPattern.test(line)) || line.length > 220 || /^https?:\/\//i.test(line)) { attachable = undefined; continue; }
+    if (isSection(line)) { section = line; attachable = undefined; continue; }
     const prefixedSection = sectionLabels[activeLanguage]
       .find(label => line.toLocaleLowerCase().startsWith(`${label} `));
     if (prefixedSection) {
       section = line.slice(0, prefixedSection.length).trim();
       line = line.slice(prefixedSection.length).trim();
     }
-    if (line.length < 3) continue;
+    if (line.length < 3 && !priceOnlyPattern.test(line)) continue;
     if (codeDefinitionPattern.test(line) && !pricePattern.test(line)) {
       codeDefinitionPattern.lastIndex = 0;
       continue;
@@ -184,9 +206,9 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
     codeDefinitionPattern.lastIndex = 0;
     const linePrice = line.match(pricePattern)?.[0]?.trim().replace(/\s+/g, ' ') || '';
     if (priceOnlyPattern.test(line)) {
-      const last = found[found.length - 1];
-      if (last && last.section === section) {
-        if (!last.price) last.price = linePrice;
+      const last = attachable;
+      if (last && last.section === section && (linePrice || /\d[.,]\d{1,2}/.test(line))) {
+        if (!last.price) last.price = linePrice || line;
         last.sourceText = `${last.sourceText}\n${sourceLine}`;
         const codedDiets = [...line.matchAll(/\b([A-Z]{1,4})\.?/g)]
           .map(match => dietCodes.get(match[1].toLocaleUpperCase()))
@@ -198,6 +220,7 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
     const hasAllergenInfo = isAllergenLine(line);
     if (hasAllergenInfo && !pricePattern.test(line)) {
       notes.push(line);
+      attachable = undefined;
       continue;
     }
     const price = line.match(pricePattern);
@@ -220,7 +243,7 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
     const name = (parts[0] || itemLine).trim();
     if (name.length < 3 || name.length > 90) continue;
     if (/^(all prices|please inform|we cannot|may contain|allergen information)/i.test(name)) continue;
-    const previous = found[found.length - 1];
+    const previous = attachable;
     if (previous && !previous.price && previous.section === section && linePrice && line.length > 50 && /\bwith\b/i.test(line)) {
       previous.price = linePrice;
       previous.description = line.replace(linePrice, '').replace(/[-–—]\s*$/, '').trim();
@@ -228,13 +251,19 @@ export function parseMenu(value: string, language: MenuLanguage): ParsedMenu {
       previous.diets = [...new Set([...previous.diets, ...explicitDietClaims(line, modules)])];
       continue;
     }
+    const nextLine = lines[index + 1] || '';
+    const hasNearbyPrice = priceOnlyPattern.test(nextLine) && (pricePattern.test(nextLine) || /\d[.,]\d{1,2}/.test(nextLine));
+    const dishEvidence = Boolean(price) || (hasNearbyPrice && Boolean(section)) || (foodName.test(name) && (Boolean(section) || hasNearbyPrice));
+    if (!dishEvidence || /^\+?[\d\s():.,/-]+$/.test(name)) { attachable = undefined; continue; }
     const key = name.toLocaleLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    const diets = [...new Set([...explicitDietClaims(line, modules), ...codeDiets])];
+    const conditionalDiet = /\b(?:on request|upon request|available as|option|optional|pyynnöstä|saatavana|på begäran)\b/i.test(line);
+    const diets = conditionalDiet ? [] : [...new Set([...explicitDietClaims(line, modules), ...codeDiets])];
     const priceText = price?.[0]?.trim().replace(/\s+/g, ' ') || '';
     const description = parts.slice(1).join(' · ').replace(pricePattern, '').trim();
-    found.push({ section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: sourceLine });
+    attachable = { section, name, description, price: priceText, diets, allergenInfo: hasAllergenInfo ? [line] : [], sourceText: sourceLine };
+    found.push(attachable);
     if (found.length >= 100) break;
   }
   return { items: found, notes };
