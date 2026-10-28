@@ -3,13 +3,15 @@ import { currentModelSize, modelSizeForDevice, MODEL_CONFIGS } from './conversat
 import { deferAI, isAIDeferred, markAIWork, wasAIInterrupted } from './model-recovery';
 afterEach(() => vi.unstubAllGlobals());
 it('uses compact weights for phones, iPad desktop mode, and reported low-memory devices', () => {
-  for (const device of [{userAgent:'Mozilla/5.0 (Linux; Android 14; SM-F956B) AppleWebKit/537.36 SamsungBrowser/27.0 Chrome/125 Mobile Safari/537.36'}, {userAgent:'X11 Linux x86_64 SamsungBrowser/27.0 Chrome/125 Safari/537.36'}, {userAgent:'Android Chrome'}, {userAgent:'iPhone Safari'}, {userAgent:'Macintosh Safari',maxTouchPoints:5}, {userAgent:'Desktop Chrome',deviceMemory:4}]) expect(modelSizeForDevice(device)).toBe('compact');
+  for (const device of [{userAgent:'Mozilla/5.0 (Linux; Android 14; SM-F956B) AppleWebKit/537.36 SamsungBrowser/27.0 Chrome/125 Mobile Safari/537.36'}, {userAgent:'X11 Linux x86_64 SamsungBrowser/27.0 Chrome/125 Safari/537.36'}, {userAgent:'Android Chrome'}, {userAgent:'iPhone Safari'}, {userAgent:'Macintosh Safari',maxTouchPoints:5}, {userAgent:'X11 Linux x86_64 Chrome/130 Safari/537.36',maxTouchPoints:5,deviceMemory:8}, {userAgent:'Desktop Chrome',deviceMemory:4}]) expect(modelSizeForDevice(device)).toBe('compact');
   expect(modelSizeForDevice({userAgent:'Macintosh Safari',maxTouchPoints:0})).toBe('standard');
   expect(modelSizeForDevice({})).toBe('standard');
   vi.stubGlobal('navigator', {userAgent:'iPad'});
   expect(currentModelSize()).toBe('compact');
   vi.stubGlobal('navigator', {userAgent:'Android Chrome'});
   expect(MODEL_CONFIGS.compact.id).toContain('360M');
+  expect(MODEL_CONFIGS.compact.dtype).toBe('fp16');
+  expect(MODEL_CONFIGS.standard.dtype).toBe('q4f16');
 });
 it('persists interrupted-work recovery independently from the choice to defer AI', () => {
   const data = new Map<string,string>();

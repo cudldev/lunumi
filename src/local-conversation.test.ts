@@ -125,3 +125,23 @@ it('times out a silent planning pass on a ready model instead of waiting the sta
   await vi.advanceTimersByTimeAsync(90_001); await rejected;
   expect(worker.terminate).toHaveBeenCalledOnce();
 });
+
+it('allows a large model download to continue while progress is increasing', async () => {
+  vi.useFakeTimers();
+  const worker=fakeWorker(), client=new LocalConversation(()=>worker);
+  const pending=client.prepare(new AbortController().signal);
+  await vi.advanceTimersByTimeAsync(5*60_000);
+  worker.onmessage!(new MessageEvent('message',{data:{type:'status',text:'Downloading',stage:'download',progress:20}}));
+  await vi.advanceTimersByTimeAsync(5*60_000);
+  expect(worker.terminate).not.toHaveBeenCalled(); expect(client.snapshot.phase).toBe('loading');
+  worker.onmessage!(new MessageEvent('message',{data:{type:'done',text:'ready'}})); await pending; client.stop();
+});
+
+it('still stops a model download after six minutes without progress', async () => {
+  vi.useFakeTimers();
+  const worker=fakeWorker(), client=new LocalConversation(()=>worker);
+  const pending=client.prepare(new AbortController().signal), rejected=expect(pending).rejects.toThrow('too long');
+  worker.onmessage!(new MessageEvent('message',{data:{type:'status',text:'Downloading',stage:'download',progress:20}}));
+  await vi.advanceTimersByTimeAsync(6*60_000+1); await rejected;
+  expect(client.snapshot.phase).toBe('error');
+});
