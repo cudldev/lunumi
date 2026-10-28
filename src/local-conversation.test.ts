@@ -114,3 +114,14 @@ it('requires WebGPU on Samsung Internet before any model allocation', async () =
   expect(worker.postMessage).toHaveBeenCalledWith({messages:[],mode:'prepare',device:'webgpu',modelSize:'compact'});
   controller.abort(); await expect(pending).rejects.toThrow('cancelled');
 });
+
+it('times out a silent planning pass on a ready model instead of waiting the startup limit', async () => {
+  vi.useFakeTimers();
+  const worker=fakeWorker(), client=new LocalConversation(()=>worker);
+  const prepared=client.prepare(new AbortController().signal);
+  worker.onmessage!(new MessageEvent('message',{data:{type:'done',text:'ready'}})); await prepared;
+  const planning=client.answer(messages,new AbortController().signal,vi.fn(),'plan');
+  const rejected=expect(planning).rejects.toThrow('too long');
+  await vi.advanceTimersByTimeAsync(90_001); await rejected;
+  expect(worker.terminate).toHaveBeenCalledOnce();
+});

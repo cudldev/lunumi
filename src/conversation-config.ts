@@ -1,5 +1,7 @@
 export const MODEL_ID = 'HuggingFaceTB/SmolLM2-1.7B-Instruct';
 export const MODEL_REVISION = '31b70e2e869a7173562077fd711b654946d38674';
+export const ORT_RUNTIME_VERSION = '1.31.1';
+export const ORT_RUNTIME_PATH = `onnxruntime/ort-${ORT_RUNTIME_VERSION}/`;
 export type ModelSize = 'compact' | 'standard';
 export const MODEL_CONFIGS = {
   standard: { id: MODEL_ID, revision: MODEL_REVISION, download: '1.1 GB' },
