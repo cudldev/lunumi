@@ -10,7 +10,7 @@ it('uses compact weights for phones, iPad desktop mode, and reported low-memory 
   expect(currentModelSize()).toBe('compact');
   vi.stubGlobal('navigator', {userAgent:'Android Chrome'});
   expect(MODEL_CONFIGS.compact.id).toContain('360M');
-  expect(MODEL_CONFIGS.compact.dtype).toBe('fp16');
+  expect(MODEL_CONFIGS.compact.dtype).toBe('q4f16');
   expect(MODEL_CONFIGS.standard.dtype).toBe('q4f16');
 });
 it('persists interrupted-work recovery independently from the choice to defer AI', () => {
