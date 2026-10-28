@@ -27,7 +27,7 @@ async function loadModel(size: ModelSize = 'standard'): Promise<TextGenerationPi
     } else if (event.status === 'done' && modelFile) scope.postMessage({ type: 'status', text: 'AI files available. Loading the model into memory…', stage: 'load' });
   };
   const config = MODEL_CONFIGS[size];
-  generator = await pipeline('text-generation', config.id, { revision: config.revision, dtype: 'q4f16', device: 'webgpu', progress_callback });
+  generator = await pipeline('text-generation', config.id, { revision: config.revision, dtype: config.dtype, device: 'webgpu', progress_callback });
   return generator;
 }
 
